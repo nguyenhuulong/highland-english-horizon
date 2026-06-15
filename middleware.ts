@@ -37,6 +37,8 @@ export async function middleware(req: NextRequest) {
   if (!pathname.startsWith(home)) {
     return NextResponse.redirect(new URL(home, req.url));
   }
+  console.log("token:", token);
+  console.log("pathname:", pathname);
 
   return NextResponse.next();
 }

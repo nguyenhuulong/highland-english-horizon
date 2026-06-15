@@ -37,9 +37,7 @@ export default function LoginForm() {
       return;
     }
     const callbackUrl = searchParams.get("callbackUrl");
-    if (!res?.error) {
-      window.location.href = callbackUrl || "/dashboard";
-    }
+    window.location.href = callbackUrl || "/dashboard";
   };
 
   return (

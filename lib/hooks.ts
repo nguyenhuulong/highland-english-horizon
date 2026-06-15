@@ -189,16 +189,21 @@ export function useTTS(enabled: boolean) {
 
 // ---- useOnlineStatus ----
 export function useOnlineStatus() {
-  const [online, setOnline] = useState(() => typeof navigator === "undefined" || navigator.onLine);
+  const [online, setOnline] = useState(true);
+
   useEffect(() => {
-    const on = () => setOnline(true);
-    const off = () => setOnline(false);
-    window.addEventListener("online", on);
-    window.addEventListener("offline", off);
+    const update = () => setOnline(navigator.onLine);
+
+    update();
+
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+
     return () => {
-      window.removeEventListener("online", on);
-      window.removeEventListener("offline", off);
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
     };
   }, []);
+
   return online;
 }

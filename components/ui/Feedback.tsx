@@ -4,7 +4,7 @@ import { useOnlineStatus } from "@/lib/hooks";
 import { useEffect, useState, useCallback } from "react";
 
 export function OfflineBanner() {
-  const online = useOnlineStatus();
+  const [online, setOnline] = useState(true);
   if (online) return null;
   return (
     <div
