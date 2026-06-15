@@ -30,6 +30,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }
           `}
         </Script> */}
+        <Script id="remove-sw" strategy="afterInteractive">
+          {`
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations()
+              .then(registrations => {
+                registrations.forEach(reg => reg.unregister());
+              });
+          }
+          `}
+        </Script>
       </head>
       <body>
         <Providers>
