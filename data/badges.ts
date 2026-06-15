@@ -1,0 +1,44 @@
+export const DEFAULT_BADGES = [
+  {
+    code: "highlands-explorer",
+    icon: "🌄",
+    name: "Highlands Explorer",
+    description: "Hoàn thành bài học đầu tiên",
+    criteria: { type: "lessons_read", value: 1 },
+  },
+  {
+    code: "english-story-reader",
+    icon: "📖",
+    name: "English Story Reader",
+    description: "Đọc 3 truyện tranh tiếng Anh",
+    criteria: { type: "lessons_read", value: 3 },
+  },
+  {
+    code: "culture-discoverer",
+    icon: "🧭",
+    name: "Culture Discoverer",
+    description: "Hoàn thành 3 nhiệm vụ khám phá văn hóa",
+    criteria: { type: "missions_done", value: 3 },
+  },
+  {
+    code: "quiz-master",
+    icon: "🎯",
+    name: "Quiz 100%",
+    description: "Đạt điểm tuyệt đối trong một bài đố vui",
+    criteria: { type: "quiz_perfect", value: 1 },
+  },
+  {
+    code: "pronunciation-star",
+    icon: "🌟",
+    name: "Pronunciation Star",
+    description: "Đạt điểm phát âm trên 80 điểm",
+    criteria: { type: "pronunciation_score", value: 80 },
+  },
+  {
+    code: "vocab-collector",
+    icon: "📝",
+    name: "Vocab Collector",
+    description: "Học được 30 từ vựng mới",
+    criteria: { type: "words_learned", value: 30 },
+  },
+];

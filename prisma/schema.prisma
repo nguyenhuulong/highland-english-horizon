@@ -1,0 +1,222 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum LessonStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum LessonSource {
+  MANUAL
+  AI
+  SAMPLE
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  password      String
+  role          Role     @default(STUDENT)
+  ethnicGroup   String?
+  ageGroup      Int?
+  avatar        String   @default("🧒")
+  xp            Int      @default(0)
+  streak        Int      @default(0)
+  lastActiveAt  DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  classesTeaching   Class[]            @relation("TeacherClasses")
+  classMemberships  ClassMember[]
+  lessonsAuthored   Lesson[]           @relation("LessonAuthor")
+  progress          LessonProgress[]
+  badges            UserBadge[]
+  pronunciation     PronunciationAttempt[]
+  missionAttempts   MissionAttempt[]
+  aiLogs            AIGenerationLog[]
+  aiTemplates       AITemplate[]
+}
+
+model Class {
+  id        String   @id @default(cuid())
+  name      String
+  joinCode  String   @unique
+  teacherId String
+  teacher   User     @relation("TeacherClasses", fields: [teacherId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  members ClassMember[]
+  lessons Lesson[]
+}
+
+model ClassMember {
+  id        String   @id @default(cuid())
+  classId   String
+  studentId String
+  joinedAt  DateTime @default(now())
+
+  class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student User  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, studentId])
+}
+
+model EthnicGroup {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  nameVi      String
+  nameEn      String
+  emoji       String  @default("🌄")
+  description String  @db.Text
+  costume     Json
+  festivals   Json
+  instruments Json
+  crafts      Json
+  cuisine     Json
+  locations   Json
+  architecture String @db.Text
+
+  lessons Lesson[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Lesson {
+  id            String       @id @default(cuid())
+  titleVi       String
+  titleEn       String
+  topic         String
+  level         Int          @default(1)
+  ageGroup      Int          @default(10)
+  color         String       @default("#E8643A")
+  emoji         String       @default("📖")
+  descriptionVi String       @db.Text
+
+  vocabulary Json
+  panels     Json
+  quiz       Json
+  missions   Json @default("[]")
+
+  status LessonStatus @default(DRAFT)
+  source LessonSource @default(MANUAL)
+
+  authorId      String
+  author        User   @relation("LessonAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  classId       String?
+  class         Class?  @relation(fields: [classId], references: [id], onDelete: SetNull)
+  ethnicGroupId String?
+  ethnicGroup   EthnicGroup? @relation(fields: [ethnicGroupId], references: [id], onDelete: SetNull)
+
+  progress        LessonProgress[]
+  pronunciation   PronunciationAttempt[]
+  missionAttempts MissionAttempt[]
+  aiLogs          AIGenerationLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model LessonProgress {
+  id            String    @id @default(cuid())
+  userId        String
+  lessonId      String
+  read          Boolean   @default(false)
+  readAt        DateTime?
+  quizScore     Int?
+  quizTotal     Int?
+  quizAt        DateTime?
+  matchScore    Int?
+  pronScore     Int?
+  xpEarned      Int       @default(0)
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+}
+
+model PronunciationAttempt {
+  id         String   @id @default(cuid())
+  userId     String
+  lessonId   String
+  sentenceEn String
+  transcript String
+  score      Int
+  createdAt  DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model MissionAttempt {
+  id         String   @id @default(cuid())
+  userId     String
+  lessonId   String
+  missionId  String
+  correct    Boolean
+  createdAt  DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model Badge {
+  id          String @id @default(cuid())
+  code        String @unique
+  icon        String
+  name        String
+  description String
+  criteria    Json
+
+  users UserBadge[]
+}
+
+model UserBadge {
+  id       String   @id @default(cuid())
+  userId   String
+  badgeId  String
+  earnedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+}
+
+model AITemplate {
+  id             String   @id @default(cuid())
+  name           String
+  description    String
+  promptTemplate String   @db.Text
+  createdById    String
+  createdBy      User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+}
+
+model AIGenerationLog {
+  id        String   @id @default(cuid())
+  userId    String
+  lessonId  String?
+  input     Json
+  status    String   @default("success")
+  createdAt DateTime @default(now())
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson Lesson? @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+}
