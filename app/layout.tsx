@@ -22,14 +22,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="vi">
       <head>
-        <link rel="manifest" href="/manifest.json" />
-        <Script id="sw-register" strategy="afterInteractive">
+        {/* <link rel="manifest" href="/manifest.json" /> */}
+        {/* <Script id="sw-register" strategy="afterInteractive">
           {`
             if ('serviceWorker' in navigator) {
               navigator.serviceWorker.register('/service-worker.js').catch(() => {});
             }
           `}
-        </Script>
+        </Script> */}
       </head>
       <body>
         <Providers>
