@@ -35,13 +35,13 @@ export default function LoginForm() {
       password,
       redirect: false,
     });
-
     console.log("SIGNIN RESULT:", res);
     setLoading(false);
     if (res?.error) {
       setError("Email hoặc mật khẩu không đúng.");
       return;
     }
+    router.push(searchParams.get("callbackUrl") || "/dashboard");
   };
 
   return (
