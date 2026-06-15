@@ -28,19 +28,12 @@ export default function LoginForm() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    const res = await signIn("credentials", {
+    await signIn("credentials", {
       email,
       password,
       redirect: true,
-      callbackUrl: searchParams.get("callbackUrl") || "/dashboard",
+      callbackUrl: "/dashboard",
     });
-
-    console.log("SIGNIN RESULT:", res);
-
-    setLoading(false);
   };
 
   return (
