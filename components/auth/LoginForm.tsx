@@ -41,7 +41,11 @@ export default function LoginForm() {
       setError("Email hoặc mật khẩu không đúng.");
       return;
     }
-    router.push(searchParams.get("callbackUrl") || "/dashboard");
+    await signIn("credentials", {
+      email,
+      password,
+      callbackUrl: "/dashboard",
+    });
   };
 
   return (

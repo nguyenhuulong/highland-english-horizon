@@ -11,11 +11,16 @@ const ROLE_HOME: Record<string, string> = {
 
 export async function proxy(req: NextRequest) {
   console.log("proxy running");
+  console.log("COOKIE:", req.headers.get("cookie"));
+  console.log("URL:", req.url);
   const { pathname } = req.nextUrl;
   if (pathname.startsWith("/login")) return NextResponse.next();
   if (!pathname.startsWith("/dashboard")) return NextResponse.next();
 
-  const token = await getToken({ req, secret: process.env.AUTH_SECRET });
+  const token = await getToken({
+    req,
+    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  });
   console.log("token:", token);
   if (!token) {
     const url = new URL("/login", req.url);
