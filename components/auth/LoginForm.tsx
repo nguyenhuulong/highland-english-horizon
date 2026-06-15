@@ -37,8 +37,9 @@ export default function LoginForm() {
       return;
     }
     const callbackUrl = searchParams.get("callbackUrl");
-    router.push(callbackUrl || "/dashboard");
-    router.refresh();
+    if (!res?.error) {
+      window.location.href = callbackUrl || "/dashboard";
+    }
   };
 
   return (
