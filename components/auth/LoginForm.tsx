@@ -37,7 +37,11 @@ export default function LoginForm() {
       return;
     }
     const callbackUrl = searchParams.get("callbackUrl");
-    window.location.href = callbackUrl || "/dashboard";
+    await signIn("credentials", {
+      email,
+      password,
+      callbackUrl: callbackUrl || "/dashboard",
+    });
   };
 
   return (

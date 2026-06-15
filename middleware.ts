@@ -12,6 +12,7 @@ const ROLE_HOME: Record<string, string> = {
 export async function middleware(req: NextRequest) {
   console.log("middleware running");
   const { pathname } = req.nextUrl;
+  if (pathname.startsWith("/login")) return NextResponse.next();
   if (!pathname.startsWith("/dashboard")) return NextResponse.next();
 
   const token = await getToken({ req, secret: process.env.AUTH_SECRET });
