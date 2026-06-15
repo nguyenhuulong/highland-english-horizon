@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { CULTURAL_GROUPS } from "../data/culture";
 import { DEFAULT_BADGES } from "../data/badges";
 import { STORIES } from "../data/stories";
+import { Prisma } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -138,40 +139,45 @@ async function main() {
         color: story.color,
         emoji: story.emoji,
         descriptionVi: story.description_vi,
-        vocabulary: story.vocabulary,
-        panels: story.panels,
-        quiz: story.quiz,
-        missions: ethnicGroup
-          ? [
-              {
-                id: `mission-${story.id}-1`,
-                type: "select",
-                title: `Khám phá văn hóa ${story.ethnic_culture}`,
-                prompt: `Lễ hội nào dưới đây thuộc về người ${story.ethnic_culture}?`,
-                options: [
+        vocabulary: JSON.parse(JSON.stringify(story.vocabulary)),
+        panels: JSON.parse(JSON.stringify(story.panels)),
+        quiz: JSON.parse(JSON.stringify(story.quiz)),
+        missions: JSON.parse(
+          JSON.stringify(
+            ethnicGroup
+              ? [
                   {
-                    id: "a",
-                    label: (ethnicGroup.festivals as string[])[0] || "Lễ hội",
-                    emoji: "🎉",
-                    correct: true,
+                    id: `mission-${story.id}-1`,
+                    type: "select",
+                    title: `Khám phá văn hóa ${story.ethnic_culture}`,
+                    prompt: `Lễ hội nào dưới đây thuộc về người ${story.ethnic_culture}?`,
+                    options: [
+                      {
+                        id: "a",
+                        label:
+                          (ethnicGroup.festivals as string[])[0] || "Lễ hội",
+                        emoji: "🎉",
+                        correct: true,
+                      },
+                      {
+                        id: "b",
+                        label: "Lễ hội Trung thu",
+                        emoji: "🥮",
+                        correct: false,
+                      },
+                      {
+                        id: "c",
+                        label: "Lễ hội Halloween",
+                        emoji: "🎃",
+                        correct: false,
+                      },
+                    ],
+                    fact: ethnicGroup.description,
                   },
-                  {
-                    id: "b",
-                    label: "Lễ hội Trung thu",
-                    emoji: "🥮",
-                    correct: false,
-                  },
-                  {
-                    id: "c",
-                    label: "Lễ hội Halloween",
-                    emoji: "🎃",
-                    correct: false,
-                  },
-                ],
-                fact: ethnicGroup.description,
-              },
-            ]
-          : [],
+                ]
+              : [],
+          ),
+        ),
         status: "PUBLISHED",
         source: "SAMPLE",
         authorId: teacher.id,
