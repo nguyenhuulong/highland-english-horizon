@@ -30,7 +30,13 @@ export default function LoginForm() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    const res = await signIn("credentials", { email, password, redirect: false });
+    const res = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    console.log("SIGNIN RESULT:", res);
     setLoading(false);
     if (res?.error) {
       setError("Email hoặc mật khẩu không đúng.");
