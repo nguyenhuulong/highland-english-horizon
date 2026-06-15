@@ -30,22 +30,17 @@ export default function LoginForm() {
     e.preventDefault();
     setError("");
     setLoading(true);
+
     const res = await signIn("credentials", {
       email,
       password,
-      redirect: false,
+      redirect: true,
+      callbackUrl: searchParams.get("callbackUrl") || "/dashboard",
     });
+
     console.log("SIGNIN RESULT:", res);
+
     setLoading(false);
-    if (res?.error) {
-      setError("Email hoặc mật khẩu không đúng.");
-      return;
-    }
-    await signIn("credentials", {
-      email,
-      password,
-      callbackUrl: "/dashboard",
-    });
   };
 
   return (
