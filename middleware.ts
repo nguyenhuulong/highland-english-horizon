@@ -9,8 +9,8 @@ const ROLE_HOME: Record<string, string> = {
   SUPER_ADMIN: "/dashboard/super-admin",
 };
 
-export async function proxy(req: NextRequest) {
-  console.log("proxy running");
+export async function middleware(req: NextRequest) {
+  console.log("middleware running");
   console.log("COOKIE:", req.headers.get("cookie"));
   console.log("URL:", req.url);
   const { pathname } = req.nextUrl;
