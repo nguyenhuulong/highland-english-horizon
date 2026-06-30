@@ -10,7 +10,8 @@ import { lessonToStory } from "@/lib/lesson";
 import { spawnConfetti } from "@/components/ui/Feedback";
 import CulturalMissionCard from "@/components/missions/CulturalMissionCard";
 import SpeakChallenge from "@/components/speak/SpeakChallenge";
-import type { Story, LangMode } from "@/types";
+import ComicPanel from "@/components/comic/ComicPanel";
+import type { Story, LangMode, ComicCharacterDTO, ComicBackgroundDTO } from "@/types";
 
 // ---- Vocab highlight ----
 function HighlightedText({ text, vocab, onSpeak }: { text: string; vocab: { en: string; vi: string }[]; onSpeak: (t: string) => void }) {
@@ -217,6 +218,10 @@ function ReaderInner() {
   const [loading, setLoading] =
     useState(true);
 
+  const [comicCharacters, setComicCharacters] = useState<ComicCharacterDTO[]>([]);
+  const [comicBackgrounds, setComicBackgrounds] = useState<ComicBackgroundDTO[]>([]);
+  const [isTeacher, setIsTeacher] = useState(false);
+
   // HOOKS PHẢI ĐẶT Ở ĐÂY
   const { settings, updateSettings } =
     useSettings();
@@ -259,6 +264,20 @@ function ReaderInner() {
 
     markRead(story.id);
   }, [story, markRead]);
+
+  useEffect(() => {
+    if (!story) return;
+    Promise.all([
+      fetch("/api/comic/characters").then((r) => r.json()).catch(() => ({ characters: [] })),
+      fetch("/api/comic/backgrounds").then((r) => r.json()).catch(() => ({ backgrounds: [] })),
+      fetch("/api/auth/session").then((r) => r.json()).catch(() => null),
+    ]).then(([charData, bgData, sessionData]) => {
+      setComicCharacters(charData.characters ?? []);
+      setComicBackgrounds(bgData.backgrounds ?? []);
+      const role = sessionData?.user?.role ?? "";
+      setIsTeacher(["TEACHER", "ADMIN", "SUPER_ADMIN"].includes(role));
+    });
+  }, [story?.id]);
 
   useEffect(() => {
     setPanelIdx(0);
@@ -317,8 +336,15 @@ function ReaderInner() {
           <div>
             <div key={panelIdx} style={{ borderRadius: 24, overflow: "hidden", border: "2px solid var(--border)", boxShadow: "var(--shadow)", animation: "slideUp 0.3s ease", background: "var(--bg-card)" }}>
               {/* Scene */}
-              <div style={{ minHeight: 280, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8rem", position: "relative", padding: 30, background: panel.bg }}>
-                <span className="animate-float">{SCENE_EMOJIS[panel.scene] || "🎨"}</span>
+              <div style={{ position: "relative", minHeight: 280, background: panel.bg }}>
+                <ComicPanel
+                  panel={panel}
+                  characters={comicCharacters}
+                  backgrounds={comicBackgrounds}
+                  ethnicCulture={story.ethnic_culture}
+                  lessonId={id ?? undefined}
+                  isTeacherMode={isTeacher}
+                />
                 <span style={{ position: "absolute", top: 12, left: 12, width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.5)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 800, fontFamily: "var(--font-display)" }}>
                   {panelIdx + 1}
                 </span>

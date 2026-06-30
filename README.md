@@ -241,3 +241,33 @@ Một nhân vật đồng hành xuyên suốt quá trình học: hướng dẫn 
 5. Tích hợp luyện phát âm và phản hồi tức thời cho học sinh.
 6. Hệ thống Cultural Missions giúp học sinh học tiếng Anh thông qua các hoạt động khám phá văn hóa.
 7. Phù hợp với điều kiện thực tế của trường học vùng sâu vùng xa, dễ triển khai và dễ mở rộng.
+
+
+## Prompt ảnh
+
+1. Nhân vật — Character Sheet 2D
+- K'Ho girl — full body: 2D cartoon character sheet, front view, K'Ho ethnic minority girl, age 8, wearing traditional K'Ho woven dress with red and black geometric patterns, long black hair with simple headband, warm brown skin, big expressive eyes, friendly smile, flat color illustration, white background, anime-inspired style, clean line art, full body standing pose
+- M'Nông boy: 2D cartoon character, full body front view, M'Nong ethnic minority boy age 9, wearing dark indigo traditional shirt with colorful embroidered collar, short black hair, barefoot, holding a small bamboo flute, flat illustration style, white background, children's book art style, clean lines, warm earthy colors
+- Elderly K'Ho woman: 2D flat cartoon, full body, elderly K'Ho woman age 65, silver hair tied in traditional bun, wearing long traditional woven skirt with geometric patterns in red black and yellow, kind wrinkled face, weaving basket in hands, warm skin tone, children's storybook illustration style, white background, front view
+- H'Mông girl: 2D cartoon character sheet, H'Mong ethnic minority girl age 7, colorful traditional H'Mong outfit with layered skirt in blue pink and green, silver jewelry necklace, black hair in braids, shy gentle expression, flat color art, white background, full body front and side view, clean line art
+
+2. Bối cảnh — Scene / Background
+- Nhà rông: 2D cartoon background, traditional K'Ho communal house "nha rong", tall pointed thatched roof reaching high, wooden stilts, surrounded by green jungle trees, warm afternoon sunlight, children's book illustration style, flat colors, no characters, wide establishing shot
+- Ruộng bậc thang: 2D cartoon landscape background, terraced rice fields in Central Highlands Vietnam, green and golden rice paddies stepping down the mountain, misty morning atmosphere, simple flat illustration, children's storybook style, vibrant colors, no people
+- Lễ hội cồng chiêng: 2D cartoon background, Central Highlands Vietnam gong festival at night, large bonfire in center, traditional gongs hanging on wooden frame, decorative banners with ethnic patterns, warm orange firelight glow, flat illustration style, children's book art, festive atmosphere
+- Rừng Tây Nguyên: 2D cartoon jungle background, Central Highlands Vietnam tropical forest, tall ancient trees with thick roots, dappled sunlight through canopy, tropical plants and ferns, a small stream visible, peaceful atmosphere, flat color illustration, children's storybook style
+
+3. Comic Panel — Cảnh truyện tranh
+- Panel gặp gỡ: 2D comic panel, K'Ho girl and M'Nong boy meeting for the first time, standing in front of traditional nha rong house, both waving hello, speech bubbles empty, children's comic book style, flat colors, simple background, cute cartoon characters with ethnic traditional clothing
+- Panel hoạt động: 2D children's comic panel, two ethnic minority children playing traditional bamboo instruments together near a river in Central Highlands Vietnam, happy expressions, afternoon light, flat illustration, simple background with jungle trees, cartoon style, warm earthy color palette
+
+4. Negative prompts gợi ý (nếu API hỗ trợ)
+realistic photo, 3D render, dark theme, scary, violent, adult content, western clothing, modern clothes, blurry, low quality, deformed hands, extra fingers
+
+Lưu ý khi test
+Consistency nhân vật — thêm cụm này vào cuối mỗi prompt về cùng một nhân vật để giữ nhất quán:
+same character design as reference, consistent art style, model sheet
+Style anchor — nếu muốn toàn bộ truyện cùng tone màu, thêm:
+Studio Ghibli inspired, warm Southeast Asian color palette, soft cel shading
+hoặc
+flat vector art, bold outlines, vibrant colors, Cartoon Network style

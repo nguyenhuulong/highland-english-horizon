@@ -173,3 +173,107 @@ export interface UserDTO {
   xp: number;
   createdAt: string;
 }
+
+// ===== Comic System Types =====
+
+export type CharacterRole = "child" | "adult" | "elder";
+export type CharacterGender = "male" | "female";
+export type BackgroundCategory =
+  | "village"
+  | "forest"
+  | "market"
+  | "festival"
+  | "house"
+  | "school";
+
+export interface PanelV2 extends Panel {
+  characters?: string[];
+  backgroundKey?: string;
+  generatedImageUrl?: string;
+  characterAction?: string;
+}
+
+// ===== Comic Studio v2 Types =====
+
+export type StoryStatus = "draft" | "generating" | "ready" | "published";
+
+export type StoryTemplateKey =
+  | "INTRO_4"
+  | "DIALOGUE_6"
+  | "ADVENTURE_6"
+  | "FESTIVAL_8"
+  | "MARKET_6"
+  | "FESTIVAL_6"
+  | "EXPLORE_8";
+
+export interface StoryTemplate {
+  key: StoryTemplateKey;
+  nameVi: string;
+  nameEn: string;
+  panelCount: number;
+  description: string;
+  structure: { label: string; hint: string }[];
+}
+
+export interface ComicStoryPanel {
+  id: number;
+  backgroundId: string;
+  backgroundImageUrl?: string;
+  generatedImageUrl?: string;
+  action: string;
+  characterIds: string[];
+  dialogue: {
+    characterId: string;
+    characterName: string;
+    en: string;
+    vi: string;
+  }[];
+}
+
+export interface ComicStoryDTO {
+  id: string;
+  title: string;
+  titleEn: string;
+  topic: string;
+  templateKey: StoryTemplateKey;
+  status: StoryStatus;
+  ethnicGroupId?: string | null;
+  authorId: string;
+  panels: ComicStoryPanel[];
+  vocabulary: { en: string; vi: string }[];
+  characterIds: string[];
+  backgroundIds: string[];
+  createdAt: string;
+}
+
+// Extended DTOs with image fields
+export interface ComicCharacterDTO {
+  id: string;
+  name: string;
+  nameEn: string;
+  role: CharacterRole;
+  gender: CharacterGender;
+  ethnicGroupId?: string | null;
+  descriptionVi: string;
+  descriptionEn: string;
+  costumePrompt: string;
+  appearancePrompt: string;
+  referenceImageUrl?: string | null;
+  characterImageUrl?: string | null;
+  thumbnailEmoji: string;
+  isActive: boolean;
+}
+
+export interface ComicBackgroundDTO {
+  id: string;
+  key: string;
+  nameVi: string;
+  nameEn: string;
+  category: BackgroundCategory;
+  ethnicGroupId?: string | null;
+  prompt: string;
+  referenceImageUrl?: string | null;
+  imageUrl?: string | null;
+  thumbnailEmoji: string;
+  isActive: boolean;
+}

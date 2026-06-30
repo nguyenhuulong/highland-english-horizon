@@ -20,12 +20,18 @@ const NAV_BY_ROLE: Record<string, { href: string; label: string; icon: string }[
     { href: "/dashboard/admin/users", label: "Người dùng", icon: "👥" },
     { href: "/dashboard/admin/lessons", label: "Bài học & truyện tranh", icon: "📖" },
     { href: "/dashboard/admin/culture", label: "Dữ liệu văn hóa", icon: "🎎" },
+    { href: "/dashboard/admin/characters", label: "Nhân vật truyện tranh", icon: "🧒" },
+    { href: "/dashboard/admin/backgrounds", label: "Bối cảnh truyện tranh", icon: "🌄" },
+    { href: "/dashboard/admin/stories", label: "Tạo & quản lý truyện", icon: "📖" },
   ],
   SUPER_ADMIN: [
     { href: "/dashboard/super-admin", label: "Tổng quan hệ thống", icon: "🏠" },
     { href: "/dashboard/admin/users", label: "Người dùng", icon: "👥" },
     { href: "/dashboard/admin/lessons", label: "Bài học & truyện tranh", icon: "📖" },
     { href: "/dashboard/admin/culture", label: "Dữ liệu văn hóa", icon: "🎎" },
+    { href: "/dashboard/admin/characters", label: "Nhân vật truyện tranh", icon: "🧒" },
+    { href: "/dashboard/admin/backgrounds", label: "Bối cảnh truyện tranh", icon: "🌄" },
+    { href: "/dashboard/admin/stories", label: "Tạo & quản lý truyện", icon: "🎨" },
   ],
 };
 

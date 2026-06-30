@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { showToast } from "@/components/ui/Feedback";
 import { CULTURAL_GROUPS } from "@/data/culture";
+import PanelImageGenerator from "@/components/comic/PanelImageGenerator";
 import type { AILessonInput, LessonDTO } from "@/types";
 
 const inputStyle: React.CSSProperties = {
@@ -154,16 +155,23 @@ export default function AILessonGenerator() {
 
               <div style={{ marginBottom: 14 }}>
                 <strong style={{ fontSize: "0.85rem" }}>🖼️ Truyện tranh ({lesson.panels.length} cảnh)</strong>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 6 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 10, marginTop: 8 }}>
                   {lesson.panels.map((p, i) => (
-                    <div key={i} style={{ padding: 10, borderRadius: 10, background: "var(--surface)", fontSize: "0.82rem" }}>
-                      <div style={{ fontWeight: 700, marginBottom: 4, color: "var(--text-muted)" }}>Cảnh {i + 1}: {p.scene}</div>
-                      {p.dialogue.map((d, j) => (
-                        <div key={j} style={{ marginBottom: 2 }}>
-                          <strong>{d.character}:</strong> {d.en} <span style={{ color: "var(--text-muted)" }}>— {d.vi}</span>
-                        </div>
-                      ))}
-                    </div>
+                    <PanelImageGenerator
+                      key={i}
+                      panel={p}
+                      panelIndex={i}
+                      ethnicCulture={form.ethnicGroup}
+                      onImageGenerated={(url) => {
+                        setLesson((prev) => {
+                          if (!prev) return prev;
+                          const panels = prev.panels.map((pp, idx) =>
+                            idx === i ? { ...pp, generatedImageUrl: url } : pp
+                          );
+                          return { ...prev, panels };
+                        });
+                      }}
+                    />
                   ))}
                 </div>
               </div>

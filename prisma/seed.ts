@@ -186,6 +186,229 @@ async function main() {
     });
   }
 
+  console.log("Seeding comic characters...");
+  const khoGroup = await prisma.ethnicGroup.findUnique({
+    where: { slug: "kho" },
+  });
+  const hmongGroup = await prisma.ethnicGroup.findUnique({
+    where: { slug: "hmong" },
+  });
+  const maGroup = await prisma.ethnicGroup.findUnique({
+    where: { slug: "ma" },
+  });
+
+  const charData = [
+    {
+      name: "Ya Đin",
+      nameEn: "Ya Din",
+      role: "child",
+      gender: "female",
+      ethnicGroupId: khoGroup?.id ?? null,
+      descriptionVi: "Bé gái K'Ho 10 tuổi, vui vẻ, tò mò, yêu văn hóa dân tộc",
+      descriptionEn:
+        "10-year-old K'Ho girl, cheerful, curious, loves her culture",
+      costumePrompt:
+        "wearing K'Ho traditional red blouse with gold geometric patterns, silver bead necklace, dark blue skirt",
+      appearancePrompt:
+        "10-year-old girl, round face, dark brown eyes, black hair in two braids, warm skin tone",
+      thumbnailEmoji: "🧒",
+      createdById: teacher.id,
+    },
+    {
+      name: "K'Lang",
+      nameEn: "K'Lang",
+      role: "child",
+      gender: "male",
+      ethnicGroupId: khoGroup?.id ?? null,
+      descriptionVi: "Bé trai K'Ho 11 tuổi, nghịch ngợm và dũng cảm",
+      descriptionEn: "11-year-old K'Ho boy, playful and brave",
+      costumePrompt:
+        "wearing K'Ho traditional short sleeve shirt with red and black stripes, dark trousers",
+      appearancePrompt:
+        "11-year-old boy, short black hair, bright smile, athletic build, warm skin tone",
+      thumbnailEmoji: "👦",
+      createdById: teacher.id,
+    },
+    {
+      name: "Mỷ",
+      nameEn: "My",
+      role: "child",
+      gender: "female",
+      ethnicGroupId: hmongGroup?.id ?? null,
+      descriptionVi: "Bé gái H'Mông 9 tuổi sống ở chợ phiên vùng cao",
+      descriptionEn: "9-year-old H'Mong girl living near the highland market",
+      costumePrompt:
+        "wearing H'Mong traditional colorful pleated skirt with embroidered patterns in blue yellow red, silver coin necklace, white long sleeve blouse",
+      appearancePrompt:
+        "9-year-old girl, round rosy cheeks, bright eyes, black hair, small frame, curious expression",
+      thumbnailEmoji: "👧",
+      createdById: teacher.id,
+    },
+    {
+      name: "Ami",
+      nameEn: "Ami",
+      role: "child",
+      gender: "female",
+      ethnicGroupId: maGroup?.id ?? null,
+      descriptionVi: "Bé gái Mạ 10 tuổi, thích chạy nhảy trong rừng",
+      descriptionEn: "10-year-old Ma girl who loves running in the forest",
+      costumePrompt:
+        "wearing Ma traditional dark blue indigo top with simple embroidery, dark wrap skirt, rattan bracelet",
+      appearancePrompt:
+        "10-year-old girl, slightly curly black hair, wide bright eyes, athletic and energetic posture",
+      thumbnailEmoji: "🌿",
+      createdById: teacher.id,
+    },
+  ];
+
+  for (const c of charData) {
+    const existing = await prisma.comicCharacter.findFirst({
+      where: { name: c.name },
+    });
+    if (!existing) {
+      await prisma.comicCharacter.create({ data: c });
+    }
+  }
+
+  console.log("Seeding comic backgrounds...");
+  const bgData = [
+    {
+      key: "morning_village",
+      nameVi: "Làng buổi sáng",
+      nameEn: "Morning village",
+      category: "village",
+      thumbnailEmoji: "🌅",
+      prompt:
+        "K'Ho highland village at sunrise, traditional wooden stilt houses with thatched roofs, green mountains in background, morning mist, golden warm light, lush tropical vegetation, peaceful rural scene, children book illustration style",
+    },
+    {
+      key: "festival_ground",
+      nameVi: "Sân lễ hội",
+      nameEn: "Festival ground",
+      category: "festival",
+      thumbnailEmoji: "🎉",
+      prompt:
+        "K'Ho gong festival celebration ground, colorful triangle banners hanging between bamboo poles, central bonfire, circle of villagers in traditional costumes, night sky with stars, warm orange firelight, children book illustration style",
+    },
+    {
+      key: "market_morning",
+      nameVi: "Chợ phiên buổi sáng",
+      nameEn: "Highland morning market",
+      category: "market",
+      thumbnailEmoji: "🛒",
+      prompt:
+        "vibrant highland ethnic market at morning, colorful fabric stalls with red and green awnings, vegetable and handicraft displays, mountain ethnic minority people in traditional costumes, mountains visible in background, children book illustration style",
+    },
+    {
+      key: "forest_entrance",
+      nameVi: "Cửa rừng",
+      nameEn: "Forest entrance",
+      category: "forest",
+      thumbnailEmoji: "🌲",
+      prompt:
+        "entrance to tropical highland forest, tall ancient trees with hanging vines, dappled sunlight through canopy, colorful tropical birds, lush green ferns and undergrowth, children book illustration style, vibrant colors",
+    },
+    {
+      key: "big_tree",
+      nameVi: "Cây đại thụ",
+      nameEn: "Ancient big tree",
+      category: "forest",
+      thumbnailEmoji: "🌳",
+      prompt:
+        "enormous ancient tree in highland forest, massive trunk with gnarled roots, children playing near the base, shafts of golden light through dense canopy, magical forest atmosphere, children book illustration style",
+    },
+    {
+      key: "cloth_stall",
+      nameVi: "Gian hàng vải",
+      nameEn: "Fabric stall",
+      category: "market",
+      thumbnailEmoji: "🧵",
+      prompt:
+        "colorful fabric stall at highland market, bolts of traditional ethnic patterned cloth in red blue and gold, friendly vendor in traditional costume, children admiring the colorful fabrics, children book illustration style",
+    },
+    {
+      key: "vegetable_stall",
+      nameVi: "Gian hàng rau củ",
+      nameEn: "Vegetable stall",
+      category: "market",
+      thumbnailEmoji: "🥬",
+      prompt:
+        "fresh vegetable stall at highland market, colorful arrangement of mountain vegetables and herbs, bamboo baskets full of produce, friendly market scene, morning sunlight, children book illustration style",
+    },
+    {
+      key: "harvest",
+      nameVi: "Mùa gặt lúa",
+      nameEn: "Rice harvest",
+      category: "village",
+      thumbnailEmoji: "🌾",
+      prompt:
+        "golden rice terrace harvest season in highland, rows of golden rice stalks ready for harvest, farmers in traditional costumes working together, beautiful mountain landscape background, children book illustration style",
+    },
+    {
+      key: "costume",
+      nameVi: "Mặc trang phục truyền thống",
+      nameEn: "Traditional costume",
+      category: "house",
+      thumbnailEmoji: "👘",
+      prompt:
+        "inside traditional K'Ho wooden house, family preparing traditional costumes for festival, colorful ethnic garments hanging and being dressed, warm interior light, carved wooden details, children book illustration style",
+    },
+    {
+      key: "drum",
+      nameVi: "Tiếng trống lễ hội",
+      nameEn: "Festival drums",
+      category: "festival",
+      thumbnailEmoji: "🥁",
+      prompt:
+        "K'Ho gong and drum ceremony, musicians playing traditional gongs and drums around bonfire, night festival scene with dancing flames, villagers in traditional red costumes, children book illustration style",
+    },
+    {
+      key: "dance",
+      nameVi: "Múa truyền thống",
+      nameEn: "Traditional dance",
+      category: "festival",
+      thumbnailEmoji: "💃",
+      prompt:
+        "highland traditional dance performance, circle of dancers in colorful ethnic costumes, graceful movements with arms raised, festival ground with lanterns and bonfire in background, children book illustration style",
+    },
+    {
+      key: "birds",
+      nameVi: "Chim rừng",
+      nameEn: "Forest birds",
+      category: "forest",
+      thumbnailEmoji: "🦜",
+      prompt:
+        "colorful tropical birds in highland forest canopy, hornbills and kingfishers perched on branches, children looking up in wonder, lush green jungle background, gentle morning light, children book illustration style",
+    },
+    {
+      key: "butterfly",
+      nameVi: "Bướm trong rừng",
+      nameEn: "Butterflies in forest",
+      category: "forest",
+      thumbnailEmoji: "🦋",
+      prompt:
+        "magical highland forest clearing full of colorful butterflies, children chasing butterflies through wildflowers, golden afternoon light filtering through trees, enchanting fairy-tale atmosphere, children book illustration style",
+    },
+    {
+      key: "bargain",
+      nameVi: "Mặc cả ở chợ",
+      nameEn: "Bargaining at market",
+      category: "market",
+      thumbnailEmoji: "🤝",
+      prompt:
+        "friendly bargaining scene at highland market, ethnic minority vendor and young customer discussing price with smiles, colorful market goods displayed, lively market atmosphere, children book illustration style",
+    },
+  ];
+
+  for (const b of bgData) {
+    const existing = await prisma.comicBackground.findUnique({
+      where: { key: b.key },
+    });
+    if (!existing) {
+      await prisma.comicBackground.create({ data: b });
+    }
+  }
+
   console.log("Done. Super admin:", superAdmin.email);
 }
 

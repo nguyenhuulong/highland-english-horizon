@@ -8,6 +8,230 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+model User {
+  id                String                 @id @default(cuid())
+  name              String
+  email             String                 @unique
+  password          String
+  role              Role                   @default(STUDENT)
+  ethnicGroup       String?
+  ageGroup          Int?
+  avatar            String                 @default("🧒")
+  xp                Int                    @default(0)
+  streak            Int                    @default(0)
+  lastActiveAt      DateTime?
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
+  aiLogs            AIGenerationLog[]
+  aiTemplates       AITemplate[]
+  classesTeaching   Class[]                @relation("TeacherClasses")
+  classMemberships  ClassMember[]
+  createdCharacters ComicCharacter[]
+  lessonsAuthored   Lesson[]               @relation("LessonAuthor")
+  progress          LessonProgress[]
+  missionAttempts   MissionAttempt[]
+  pronunciation     PronunciationAttempt[]
+  badges            UserBadge[]
+}
+
+model Class {
+  id        String        @id @default(cuid())
+  name      String
+  joinCode  String        @unique
+  teacherId String
+  createdAt DateTime      @default(now())
+  teacher   User          @relation("TeacherClasses", fields: [teacherId], references: [id], onDelete: Cascade)
+  members   ClassMember[]
+  lessons   Lesson[]
+}
+
+model ClassMember {
+  id        String   @id @default(cuid())
+  classId   String
+  studentId String
+  joinedAt  DateTime @default(now())
+  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, studentId])
+}
+
+model EthnicGroup {
+  id           String            @id @default(cuid())
+  slug         String            @unique
+  nameVi       String
+  nameEn       String
+  emoji        String            @default("🌄")
+  description  String
+  costume      Json
+  festivals    Json
+  instruments  Json
+  crafts       Json
+  cuisine      Json
+  locations    Json
+  architecture String
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  backgrounds  ComicBackground[]
+  characters   ComicCharacter[]
+  lessons      Lesson[]
+}
+
+model Lesson {
+  id              String                 @id @default(cuid())
+  titleVi         String
+  titleEn         String
+  topic           String
+  level           Int                    @default(1)
+  ageGroup        Int                    @default(10)
+  color           String                 @default("#E8643A")
+  emoji           String                 @default("📖")
+  descriptionVi   String
+  vocabulary      Json
+  panels          Json
+  quiz            Json
+  missions        Json                   @default("[]")
+  status          LessonStatus           @default(DRAFT)
+  source          LessonSource           @default(MANUAL)
+  authorId        String
+  classId         String?
+  ethnicGroupId   String?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  aiLogs          AIGenerationLog[]
+  author          User                   @relation("LessonAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  class           Class?                 @relation(fields: [classId], references: [id])
+  ethnicGroup     EthnicGroup?           @relation(fields: [ethnicGroupId], references: [id])
+  progress        LessonProgress[]
+  missionAttempts MissionAttempt[]
+  pronunciation   PronunciationAttempt[]
+}
+
+model LessonProgress {
+  id         String    @id @default(cuid())
+  userId     String
+  lessonId   String
+  read       Boolean   @default(false)
+  readAt     DateTime?
+  quizScore  Int?
+  quizTotal  Int?
+  quizAt     DateTime?
+  matchScore Int?
+  pronScore  Int?
+  xpEarned   Int       @default(0)
+  lesson     Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+}
+
+model PronunciationAttempt {
+  id         String   @id @default(cuid())
+  userId     String
+  lessonId   String
+  sentenceEn String
+  transcript String
+  score      Int
+  createdAt  DateTime @default(now())
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MissionAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  lessonId  String
+  missionId String
+  correct   Boolean
+  createdAt DateTime @default(now())
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Badge {
+  id          String      @id @default(cuid())
+  code        String      @unique
+  icon        String
+  name        String
+  description String
+  criteria    Json
+  users       UserBadge[]
+}
+
+model UserBadge {
+  id       String   @id @default(cuid())
+  userId   String
+  badgeId  String
+  earnedAt DateTime @default(now())
+  badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+}
+
+model AITemplate {
+  id             String   @id @default(cuid())
+  name           String
+  description    String
+  promptTemplate String
+  createdById    String
+  createdAt      DateTime @default(now())
+  createdBy      User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+}
+
+model AIGenerationLog {
+  id        String   @id @default(cuid())
+  userId    String
+  lessonId  String?
+  input     Json
+  status    String   @default("success")
+  createdAt DateTime @default(now())
+  lesson    Lesson?  @relation(fields: [lessonId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ComicCharacter {
+  id                String       @id @default(cuid())
+  name              String
+  nameEn            String
+  role              String       @default("child")
+  gender            String       @default("female")
+  ethnicGroupId     String?
+  descriptionVi     String
+  descriptionEn     String
+  costumePrompt     String
+  appearancePrompt  String
+  referenceImageUrl String?
+  thumbnailEmoji    String       @default("🧒")
+  isActive          Boolean      @default(true)
+  createdById       String
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  createdBy         User         @relation(fields: [createdById], references: [id])
+  ethnicGroup       EthnicGroup? @relation(fields: [ethnicGroupId], references: [id])
+
+  @@index([ethnicGroupId])
+}
+
+model ComicBackground {
+  id             String       @id @default(cuid())
+  key            String       @unique
+  nameVi         String
+  nameEn         String
+  category       String       @default("village")
+  ethnicGroupId  String?
+  prompt         String
+  imageUrl       String?
+  thumbnailEmoji String       @default("🌄")
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  ethnicGroup    EthnicGroup? @relation(fields: [ethnicGroupId], references: [id])
+
+  @@index([key])
+  @@index([category])
+}
+
 enum Role {
   STUDENT
   TEACHER
@@ -24,199 +248,4 @@ enum LessonSource {
   MANUAL
   AI
   SAMPLE
-}
-
-model User {
-  id            String   @id @default(cuid())
-  name          String
-  email         String   @unique
-  password      String
-  role          Role     @default(STUDENT)
-  ethnicGroup   String?
-  ageGroup      Int?
-  avatar        String   @default("🧒")
-  xp            Int      @default(0)
-  streak        Int      @default(0)
-  lastActiveAt  DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  classesTeaching   Class[]            @relation("TeacherClasses")
-  classMemberships  ClassMember[]
-  lessonsAuthored   Lesson[]           @relation("LessonAuthor")
-  progress          LessonProgress[]
-  badges            UserBadge[]
-  pronunciation     PronunciationAttempt[]
-  missionAttempts   MissionAttempt[]
-  aiLogs            AIGenerationLog[]
-  aiTemplates       AITemplate[]
-}
-
-model Class {
-  id        String   @id @default(cuid())
-  name      String
-  joinCode  String   @unique
-  teacherId String
-  teacher   User     @relation("TeacherClasses", fields: [teacherId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  members ClassMember[]
-  lessons Lesson[]
-}
-
-model ClassMember {
-  id        String   @id @default(cuid())
-  classId   String
-  studentId String
-  joinedAt  DateTime @default(now())
-
-  class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
-  student User  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@unique([classId, studentId])
-}
-
-model EthnicGroup {
-  id          String  @id @default(cuid())
-  slug        String  @unique
-  nameVi      String
-  nameEn      String
-  emoji       String  @default("🌄")
-  description String  @db.Text
-  costume     Json
-  festivals   Json
-  instruments Json
-  crafts      Json
-  cuisine     Json
-  locations   Json
-  architecture String @db.Text
-
-  lessons Lesson[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Lesson {
-  id            String       @id @default(cuid())
-  titleVi       String
-  titleEn       String
-  topic         String
-  level         Int          @default(1)
-  ageGroup      Int          @default(10)
-  color         String       @default("#E8643A")
-  emoji         String       @default("📖")
-  descriptionVi String       @db.Text
-
-  vocabulary Json
-  panels     Json
-  quiz       Json
-  missions   Json @default("[]")
-
-  status LessonStatus @default(DRAFT)
-  source LessonSource @default(MANUAL)
-
-  authorId      String
-  author        User   @relation("LessonAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  classId       String?
-  class         Class?  @relation(fields: [classId], references: [id], onDelete: SetNull)
-  ethnicGroupId String?
-  ethnicGroup   EthnicGroup? @relation(fields: [ethnicGroupId], references: [id], onDelete: SetNull)
-
-  progress        LessonProgress[]
-  pronunciation   PronunciationAttempt[]
-  missionAttempts MissionAttempt[]
-  aiLogs          AIGenerationLog[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model LessonProgress {
-  id            String    @id @default(cuid())
-  userId        String
-  lessonId      String
-  read          Boolean   @default(false)
-  readAt        DateTime?
-  quizScore     Int?
-  quizTotal     Int?
-  quizAt        DateTime?
-  matchScore    Int?
-  pronScore     Int?
-  xpEarned      Int       @default(0)
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, lessonId])
-}
-
-model PronunciationAttempt {
-  id         String   @id @default(cuid())
-  userId     String
-  lessonId   String
-  sentenceEn String
-  transcript String
-  score      Int
-  createdAt  DateTime @default(now())
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-}
-
-model MissionAttempt {
-  id         String   @id @default(cuid())
-  userId     String
-  lessonId   String
-  missionId  String
-  correct    Boolean
-  createdAt  DateTime @default(now())
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-}
-
-model Badge {
-  id          String @id @default(cuid())
-  code        String @unique
-  icon        String
-  name        String
-  description String
-  criteria    Json
-
-  users UserBadge[]
-}
-
-model UserBadge {
-  id       String   @id @default(cuid())
-  userId   String
-  badgeId  String
-  earnedAt DateTime @default(now())
-
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, badgeId])
-}
-
-model AITemplate {
-  id             String   @id @default(cuid())
-  name           String
-  description    String
-  promptTemplate String   @db.Text
-  createdById    String
-  createdBy      User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  createdAt      DateTime @default(now())
-}
-
-model AIGenerationLog {
-  id        String   @id @default(cuid())
-  userId    String
-  lessonId  String?
-  input     Json
-  status    String   @default("success")
-  createdAt DateTime @default(now())
-
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lesson Lesson? @relation(fields: [lessonId], references: [id], onDelete: SetNull)
 }
