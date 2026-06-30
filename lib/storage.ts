@@ -1,7 +1,8 @@
 // lib/storage.ts — Upload file lên Supabase Storage
 // Bucket "comic-assets" phải được tạo sẵn trong Supabase Dashboard với policy public read
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
+const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "";
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 
 const BUCKET = "comic-assets";
@@ -12,16 +13,17 @@ const BUCKET = "comic-assets";
  */
 export async function uploadToSupabase(opts: {
   buffer: Buffer | ArrayBuffer;
-  fileName: string;     // vd: "characters/abc123.jpg"
-  contentType: string;  // vd: "image/jpeg"
+  fileName: string; // vd: "characters/abc123.jpg"
+  contentType: string; // vd: "image/jpeg"
 }): Promise<string> {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-    throw new Error("Thiếu SUPABASE_URL hoặc SUPABASE_SERVICE_ROLE_KEY trong .env");
+    throw new Error(
+      "Thiếu SUPABASE_URL hoặc SUPABASE_SERVICE_ROLE_KEY trong .env",
+    );
   }
 
-  const buf = opts.buffer instanceof ArrayBuffer
-    ? Buffer.from(opts.buffer)
-    : opts.buffer;
+  const buf =
+    opts.buffer instanceof ArrayBuffer ? Buffer.from(opts.buffer) : opts.buffer;
 
   const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${opts.fileName}`;
 
@@ -30,14 +32,16 @@ export async function uploadToSupabase(opts: {
     headers: {
       Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
       "Content-Type": opts.contentType,
-      "x-upsert": "true",  // overwrite nếu file đã tồn tại
+      "x-upsert": "true", // overwrite nếu file đã tồn tại
     },
     body: buf as unknown as BodyInit,
   });
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Supabase Storage upload failed ${res.status}: ${err.slice(0, 200)}`);
+    throw new Error(
+      `Supabase Storage upload failed ${res.status}: ${err.slice(0, 200)}`,
+    );
   }
 
   // Trả về public URL

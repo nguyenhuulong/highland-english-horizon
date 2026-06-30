@@ -29,20 +29,19 @@ export async function PATCH(req: Request, { params }: Params) {
       { status: 400 },
     );
 
-  if (session.user.role === "ADMIN" && parsed.data.role === "ADMIN") {
+  if (parsed.data.role === "ADMIN") {
     return NextResponse.json(
-      { error: "Admin không thể gán quyền Admin/Ban tổ chức" },
+      { error: "Không thể gán quyền Quản trị viên qua API này" },
       { status: 403 },
     );
   }
-  if (session.user.role === "ADMIN") {
-    const target = await prisma.user.findUnique({ where: { id } });
-    if (target && target.role === "ADMIN") {
-      return NextResponse.json(
-        { error: "Không thể chỉnh sửa tài khoản quản trị" },
-        { status: 403 },
-      );
-    }
+
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (target?.role === "ADMIN") {
+    return NextResponse.json(
+      { error: "Không thể chỉnh sửa tài khoản quản trị" },
+      { status: 403 },
+    );
   }
 
   const user = await prisma.user.update({
@@ -68,14 +67,12 @@ export async function DELETE(_req: Request, { params }: Params) {
       { status: 400 },
     );
   }
-  if (session.user.role === "ADMIN") {
-    const target = await prisma.user.findUnique({ where: { id } });
-    if (target && target.role === "ADMIN") {
-      return NextResponse.json(
-        { error: "Không có quyền xóa tài khoản này" },
-        { status: 403 },
-      );
-    }
+  const target = await prisma.user.findUnique({ where: { id } });
+  if (target?.role === "ADMIN") {
+    return NextResponse.json(
+      { error: "Không có quyền xóa tài khoản này" },
+      { status: 403 },
+    );
   }
   await prisma.user.delete({ where: { id } });
   return NextResponse.json({ ok: true });

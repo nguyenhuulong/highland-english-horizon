@@ -2,7 +2,6 @@
 
 import { Suspense, useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
-// import { STORIES } from "@/data/stories";
 import { useProgress, useSettings, useTTS } from "@/lib/hooks";
 import { lessonToStory } from "@/lib/lesson";
 import { spawnConfetti, showToast } from "@/components/ui/Feedback";
@@ -94,7 +93,7 @@ function MatchGame({ story, onSave }: { story: Story; onSave: (score: number) =>
           {shuffledVi.map(v => {
             const isMatched = matchedViSet.has(v.vi);
             const isSelected = selected?.type === "vi" && selected.vi === v.vi;
-            const isWrong = wrong?.endsWith(v.vi) && !wrong.startsWith(pairs.find(p=>p.vi===v.vi)?.en || "___");
+            const isWrong = wrong?.endsWith(v.vi) && !wrong.startsWith(pairs.find(p => p.vi === v.vi)?.en || "___");
             return (
               <div key={v.vi} onClick={() => !isMatched && select("vi", v.en, v.vi)}
                 style={{ padding: "14px 18px", borderRadius: 10, border: `2px solid ${isMatched ? "#2E7D32" : isSelected ? "var(--secondary)" : "var(--border)"}`, background: isMatched ? "#E8F5E9" : isSelected ? "#E8F5E9" : "var(--bg-card)", cursor: isMatched ? "default" : "pointer", fontWeight: 700, textAlign: "center", transition: "all 0.2s", color: isMatched ? "#2E7D32" : "var(--secondary)" }}>

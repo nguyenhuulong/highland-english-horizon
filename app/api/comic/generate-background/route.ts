@@ -7,7 +7,7 @@ import { uploadFromUrl, makeFileName } from "@/lib/storage";
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user || !["ADMIN"].includes(session.user.role ?? "")) {
+    if (!session?.user || !["TEACHER", "ADMIN"].includes(session.user.role ?? "")) {
       return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
 
@@ -28,6 +28,10 @@ export async function POST(req: NextRequest) {
         { status: 404 },
       );
 
+    if (session.user.role === "TEACHER" && bg.createdById !== session.user.id) {
+      return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
+    }
+
     let ethnicCulture: string | undefined;
     if (bg.ethnicGroupId) {
       const eg = await prisma.ethnicGroup.findUnique({
@@ -41,6 +45,7 @@ export async function POST(req: NextRequest) {
       prompt: bg.prompt,
       nameEn: bg.nameEn,
       ethnicCulture,
+      referenceImageUrl: bg.referenceImageUrl,
     });
 
     let imageUrl = rawUrl;

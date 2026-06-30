@@ -14,8 +14,8 @@ interface PanelImageGeneratorProps {
 }
 
 const BG_OPTIONS = [
-  "morning_village","forest_entrance","big_tree","market_morning","cloth_stall",
-  "vegetable_stall","bargain","harvest","costume","drum","dance","birds","butterfly","festival_ground",
+  "morning_village", "forest_entrance", "big_tree", "market_morning", "cloth_stall",
+  "vegetable_stall", "bargain", "harvest", "costume", "drum", "dance", "birds", "butterfly", "festival_ground",
 ];
 
 export default function PanelImageGenerator({
@@ -94,7 +94,7 @@ export default function PanelImageGenerator({
             {panelChars.length > 0 ? (
               panelChars.map((c, i) => {
                 const pos = panelChars.length === 1 ? "center" : i === 0 ? "left" : "right";
-                return <Character key={c.id} ethnicGroup={ethnicSlug} role={c.role as "child"|"adult"|"elder"} gender={c.gender as "male"|"female"} position={pos as "left"|"center"|"right"} />;
+                return <Character key={c.id} ethnicGroup={ethnicSlug} role={c.role as "child" | "adult" | "elder"} gender={c.gender as "male" | "female"} position={pos as "left" | "center" | "right"} />;
               })
             ) : (
               <Character ethnicGroup={ethnicSlug} role="child" position="center" />

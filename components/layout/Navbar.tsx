@@ -7,14 +7,6 @@ import { useState } from "react";
 import { useSettings } from "@/lib/hooks";
 import { ROLE_HOME, ROLE_LABELS } from "@/lib/rbac";
 
-// const NAV_LINKS = [
-//   { href: "/", label: "Trang chủ", icon: "🏠" },
-//   { href: "/library", label: "Thư viện", icon: "📚" },
-//   { href: "/games", label: "Trò chơi", icon: "🎮" },
-//   { href: "/creator", label: "Sáng tác", icon: "✏️" },
-//   { href: "/progress", label: "Tiến độ", icon: "📊" },
-// ];
-
 const GUEST_LINKS = [
   { href: "/", label: "Trang chủ", icon: "🏠" },
   { href: "/library", label: "Bài học mẫu", icon: "📚" },
@@ -27,7 +19,7 @@ const STUDENT_LINKS = [
 ];
 
 const TEACHER_LINKS = [
-  { href: "/dashboard/teacher", label: "Lớp học", icon: "🏫" },
+  { href: "/dashboard/teacher", label: "Bảng điều khiển", icon: "🏠" },
   { href: "/creator", label: "Tạo bài học", icon: "✏️" },
 ];
 
@@ -43,7 +35,6 @@ function getNavLinks(role?: string) {
     case "TEACHER":
       return [...STUDENT_LINKS, ...TEACHER_LINKS];
 
-    case "ADMIN":
     case "ADMIN":
       return [...STUDENT_LINKS, ...TEACHER_LINKS, ...ADMIN_LINKS];
 

@@ -41,9 +41,9 @@ export default function HomePage() {
       desc: "Lưu kết quả học tập, theo dõi quá trình hoàn thành bài học và mức độ tiến bộ của học sinh"
     },
     {
-      icon: "🏫",
-      title: "Quản lý lớp học",
-      desc: "Hỗ trợ phân quyền Học sinh, Giáo viên, Quản trị viên với khu vực làm việc và chức năng riêng biệt"
+      icon: "🏅",
+      title: "Bảng xếp hạng & huy hiệu",
+      desc: "Học sinh tích lũy điểm kinh nghiệm, nhận huy hiệu thành tích và cạnh tranh trên bảng xếp hạng toàn hệ thống"
     },
     {
       icon: "🤖",
@@ -135,7 +135,7 @@ export default function HomePage() {
           >
             6 nhóm văn hóa dân tộc được tích hợp vào hệ thống học liệu,
             giúp bài học tiếng Anh gắn với bối cảnh đời sống và bản sắc địa phương.
-            Trọng tâm hiện nay là các cộng đồng K'Ho, Mạ và M'Nông tại Tây Nguyên.
+            Trọng tâm hiện nay là các cộng đồng K&apos;Ho, Mạ và M&apos;Nông tại Tây Nguyên.
           </p>
 
           <div

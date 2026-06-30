@@ -25,18 +25,18 @@ function syncToServer(body: Record<string, unknown>) {
 export function useProgress() {
   const { status } = useSession();
   const isAuthed = status === "authenticated";
-  const [progress, setProgress] = useState<AllProgress>({});
-  useEffect(() => {
+  const [progress, setProgress] = useState<AllProgress>(() => {
+    if (typeof window === "undefined") return {};
     try {
       const raw = localStorage.getItem(PROGRESS_KEY);
-      if (raw) {
-        setProgress(JSON.parse(raw));
-      }
-    } catch {}
-  }, []);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  });
   const markRead = useCallback(
     (storyId: string) => {
-      setProgress((prev) => {
+      setProgress(prev => {
         const next = {
           ...prev,
           [storyId]: { ...prev[storyId], read: true, readAt: Date.now() },
@@ -48,12 +48,12 @@ export function useProgress() {
       });
       if (isAuthed) syncToServer({ lessonId: storyId, action: "read" });
     },
-    [isAuthed]
+    [isAuthed],
   );
 
   const saveQuizScore = useCallback(
     (storyId: string, score: number, total: number) => {
-      setProgress((prev) => {
+      setProgress(prev => {
         const next = {
           ...prev,
           [storyId]: {
@@ -68,57 +68,75 @@ export function useProgress() {
         } catch {}
         return next;
       });
-      if (isAuthed) syncToServer({ lessonId: storyId, action: "quiz", score, total });
+      if (isAuthed)
+        syncToServer({ lessonId: storyId, action: "quiz", score, total });
     },
-    [isAuthed]
+    [isAuthed],
   );
 
-  const saveMatchScore = useCallback((storyId: string, score: number) => {
-    setProgress((prev) => {
-      const next = {
-        ...prev,
-        [storyId]: { ...prev[storyId], matchScore: score },
-      };
-      try {
-        localStorage.setItem(PROGRESS_KEY, JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-    if (isAuthed) syncToServer({ lessonId: storyId, action: "match", score });
-  }, [isAuthed]);
+  const saveMatchScore = useCallback(
+    (storyId: string, score: number) => {
+      setProgress(prev => {
+        const next = {
+          ...prev,
+          [storyId]: { ...prev[storyId], matchScore: score },
+        };
+        try {
+          localStorage.setItem(PROGRESS_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+      if (isAuthed) syncToServer({ lessonId: storyId, action: "match", score });
+    },
+    [isAuthed],
+  );
 
-  const savePronunciationScore = useCallback((storyId: string, score: number, sentenceEn: string, transcript: string) => {
-    setProgress((prev) => {
-      const next = {
-        ...prev,
-        [storyId]: { ...prev[storyId], pronScore: score },
-      };
-      try {
-        localStorage.setItem(PROGRESS_KEY, JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-    if (isAuthed) syncToServer({ lessonId: storyId, action: "pronunciation", score, sentenceEn, transcript });
-  }, [isAuthed]);
+  const savePronunciationScore = useCallback(
+    (
+      storyId: string,
+      score: number,
+      sentenceEn: string,
+      transcript: string,
+    ) => {
+      setProgress(prev => {
+        const next = {
+          ...prev,
+          [storyId]: { ...prev[storyId], pronScore: score },
+        };
+        try {
+          localStorage.setItem(PROGRESS_KEY, JSON.stringify(next));
+        } catch {}
+        return next;
+      });
+      if (isAuthed)
+        syncToServer({
+          lessonId: storyId,
+          action: "pronunciation",
+          score,
+          sentenceEn,
+          transcript,
+        });
+    },
+    [isAuthed],
+  );
 
   const getStoryProgress = useCallback(
     (storyId: string): StoryProgress => progress[storyId] || {},
-    [progress]
+    [progress],
   );
 
   const getStoriesRead = useCallback(
-    (stories: Story[]) =>
-      stories.filter((s) => progress[s.id]?.read).length,
-    [progress]
+    (stories: Story[]) => stories.filter(s => progress[s.id]?.read).length,
+    [progress],
   );
 
   const getTotalWords = useCallback(
     (stories: Story[]) =>
       stories.reduce(
         (sum, s) => sum + (progress[s.id]?.read ? s.vocabulary.length : 0),
-        0
+        0,
       ),
-    [progress]
+    [progress],
   );
 
   return {
@@ -139,7 +157,9 @@ export function useSettings() {
     if (typeof window === "undefined") return DEFAULT_SETTINGS;
     try {
       const raw = localStorage.getItem(SETTINGS_KEY);
-      return raw ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) } : DEFAULT_SETTINGS;
+      return raw
+        ? { ...DEFAULT_SETTINGS, ...JSON.parse(raw) }
+        : DEFAULT_SETTINGS;
     } catch {
       return DEFAULT_SETTINGS;
     }
@@ -150,7 +170,7 @@ export function useSettings() {
   }, [settings.theme]);
 
   const updateSettings = useCallback((patch: Partial<Settings>) => {
-    setSettings((prev) => {
+    setSettings(prev => {
       const next = { ...prev, ...patch };
       try {
         localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
@@ -162,7 +182,7 @@ export function useSettings() {
   const toggleTheme = useCallback(
     () =>
       updateSettings({ theme: settings.theme === "light" ? "dark" : "light" }),
-    [settings.theme, updateSettings]
+    [settings.theme, updateSettings],
   );
 
   return { settings, updateSettings, toggleTheme };
@@ -181,7 +201,7 @@ export function useTTS(enabled: boolean) {
       utt.pitch = 1;
       window.speechSynthesis.speak(utt);
     },
-    [enabled]
+    [enabled],
   );
 
   return { speak };

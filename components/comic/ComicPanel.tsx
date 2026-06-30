@@ -83,8 +83,8 @@ export default function ComicPanel({
               const positions: Array<"left" | "center" | "right"> = panelChars.length === 1
                 ? ["center"]
                 : panelChars.length === 2
-                ? ["left", "right"]
-                : ["left", "center", "right"];
+                  ? ["left", "right"]
+                  : ["left", "center", "right"];
               return (
                 <Character
                   key={char.id}

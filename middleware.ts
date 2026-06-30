@@ -8,16 +8,25 @@ const ROLE_HOME: Record<string, string> = {
   ADMIN: "/dashboard/admin",
 };
 
+const TEACHER_ALLOWED_PREFIXES = [
+  "/dashboard/teacher",
+  "/dashboard/admin/characters",
+  "/dashboard/admin/backgrounds",
+  "/dashboard/admin/stories",
+  "/dashboard/admin/students",
+];
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  if (pathname.startsWith("/login")) return NextResponse.next();
-  if (!pathname.startsWith("/dashboard")) return NextResponse.next();
+  const isProtected =
+    pathname.startsWith("/dashboard") || pathname.startsWith("/creator");
+  if (!isProtected) return NextResponse.next();
 
   const token = await getToken({
     req,
     secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   });
-  console.log("token:", token);
+
   if (!token) {
     const url = new URL("/login", req.url);
     url.searchParams.set("callbackUrl", pathname);
@@ -27,30 +36,26 @@ export async function middleware(req: NextRequest) {
   const role = (token.role as string) || "STUDENT";
   const home = ROLE_HOME[role] || "/dashboard/student";
 
-  // Redirect /dashboard → role home
+  if (pathname.startsWith("/creator")) {
+    if (role === "TEACHER" || role === "ADMIN") return NextResponse.next();
+    return NextResponse.redirect(new URL(home, req.url));
+  }
+
   if (pathname === "/dashboard") {
     return NextResponse.redirect(new URL(home, req.url));
   }
 
-  // ADMIN có thể truy cập mọi trang /dashboard/admin/*
   if (role === "ADMIN" && pathname.startsWith("/dashboard/admin")) {
     return NextResponse.next();
   }
 
-  // TEACHER có thể truy cập /dashboard/teacher/* và /dashboard/admin/characters, backgrounds, stories
-  if (role === "TEACHER") {
-    const teacherAllowed = [
-      "/dashboard/teacher",
-      "/dashboard/admin/characters",
-      "/dashboard/admin/backgrounds",
-      "/dashboard/admin/stories",
-    ];
-    if (teacherAllowed.some(p => pathname.startsWith(p))) {
-      return NextResponse.next();
-    }
+  if (
+    role === "TEACHER" &&
+    TEACHER_ALLOWED_PREFIXES.some(p => pathname.startsWith(p))
+  ) {
+    return NextResponse.next();
   }
 
-  // Các role khác chỉ truy cập được đúng home của mình
   if (!pathname.startsWith(home)) {
     return NextResponse.redirect(new URL(home, req.url));
   }
@@ -59,5 +64,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/creator/:path*"],
 };

@@ -8,7 +8,6 @@ const patchSchema = z.object({
   titleVi: z.string().optional(),
   titleEn: z.string().optional(),
   descriptionVi: z.string().optional(),
-  classId: z.string().nullable().optional(),
   ethnicGroupId: z.string().nullable().optional(),
   vocabulary: z.array(z.any()).optional(),
   panels: z.array(z.any()).optional(),

@@ -61,11 +61,13 @@ function getGreeting(pathname: string, role?: string) {
   }
 
   if (role === "ADMIN") {
-    return "📊 Hệ thống đang hoạt động ổn định.";
-  }
+    switch (pathname) {
+      case "/dashboard/admin":
+        return "🛠️ Kiểm tra vận hành hệ thống.";
 
-  if (role === "ADMIN") {
-    return "🛠️ Kiểm tra vận hành hệ thống.";
+      default:
+        return "📊 Hệ thống đang hoạt động ổn định.";
+    }
   }
 
   return "Cố lên nhé! 💪";

@@ -13,8 +13,7 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get("status");
 
     const where: Record<string, unknown> = {};
-    // Teacher chỉ thấy truyện của mình; Admin thấy tất cả
-    if (!["ADMIN"].includes(session.user.role ?? "")) {
+    if (session.user.role !== "ADMIN") {
       where.authorId = session.user.id;
     }
     if (ethnicGroupId) where.ethnicGroupId = ethnicGroupId;

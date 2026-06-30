@@ -30,12 +30,6 @@ export default function LibraryPage() {
       .then((r) => r.json())
       .then((data) => {
         const lessons: LessonDTO[] = data.lessons || [];
-
-        console.log(
-          "Lesson IDs:",
-          lessons.map((l) => l.id)
-        );
-
         setStories(lessons.map(lessonToStory));
       })
       .catch((err) => {
@@ -78,8 +72,8 @@ export default function LibraryPage() {
               padding: "8px 18px",
               borderRadius: 20,
               border: `2px solid ${filter === f.value
-                  ? "var(--primary)"
-                  : "var(--border)"
+                ? "var(--primary)"
+                : "var(--border)"
                 }`,
               background:
                 filter === f.value

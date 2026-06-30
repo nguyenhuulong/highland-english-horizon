@@ -51,6 +51,7 @@ export async function POST(req: NextRequest) {
       ethnicCulture,
       gender: character.gender,
       role: character.role,
+      referenceImageUrl: character.referenceImageUrl,
     });
 
     // Lưu ảnh vào Supabase Storage (URL Together có thể expire)

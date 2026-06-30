@@ -15,6 +15,7 @@ const NAV_BY_ROLE: Record<string, { href: string; label: string; icon: string }[
     { href: "/dashboard/admin/characters", label: "Nhân vật truyện tranh", icon: "🧒" },
     { href: "/dashboard/admin/backgrounds", label: "Bối cảnh truyện tranh", icon: "🌄" },
     { href: "/dashboard/admin/stories", label: "Tạo & quản lý truyện", icon: "🎨" },
+    { href: "/dashboard/admin/students", label: "Tiến độ học sinh", icon: "📊" },
   ],
   ADMIN: [
     { href: "/dashboard/admin", label: "Tổng quan", icon: "🏠" },
@@ -24,19 +25,18 @@ const NAV_BY_ROLE: Record<string, { href: string; label: string; icon: string }[
     { href: "/dashboard/admin/characters", label: "Nhân vật truyện tranh", icon: "🧒" },
     { href: "/dashboard/admin/backgrounds", label: "Bối cảnh truyện tranh", icon: "🌄" },
     { href: "/dashboard/admin/stories", label: "Tạo & quản lý truyện", icon: "🎨" },
+    { href: "/dashboard/admin/students", label: "Tiến độ học sinh", icon: "📊" },
   ],
 };
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   const role = session?.user?.role || "STUDENT";
-  // Gộp SUPER_ADMIN (legacy) về ADMIN nav
-  const navRole = role === "SUPER_ADMIN" ? "ADMIN" : role;
-  const items = NAV_BY_ROLE[navRole] || NAV_BY_ROLE.STUDENT;
+  const items = NAV_BY_ROLE[role] || NAV_BY_ROLE.STUDENT;
 
   return (
     <div style={{ display: "flex" }}>
-      <DashboardSidebar items={items} title={ROLE_LABELS[navRole] || "Bảng điều khiển"} />
+      <DashboardSidebar items={items} title={ROLE_LABELS[role] || "Bảng điều khiển"} />
       <div style={{ flex: 1, padding: "28px 32px", minWidth: 0 }}>{children}</div>
     </div>
   );

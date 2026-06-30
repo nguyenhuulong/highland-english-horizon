@@ -2,17 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
-import { buildPanelPrompt, generatePanelImage } from "@/lib/imageGen";
+import { generateComicPanel } from "@/lib/imageGen";
+import { uploadFromUrl, makeFileName } from "@/lib/storage";
 import type { ComicCharacterDTO, ComicBackgroundDTO } from "@/types";
-
-function isValidHttpsUrl(url: string): boolean {
-  try {
-    const u = new URL(url);
-    return u.protocol === "https:";
-  } catch {
-    return false;
-  }
-}
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,29 +36,10 @@ export async function POST(req: NextRequest) {
     };
 
     const dbChars = await prisma.comicCharacter.findMany({
-      where: {
-        name: { in: characterNames },
-        isActive: true,
-      },
+      where: { name: { in: characterNames }, isActive: true },
     });
 
-    const characters: ComicCharacterDTO[] = (
-      dbChars as {
-        id: string;
-        name: string;
-        nameEn: string;
-        role: string;
-        gender: string;
-        ethnicGroupId: string | null;
-        descriptionVi: string;
-        descriptionEn: string;
-        costumePrompt: string;
-        appearancePrompt: string;
-        referenceImageUrl: string | null;
-        thumbnailEmoji: string;
-        isActive: boolean;
-      }[]
-    ).map(c => ({
+    const characters: ComicCharacterDTO[] = dbChars.map(c => ({
       id: c.id,
       name: c.name,
       nameEn: c.nameEn,
@@ -78,6 +51,7 @@ export async function POST(req: NextRequest) {
       costumePrompt: c.costumePrompt,
       appearancePrompt: c.appearancePrompt,
       referenceImageUrl: c.referenceImageUrl,
+      characterImageUrl: c.characterImageUrl,
       thumbnailEmoji: c.thumbnailEmoji,
       isActive: c.isActive,
     }));
@@ -101,6 +75,7 @@ export async function POST(req: NextRequest) {
             | "school",
           ethnicGroupId: dbBg.ethnicGroupId,
           prompt: dbBg.prompt,
+          referenceImageUrl: dbBg.referenceImageUrl,
           imageUrl: dbBg.imageUrl,
           thumbnailEmoji: dbBg.thumbnailEmoji,
           isActive: dbBg.isActive,
@@ -123,34 +98,35 @@ export async function POST(req: NextRequest) {
         ) % 10000
       : 42 + panelId;
 
-    const panelPrompt = await buildPanelPrompt({
+    const rawUrl = await generateComicPanel({
       background,
       characters,
       action,
       ethnicCulture,
+      panelSeed: seed,
     });
-    const imageUrl = await generatePanelImage({ panelPrompt, seed });
+
+    const fileName = makeFileName(
+      `panels/${lessonId || "preview"}/panel-${panelId}`,
+      "jpg",
+    );
+    const imageUrl = await uploadFromUrl({ sourceUrl: rawUrl, fileName }).catch(
+      () => rawUrl,
+    );
 
     if (saveToPanel && lessonId) {
-      try {
-        const lesson = await prisma.lesson.findUnique({
+      const lesson = await prisma.lesson.findUnique({
+        where: { id: lessonId },
+      });
+      if (lesson) {
+        const panels = lesson.panels as Record<string, unknown>[];
+        const updated = panels.map(p =>
+          Number(p.id) === panelId ? { ...p, generatedImageUrl: imageUrl } : p,
+        );
+        await prisma.lesson.update({
           where: { id: lessonId },
+          data: { panels: updated as unknown as Prisma.InputJsonValue },
         });
-        if (lesson) {
-          const panels = lesson.panels as Record<string, unknown>[];
-          const updated = panels.map(p => {
-            if (Number(p.id) === panelId) {
-              return { ...p, generatedImageUrl: imageUrl };
-            }
-            return p;
-          });
-          await prisma.lesson.update({
-            where: { id: lessonId },
-            data: { panels: updated as Prisma.InputJsonValue },
-          });
-        }
-      } catch (e) {
-        console.error("[generate-image] Failed to save to panel:", e);
       }
     }
 
@@ -173,7 +149,10 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ imageUrl, cached: false });
   } catch (err) {
-    console.error("[generate-image] Error:", err);
-    return NextResponse.json({ error: "Lỗi sinh ảnh" }, { status: 500 });
+    console.error("[generate-image]", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Lỗi sinh ảnh" },
+      { status: 500 },
+    );
   }
 }

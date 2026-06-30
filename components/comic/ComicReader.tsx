@@ -84,25 +84,31 @@ export default function ComicReader({ story, ethnicEmoji = "🌄" }: Props) {
         </div>
         <div style={{ flex: 1 }} />
         <button onClick={() => setShowVocab((v) => !v)}
-          style={{ padding: "7px 14px", borderRadius: 20, border: "1.5px solid var(--border)",
+          style={{
+            padding: "7px 14px", borderRadius: 20, border: "1.5px solid var(--border)",
             background: showVocab ? "var(--primary)" : "var(--surface)",
             color: showVocab ? "#fff" : "var(--text)", cursor: "pointer",
-            fontWeight: 700, fontSize: "0.8rem", fontFamily: "var(--font-body)" }}>
+            fontWeight: 700, fontSize: "0.8rem", fontFamily: "var(--font-body)"
+          }}>
           📚 Từ vựng
         </button>
       </div>
 
       {/* Vocab panel */}
       {showVocab && story.vocabulary.length > 0 && (
-        <div style={{ background: "#fffbf0", borderRadius: 14, padding: 16, marginBottom: 16,
-          border: "1.5px solid #f0e0a0" }}>
+        <div style={{
+          background: "#fffbf0", borderRadius: 14, padding: 16, marginBottom: 16,
+          border: "1.5px solid #f0e0a0"
+        }}>
           <div style={{ fontWeight: 800, fontSize: "0.85rem", marginBottom: 10, color: "#7a5c00" }}>
             📚 Từ vựng trong truyện
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {story.vocabulary.map((v, i) => (
-              <div key={i} style={{ background: "white", borderRadius: 10, padding: "6px 12px",
-                border: "1px solid #f0d080" }}>
+              <div key={i} style={{
+                background: "white", borderRadius: 10, padding: "6px 12px",
+                border: "1px solid #f0d080"
+              }}>
                 <span style={{ fontWeight: 800, color: "var(--primary)" }}>{v.en}</span>
                 <span style={{ color: "var(--text-muted)", margin: "0 4px" }}>—</span>
                 <span style={{ fontSize: "0.88rem" }}>{v.vi}</span>
@@ -116,15 +122,19 @@ export default function ComicReader({ story, ethnicEmoji = "🌄" }: Props) {
       <div style={{ display: "flex", gap: 4, marginBottom: 12 }}>
         {story.panels.map((_, i) => (
           <button key={i} onClick={() => { stopSpeaking(); setCurrentPanel(i); }}
-            style={{ flex: 1, height: 6, borderRadius: 3, border: "none", cursor: "pointer",
+            style={{
+              flex: 1, height: 6, borderRadius: 3, border: "none", cursor: "pointer",
               background: i === currentPanel ? "var(--primary)" : i < currentPanel ? "#fdb89a" : "var(--border)",
-              transition: "background 0.2s" }} />
+              transition: "background 0.2s"
+            }} />
         ))}
       </div>
 
       {/* Panel ảnh */}
-      <div style={{ borderRadius: 18, overflow: "hidden", border: "2px solid var(--border)",
-        boxShadow: "var(--shadow-lg)", marginBottom: 0, position: "relative" }}>
+      <div style={{
+        borderRadius: 18, overflow: "hidden", border: "2px solid var(--border)",
+        boxShadow: "var(--shadow-lg)", marginBottom: 0, position: "relative"
+      }}>
         {panel.generatedImageUrl ? (
           <img src={panel.generatedImageUrl} alt={`Panel ${currentPanel + 1}`}
             style={{ width: "100%", display: "block", minHeight: 280, objectFit: "cover" }} />
@@ -132,43 +142,55 @@ export default function ComicReader({ story, ethnicEmoji = "🌄" }: Props) {
           <img src={panel.backgroundImageUrl} alt="background"
             style={{ width: "100%", display: "block", minHeight: 280, objectFit: "cover", opacity: 0.7 }} />
         ) : (
-          <div style={{ minHeight: 280, background: "linear-gradient(135deg, #ffecd2, #fcb69f)",
-            display: "flex", alignItems: "center", justifyContent: "center", fontSize: "5rem" }}>
+          <div style={{
+            minHeight: 280, background: "linear-gradient(135deg, #ffecd2, #fcb69f)",
+            display: "flex", alignItems: "center", justifyContent: "center", fontSize: "5rem"
+          }}>
             {ethnicEmoji}
           </div>
         )}
 
         {/* Panel number badge */}
-        <div style={{ position: "absolute", top: 12, left: 12, background: "rgba(0,0,0,0.55)",
+        <div style={{
+          position: "absolute", top: 12, left: 12, background: "rgba(0,0,0,0.55)",
           color: "#fff", borderRadius: 20, padding: "3px 12px",
-          fontSize: "0.78rem", fontWeight: 800, fontFamily: "var(--font-display)" }}>
+          fontSize: "0.78rem", fontWeight: 800, fontFamily: "var(--font-display)"
+        }}>
           {currentPanel + 1} / {total}
         </div>
 
         {/* Play / Stop button overlay */}
         <button onClick={speaking ? stopSpeaking : playPanel}
-          style={{ position: "absolute", bottom: 12, right: 12,
+          style={{
+            position: "absolute", bottom: 12, right: 12,
             width: 44, height: 44, borderRadius: "50%", border: "none",
             background: speaking ? "#ef4444" : "var(--primary)",
             color: "#fff", cursor: "pointer", fontSize: "1.1rem",
             boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
-            display: "flex", alignItems: "center", justifyContent: "center" }}>
+            display: "flex", alignItems: "center", justifyContent: "center"
+          }}>
           {speaking ? "⏹" : "▶"}
         </button>
       </div>
 
       {/* Dialogue bubbles */}
-      <div style={{ background: "var(--bg-card)", borderRadius: "0 0 18px 18px",
+      <div style={{
+        background: "var(--bg-card)", borderRadius: "0 0 18px 18px",
         border: "2px solid var(--border)", borderTop: "none",
-        padding: "14px 18px 18px", display: "flex", flexDirection: "column", gap: 10 }}>
+        padding: "14px 18px 18px", display: "flex", flexDirection: "column", gap: 10
+      }}>
         {panel.dialogue.map((d, i) => {
           const isActive = speakingIdx === i;
           const isLeft = i % 2 === 0;
           return (
-            <div key={i} style={{ display: "flex", flexDirection: "column",
-              alignItems: isLeft ? "flex-start" : "flex-end" }}>
-              <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--text-muted)",
-                marginBottom: 3, paddingLeft: isLeft ? 4 : 0, paddingRight: isLeft ? 0 : 4 }}>
+            <div key={i} style={{
+              display: "flex", flexDirection: "column",
+              alignItems: isLeft ? "flex-start" : "flex-end"
+            }}>
+              <div style={{
+                fontSize: "0.72rem", fontWeight: 700, color: "var(--text-muted)",
+                marginBottom: 3, paddingLeft: isLeft ? 4 : 0, paddingRight: isLeft ? 0 : 4
+              }}>
                 {d.characterName}
               </div>
               <div style={{
@@ -180,14 +202,18 @@ export default function ComicReader({ story, ethnicEmoji = "🌄" }: Props) {
               }}
                 onClick={() => speak(d.en)}>
                 {/* Tiếng Anh */}
-                <div style={{ fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "1rem",
-                  color: isActive ? "#fff" : "var(--text)", lineHeight: 1.4 }}>
+                <div style={{
+                  fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "1rem",
+                  color: isActive ? "#fff" : "var(--text)", lineHeight: 1.4
+                }}>
                   {d.en}
                 </div>
                 {/* Transcript tiếng Việt */}
-                <div style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem",
+                <div style={{
+                  fontFamily: "var(--font-body)", fontSize: "0.82rem",
                   color: isActive ? "rgba(255,255,255,0.85)" : "var(--text-muted)",
-                  marginTop: 4, lineHeight: 1.3 }}>
+                  marginTop: 4, lineHeight: 1.3
+                }}>
                   {d.vi}
                 </div>
               </div>
@@ -204,19 +230,23 @@ export default function ComicReader({ story, ethnicEmoji = "🌄" }: Props) {
       {/* Navigation */}
       <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
         <button onClick={() => goPanel(-1)} disabled={currentPanel === 0}
-          style={{ flex: 1, padding: "13px 0", borderRadius: 12,
+          style={{
+            flex: 1, padding: "13px 0", borderRadius: 12,
             border: "1.5px solid var(--border)", background: "var(--surface)",
             cursor: currentPanel === 0 ? "not-allowed" : "pointer",
             opacity: currentPanel === 0 ? 0.4 : 1,
-            fontWeight: 800, fontFamily: "var(--font-body)", fontSize: "0.95rem" }}>
+            fontWeight: 800, fontFamily: "var(--font-body)", fontSize: "0.95rem"
+          }}>
           ← Panel trước
         </button>
         <button onClick={() => goPanel(1)} disabled={currentPanel === total - 1}
-          style={{ flex: 1, padding: "13px 0", borderRadius: 12,
+          style={{
+            flex: 1, padding: "13px 0", borderRadius: 12,
             background: currentPanel === total - 1 ? "var(--border)" : "var(--primary)",
             color: currentPanel === total - 1 ? "var(--text-muted)" : "#fff",
             border: "none", cursor: currentPanel === total - 1 ? "not-allowed" : "pointer",
-            fontWeight: 800, fontFamily: "var(--font-body)", fontSize: "0.95rem" }}>
+            fontWeight: 800, fontFamily: "var(--font-body)", fontSize: "0.95rem"
+          }}>
           Panel tiếp →
         </button>
       </div>

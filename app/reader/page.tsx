@@ -216,7 +216,7 @@ function ReaderInner() {
     useState<Story | null>(null);
 
   const [loading, setLoading] =
-    useState(true);
+    useState(!!id);
 
   const [comicCharacters, setComicCharacters] = useState<ComicCharacterDTO[]>([]);
   const [comicBackgrounds, setComicBackgrounds] = useState<ComicBackgroundDTO[]>([]);
@@ -242,10 +242,7 @@ function ReaderInner() {
     useState(false);
 
   useEffect(() => {
-    if (!id) {
-      setLoading(false);
-      return;
-    }
+    if (!id) return;
 
     fetch(`/api/lessons/${id}`)
       .then((r) => r.json())
@@ -254,6 +251,7 @@ function ReaderInner() {
           setStory(
             lessonToStory(data.lesson)
           );
+          setPanelIdx(0);
         }
       })
       .finally(() => setLoading(false));
@@ -277,10 +275,6 @@ function ReaderInner() {
       const role = sessionData?.user?.role ?? "";
       setIsTeacher(["TEACHER", "ADMIN"].includes(role));
     });
-  }, [story?.id]);
-
-  useEffect(() => {
-    setPanelIdx(0);
   }, [story?.id]);
 
   // RETURN ĐẶT SAU TOÀN BỘ HOOK

@@ -3,13 +3,13 @@
 import React from "react";
 
 export const ETHNIC_PALETTE: Record<string, { top: string; pattern: string; headwear: string }> = {
-  kho:    { top: "#C0392B", pattern: "#F0AD4E", headwear: "#2C3E50" },
-  ma:     { top: "#27AE60", pattern: "#A9DFBF", headwear: "#5D4037" },
-  mnong:  { top: "#8E44AD", pattern: "#D7BDE2", headwear: "#4A235A" },
-  hmong:  { top: "#2980B9", pattern: "#F9CA24", headwear: "#C0392B" },
-  tay:    { top: "#16A085", pattern: "#A2D9CE", headwear: "#3E2723" },
-  nung:   { top: "#5D4037", pattern: "#FFCCBC", headwear: "#1B2631" },
-  default:{ top: "#607D8B", pattern: "#CFD8DC", headwear: "#455A64" },
+  kho: { top: "#C0392B", pattern: "#F0AD4E", headwear: "#2C3E50" },
+  ma: { top: "#27AE60", pattern: "#A9DFBF", headwear: "#5D4037" },
+  mnong: { top: "#8E44AD", pattern: "#D7BDE2", headwear: "#4A235A" },
+  hmong: { top: "#2980B9", pattern: "#F9CA24", headwear: "#C0392B" },
+  tay: { top: "#16A085", pattern: "#A2D9CE", headwear: "#3E2723" },
+  nung: { top: "#5D4037", pattern: "#FFCCBC", headwear: "#1B2631" },
+  default: { top: "#607D8B", pattern: "#CFD8DC", headwear: "#455A64" },
 };
 
 const SCENE_TO_BG: Record<string, string> = {
@@ -77,9 +77,9 @@ export function Background({ type }: { type: BgType }) {
         <polygon points="180,240 200,180 220,240" fill="#f4a261" />
         <polygon points="195,240 200,200 205,240" fill="#e76f51" />
         <line x1="50" y1="60" x2="350" y2="60" stroke="#adb5bd" strokeWidth="1.5" />
-        {[60,100,140,180,220,260,300,340].map((x, i) => (
-          <polygon key={i} points={`${x},55 ${x+12},65 ${x+6},55`}
-            fill={["#e63946","#457b9d","#2a9d8f","#e9c46a","#f4a261","#e63946","#457b9d","#2a9d8f"][i]} />
+        {[60, 100, 140, 180, 220, 260, 300, 340].map((x, i) => (
+          <polygon key={i} points={`${x},55 ${x + 12},65 ${x + 6},55`}
+            fill={["#e63946", "#457b9d", "#2a9d8f", "#e9c46a", "#f4a261", "#e63946", "#457b9d", "#2a9d8f"][i]} />
         ))}
         <rect y="240" width="400" height="40" fill="#3d405b" />
       </svg>
@@ -122,10 +122,10 @@ export function Background({ type }: { type: BgType }) {
         <rect width="400" height="280" fill="url(#skyH)" />
         <ellipse cx="70" cy="60" rx="35" ry="35" fill="#fffde7" opacity="0.9" />
         <rect y="200" width="400" height="80" fill="#a0522d" />
-        {[10,30,50,70,90,110,130,150,170,190,210,230,250,270,290,310,330,350,370].map((x, i) => (
+        {[10, 30, 50, 70, 90, 110, 130, 150, 170, 190, 210, 230, 250, 270, 290, 310, 330, 350, 370].map((x, i) => (
           <g key={i}>
-            <line x1={x+10} y1="200" x2={x+10} y2="160" stroke="#c8a000" strokeWidth="2" />
-            <ellipse cx={x+10} cy="155" rx="5" ry="10" fill="#f0c040" />
+            <line x1={x + 10} y1="200" x2={x + 10} y2="160" stroke="#c8a000" strokeWidth="2" />
+            <ellipse cx={x + 10} cy="155" rx="5" ry="10" fill="#f0c040" />
           </g>
         ))}
         <ellipse cx="200" cy="210" rx="190" ry="6" fill="rgba(0,0,0,0.08)" />

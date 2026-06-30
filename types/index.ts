@@ -27,6 +27,7 @@ export interface Panel {
   bg: string;
   scene: string;
   dialogue: Dialogue[];
+  generatedImageUrl?: string;
 }
 
 export interface QuizQuestion {
@@ -241,8 +242,10 @@ export interface ComicStoryDTO {
   authorId: string;
   panels: ComicStoryPanel[];
   vocabulary: { en: string; vi: string }[];
+  quiz: QuizQuestion[];
   characterIds: string[];
   backgroundIds: string[];
+  lessonId?: string | null;
   createdAt: string;
 }
 

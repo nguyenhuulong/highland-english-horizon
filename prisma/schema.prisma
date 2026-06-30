@@ -23,6 +23,7 @@ enum LessonSource {
   MANUAL
   AI
   SAMPLE
+  COMIC
 }
 
 model User {
@@ -245,18 +246,17 @@ model ComicStory {
   titleEn         String
   topic           String
   templateKey     String       @default("INTRO_4")
-  status          String       @default("draft")
-  // draft
-  // generating
-  // ready
+  status          String       @default("draft") // draft | generating | ready | published
   ethnicGroupId   String?
   ethnicGroup     EthnicGroup? @relation(fields: [ethnicGroupId], references: [id], onDelete: SetNull)
   authorId        String
   author          User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
   panels          Json         @default("[]")
   vocabulary      Json         @default("[]")
+  quiz            Json         @default("[]")
   characterIds    Json         @default("[]")
   backgroundIds   Json         @default("[]")
+  lessonId        String?      @unique
 
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt

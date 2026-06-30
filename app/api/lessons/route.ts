@@ -22,7 +22,6 @@ const lessonSchema = z.object({
   status: z.enum(["DRAFT", "PUBLISHED"]).default("DRAFT"),
   source: z.enum(["MANUAL", "AI", "SAMPLE"]).default("MANUAL"),
   ethnicGroupId: z.string().nullable().optional(),
-  classId: z.string().nullable().optional(),
 });
 
 export async function GET(req: Request) {

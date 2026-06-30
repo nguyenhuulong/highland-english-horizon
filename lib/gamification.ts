@@ -18,24 +18,39 @@ export async function addXP(userId: string, amount: number) {
 }
 
 export async function evaluateBadges(userId: string) {
-  const [user, progress, missions, pronunciation, badgeDefs, earned] = await Promise.all([
-    prisma.user.findUnique({ where: { id: userId } }),
-    prisma.lessonProgress.findMany({ where: { userId }, include: { lesson: true } }),
-    prisma.missionAttempt.findMany({ where: { userId, correct: true } }),
-    prisma.pronunciationAttempt.findMany({ where: { userId } }),
-    prisma.badge.findMany(),
-    prisma.userBadge.findMany({ where: { userId } }),
-  ]);
+  const [user, progress, missions, pronunciation, badgeDefs, earned] =
+    await Promise.all([
+      prisma.user.findUnique({ where: { id: userId } }),
+      prisma.lessonProgress.findMany({
+        where: { userId },
+        include: { lesson: true },
+      }),
+      prisma.missionAttempt.findMany({ where: { userId, correct: true } }),
+      prisma.pronunciationAttempt.findMany({ where: { userId } }),
+      prisma.badge.findMany(),
+      prisma.userBadge.findMany({ where: { userId } }),
+    ]);
   if (!user) return [];
 
-  const earnedCodes = new Set(earned.map((e) => e.badgeId));
-  const lessonsRead = progress.filter((p) => p.read).length;
+  const earnedCodes = new Set(earned.map(e => e.badgeId));
+  const lessonsRead = progress.filter(p => p.read).length;
   const quizPerfect = progress.some(
-    (p) => p.quizScore != null && p.quizTotal != null && p.quizTotal > 0 && p.quizScore === p.quizTotal
+    p =>
+      p.quizScore != null &&
+      p.quizTotal != null &&
+      p.quizTotal > 0 &&
+      p.quizScore === p.quizTotal,
   );
   const wordsLearned = progress
-    .filter((p) => p.read)
-    .reduce((sum, p) => sum + (Array.isArray(p.lesson.vocabulary) ? (p.lesson.vocabulary as unknown[]).length : 0), 0);
+    .filter(p => p.read)
+    .reduce(
+      (sum, p) =>
+        sum +
+        (Array.isArray(p.lesson.vocabulary)
+          ? (p.lesson.vocabulary as unknown[]).length
+          : 0),
+      0,
+    );
   const bestPron = pronunciation.reduce((max, p) => Math.max(max, p.score), 0);
 
   const newlyEarned: string[] = [];

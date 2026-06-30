@@ -21,11 +21,11 @@ const TEMPLATES: {
   panelCount: number;
   description: string;
 }[] = [
-  { key: "INTRO_4", nameVi: "Giới thiệu", emoji: "👋", panelCount: 4, description: "4 panel — nhập môn, phù hợp bài học đầu tiên" },
-  { key: "DIALOGUE_6", nameVi: "Hội thoại", emoji: "💬", panelCount: 6, description: "6 panel — tập trung giao tiếp, hỏi đáp" },
-  { key: "ADVENTURE_6", nameVi: "Phiêu lưu", emoji: "🌄", panelCount: 6, description: "6 panel — khám phá địa điểm, vượt thử thách" },
-  { key: "FESTIVAL_8", nameVi: "Lễ hội", emoji: "🎉", panelCount: 8, description: "8 panel — lễ hội văn hóa dân tộc, nhiều hoạt động" },
-];
+    { key: "INTRO_4", nameVi: "Giới thiệu", emoji: "👋", panelCount: 4, description: "4 panel — nhập môn, phù hợp bài học đầu tiên" },
+    { key: "DIALOGUE_6", nameVi: "Hội thoại", emoji: "💬", panelCount: 6, description: "6 panel — tập trung giao tiếp, hỏi đáp" },
+    { key: "ADVENTURE_6", nameVi: "Phiêu lưu", emoji: "🌄", panelCount: 6, description: "6 panel — khám phá địa điểm, vượt thử thách" },
+    { key: "FESTIVAL_8", nameVi: "Lễ hội", emoji: "🎉", panelCount: 8, description: "8 panel — lễ hội văn hóa dân tộc, nhiều hoạt động" },
+  ];
 
 type Step = "setup" | "characters" | "backgrounds" | "generate";
 
@@ -144,8 +144,10 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
   return (
     <div style={{ maxWidth: 780, margin: "0 auto" }}>
       {/* Step bar */}
-      <div style={{ display: "flex", gap: 0, marginBottom: 28, borderRadius: 12,
-        overflow: "hidden", border: "1.5px solid var(--border)" }}>
+      <div style={{
+        display: "flex", gap: 0, marginBottom: 28, borderRadius: 12,
+        overflow: "hidden", border: "1.5px solid var(--border)"
+      }}>
         {steps.map((s, i) => (
           <button key={s.key} onClick={() => { if (s.key !== "generate") setStep(s.key); }}
             disabled={s.key === "generate"}
@@ -167,10 +169,10 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
           <div>
             <label style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-muted)", display: "block", marginBottom: 6 }}>
-              Chủ đề truyện *
+              Mô tả câu chuyện *
             </label>
-            <input value={topic} onChange={(e) => setTopic(e.target.value)} style={inp}
-              placeholder="vd: Đi chợ phiên, Lễ hội cồng chiêng, Hái rau rừng..." />
+            <textarea value={topic} onChange={(e) => setTopic(e.target.value)} style={{ ...inp, minHeight: 90, resize: "vertical" }}
+              placeholder="Mô tả ngắn về nội dung câu chuyện, ví dụ: Ya Đin theo mẹ đi chợ phiên buổi sáng, học cách mặc cả mua rau và gặp một người bạn mới ở chợ..." />
           </div>
           <div>
             <label style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-muted)", display: "block", marginBottom: 6 }}>
@@ -213,8 +215,10 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
           </div>
 
           <button onClick={() => { if (!topic.trim()) { showToast("Nhập chủ đề truyện", "error"); return; } setStep("characters"); }}
-            style={{ padding: "13px 0", borderRadius: 12, background: "var(--primary)", color: "#fff",
-              border: "none", cursor: "pointer", fontWeight: 800, fontFamily: "var(--font-body)", fontSize: "1rem" }}>
+            style={{
+              padding: "13px 0", borderRadius: 12, background: "var(--primary)", color: "#fff",
+              border: "none", cursor: "pointer", fontWeight: 800, fontFamily: "var(--font-body)", fontSize: "1rem"
+            }}>
             Tiếp theo → Chọn nhân vật
           </button>
         </div>
@@ -255,14 +259,18 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
                         <img src={c.characterImageUrl} alt={c.name}
                           style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                       ) : (
-                        <div style={{ height: "100%", display: "flex", alignItems: "center",
-                          justifyContent: "center", fontSize: "3rem" }}>{c.thumbnailEmoji}</div>
+                        <div style={{
+                          height: "100%", display: "flex", alignItems: "center",
+                          justifyContent: "center", fontSize: "3rem"
+                        }}>{c.thumbnailEmoji}</div>
                       )}
                       {selected && (
-                        <div style={{ position: "absolute", top: 8, right: 8, width: 22, height: 22,
+                        <div style={{
+                          position: "absolute", top: 8, right: 8, width: 22, height: 22,
                           borderRadius: "50%", background: "var(--primary)", color: "#fff",
                           display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: "0.75rem", fontWeight: 800 }}>✓</div>
+                          fontSize: "0.75rem", fontWeight: 800
+                        }}>✓</div>
                       )}
                     </div>
                     <div style={{ padding: "8px 10px" }}>
@@ -276,12 +284,16 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
           )}
 
           <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={() => setStep("setup")} style={{ flex: 1, padding: "12px 0", borderRadius: 10,
+            <button onClick={() => setStep("setup")} style={{
+              flex: 1, padding: "12px 0", borderRadius: 10,
               border: "1.5px solid var(--border)", background: "var(--surface)", cursor: "pointer",
-              fontWeight: 700, fontFamily: "var(--font-body)" }}>← Quay lại</button>
+              fontWeight: 700, fontFamily: "var(--font-body)"
+            }}>← Quay lại</button>
             <button onClick={() => { if (selectedCharIds.length === 0) { showToast("Chọn ít nhất 1 nhân vật", "error"); return; } setStep("backgrounds"); }}
-              style={{ flex: 2, padding: "12px 0", borderRadius: 10, background: "var(--primary)", color: "#fff",
-                border: "none", cursor: "pointer", fontWeight: 800, fontFamily: "var(--font-body)" }}>
+              style={{
+                flex: 2, padding: "12px 0", borderRadius: 10, background: "var(--primary)", color: "#fff",
+                border: "none", cursor: "pointer", fontWeight: 800, fontFamily: "var(--font-body)"
+              }}>
               Tiếp theo → Chọn bối cảnh
             </button>
           </div>
@@ -321,14 +333,18 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
                         <img src={b.imageUrl} alt={b.nameVi}
                           style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                       ) : (
-                        <div style={{ height: "100%", display: "flex", alignItems: "center",
-                          justifyContent: "center", fontSize: "2.8rem" }}>{b.thumbnailEmoji}</div>
+                        <div style={{
+                          height: "100%", display: "flex", alignItems: "center",
+                          justifyContent: "center", fontSize: "2.8rem"
+                        }}>{b.thumbnailEmoji}</div>
                       )}
                       {selected && (
-                        <div style={{ position: "absolute", top: 8, right: 8, width: 22, height: 22,
+                        <div style={{
+                          position: "absolute", top: 8, right: 8, width: 22, height: 22,
                           borderRadius: "50%", background: "var(--primary)", color: "#fff",
                           display: "flex", alignItems: "center", justifyContent: "center",
-                          fontSize: "0.75rem", fontWeight: 800 }}>
+                          fontSize: "0.75rem", fontWeight: 800
+                        }}>
                           {selectedBgIds.indexOf(b.id) + 1}
                         </div>
                       )}
@@ -344,12 +360,16 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
           )}
 
           <div style={{ display: "flex", gap: 10 }}>
-            <button onClick={() => setStep("characters")} style={{ flex: 1, padding: "12px 0", borderRadius: 10,
+            <button onClick={() => setStep("characters")} style={{
+              flex: 1, padding: "12px 0", borderRadius: 10,
               border: "1.5px solid var(--border)", background: "var(--surface)", cursor: "pointer",
-              fontWeight: 700, fontFamily: "var(--font-body)" }}>← Quay lại</button>
+              fontWeight: 700, fontFamily: "var(--font-body)"
+            }}>← Quay lại</button>
             <button onClick={() => { if (selectedBgIds.length === 0) { showToast("Chọn ít nhất 1 bối cảnh", "error"); return; } setStep("generate"); }}
-              style={{ flex: 2, padding: "12px 0", borderRadius: 10, background: "var(--primary)", color: "#fff",
-                border: "none", cursor: "pointer", fontWeight: 800, fontFamily: "var(--font-body)" }}>
+              style={{
+                flex: 2, padding: "12px 0", borderRadius: 10, background: "var(--primary)", color: "#fff",
+                border: "none", cursor: "pointer", fontWeight: 800, fontFamily: "var(--font-body)"
+              }}>
               Tiếp theo → Xem lại & tạo
             </button>
           </div>
@@ -364,8 +384,10 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
           </h3>
 
           {/* Summary */}
-          <div style={{ background: "var(--surface)", borderRadius: 14, padding: 18,
-            border: "1.5px solid var(--border)", display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{
+            background: "var(--surface)", borderRadius: 14, padding: 18,
+            border: "1.5px solid var(--border)", display: "flex", flexDirection: "column", gap: 10
+          }}>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
               <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", fontWeight: 700 }}>Chủ đề</span>
               <span style={{ fontSize: "0.9rem", fontWeight: 800 }}>{topic}</span>
@@ -392,18 +414,24 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
             </div>
           </div>
 
-          <div style={{ background: "#fff8e7", borderRadius: 12, padding: 14,
-            border: "1.5px solid #f0d080", fontSize: "0.82rem", color: "#7a5c00" }}>
+          <div style={{
+            background: "#fff8e7", borderRadius: 12, padding: 14,
+            border: "1.5px solid #f0d080", fontSize: "0.82rem", color: "#7a5c00"
+          }}>
             <strong>⏱ Ước tính thời gian:</strong> {template.panelCount} panel × ~15–30s = {Math.round(template.panelCount * 20 / 60)} phút.
             Hệ thống sẽ: (1) LLM viết kịch bản → (2) sinh ảnh từng panel bằng Replicate FLUX-dev → (3) lưu vào Supabase.
           </div>
 
           {generating && (
-            <div style={{ background: "var(--surface)", borderRadius: 14, padding: 24,
-              border: "1.5px solid var(--border)", textAlign: "center" }}>
-              <div style={{ width: 44, height: 44, border: "4px solid var(--border)",
+            <div style={{
+              background: "var(--surface)", borderRadius: 14, padding: 24,
+              border: "1.5px solid var(--border)", textAlign: "center"
+            }}>
+              <div style={{
+                width: 44, height: 44, border: "4px solid var(--border)",
                 borderTopColor: "var(--primary)", borderRadius: "50%",
-                animation: "spin 0.9s linear infinite", margin: "0 auto 14px" }} />
+                animation: "spin 0.9s linear infinite", margin: "0 auto 14px"
+              }} />
               <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--text)" }}>{generatingStep}</div>
               <div style={{ color: "var(--text-muted)", fontSize: "0.82rem", marginTop: 6 }}>
                 Đừng đóng trang này trong khi đang tạo...
@@ -413,16 +441,20 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
 
           <div style={{ display: "flex", gap: 10 }}>
             <button onClick={() => setStep("backgrounds")} disabled={generating}
-              style={{ flex: 1, padding: "13px 0", borderRadius: 10,
+              style={{
+                flex: 1, padding: "13px 0", borderRadius: 10,
                 border: "1.5px solid var(--border)", background: "var(--surface)",
-                cursor: generating ? "not-allowed" : "pointer", fontWeight: 700, fontFamily: "var(--font-body)" }}>
+                cursor: generating ? "not-allowed" : "pointer", fontWeight: 700, fontFamily: "var(--font-body)"
+              }}>
               ← Quay lại
             </button>
             <button onClick={handleGenerate} disabled={generating}
-              style={{ flex: 3, padding: "13px 0", borderRadius: 10,
+              style={{
+                flex: 3, padding: "13px 0", borderRadius: 10,
                 background: generating ? "var(--border)" : "var(--primary)", color: "#fff",
                 border: "none", cursor: generating ? "not-allowed" : "pointer",
-                fontWeight: 800, fontFamily: "var(--font-body)", fontSize: "1rem" }}>
+                fontWeight: 800, fontFamily: "var(--font-body)", fontSize: "1rem"
+              }}>
               {generating ? "⏳ Đang tạo truyện..." : "🚀 Tạo truyện ngay!"}
             </button>
           </div>

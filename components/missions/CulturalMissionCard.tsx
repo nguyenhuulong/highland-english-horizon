@@ -19,7 +19,7 @@ export default function CulturalMissionCard({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ lessonId, missionId: mission.id, correct: !!correct }),
-    }).catch(() => {});
+    }).catch(() => { });
     onComplete(!!correct);
   };
 
