@@ -29,18 +29,29 @@ export async function GET() {
     select: { xp: true, streak: true },
   });
 
-  return NextResponse.json({ progress, badges, xp: user?.xp || 0, streak: user?.streak || 0 });
+  return NextResponse.json({
+    progress,
+    badges,
+    xp: user?.xp || 0,
+    streak: user?.streak || 0,
+  });
 }
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+  if (!session?.user)
+    return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
 
   const body = await req.json();
   const parsed = schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  if (!parsed.success)
+    return NextResponse.json(
+      { error: parsed.error.flatten() },
+      { status: 400 },
+    );
 
-  const { lessonId, action, score, total, sentenceEn, transcript } = parsed.data;
+  const { lessonId, action, score, total, sentenceEn, transcript } =
+    parsed.data;
   const userId = session.user.id;
 
   let xpGain = 0;
@@ -48,7 +59,13 @@ export async function POST(req: Request) {
   if (action === "read") {
     await prisma.lessonProgress.upsert({
       where: { userId_lessonId: { userId, lessonId } },
-      create: { userId, lessonId, read: true, readAt: new Date(), xpEarned: XP_RULES.LESSON_READ },
+      create: {
+        userId,
+        lessonId,
+        read: true,
+        readAt: new Date(),
+        xpEarned: XP_RULES.LESSON_READ,
+      },
       update: { read: true, readAt: new Date() },
     });
     const existing = await prisma.lessonProgress.findUnique({
@@ -75,7 +92,12 @@ export async function POST(req: Request) {
         quizAt: new Date(),
         xpEarned: xpGain,
       },
-      update: { quizScore: score, quizTotal: total, quizAt: new Date(), xpEarned: { increment: xpGain } },
+      update: {
+        quizScore: score,
+        quizTotal: total,
+        quizAt: new Date(),
+        xpEarned: { increment: xpGain },
+      },
     });
   }
 
@@ -90,7 +112,13 @@ export async function POST(req: Request) {
 
   if (action === "pronunciation" && score != null && sentenceEn) {
     await prisma.pronunciationAttempt.create({
-      data: { userId, lessonId, sentenceEn, transcript: transcript || "", score },
+      data: {
+        userId,
+        lessonId,
+        sentenceEn,
+        transcript: transcript || "",
+        score,
+      },
     });
     if (score >= 70) xpGain = XP_RULES.PRONUNCIATION_GOOD;
     await prisma.lessonProgress.upsert({

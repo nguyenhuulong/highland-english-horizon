@@ -13,7 +13,9 @@ const lessonSchema = z.object({
   color: z.string().default("#E8643A"),
   emoji: z.string().default("📖"),
   descriptionVi: z.string().default(""),
-  vocabulary: z.array(z.object({ en: z.string(), vi: z.string(), audio: z.string().optional() })),
+  vocabulary: z.array(
+    z.object({ en: z.string(), vi: z.string(), audio: z.string().optional() }),
+  ),
   panels: z.array(z.any()),
   quiz: z.array(z.any()).default([]),
   missions: z.array(z.any()).default([]),
@@ -40,7 +42,7 @@ export async function GET(req: Request) {
   const role = session.user.role;
   let where: Record<string, unknown> = { status: "PUBLISHED" };
 
-  if (role === "ADMIN" || role === "SUPER_ADMIN") {
+  if (role === "ADMIN") {
     where = status ? { status } : {};
   } else if (role === "TEACHER") {
     where = mine ? { authorId: session.user.id } : { status: "PUBLISHED" };
@@ -59,13 +61,19 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user || !canCreateLessons(session.user.role)) {
-    return NextResponse.json({ error: "Không có quyền tạo bài học" }, { status: 403 });
+    return NextResponse.json(
+      { error: "Không có quyền tạo bài học" },
+      { status: 403 },
+    );
   }
 
   const body = await req.json();
   const parsed = lessonSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.flatten() },
+      { status: 400 },
+    );
   }
 
   const lesson = await prisma.lesson.create({

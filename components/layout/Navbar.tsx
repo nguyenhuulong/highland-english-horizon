@@ -44,7 +44,7 @@ function getNavLinks(role?: string) {
       return [...STUDENT_LINKS, ...TEACHER_LINKS];
 
     case "ADMIN":
-    case "SUPER_ADMIN":
+    case "ADMIN":
       return [...STUDENT_LINKS, ...TEACHER_LINKS, ...ADMIN_LINKS];
 
     default:

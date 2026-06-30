@@ -17,12 +17,23 @@ function isValidHttpsUrl(url: string): boolean {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user || !["TEACHER", "ADMIN", "SUPER_ADMIN"].includes(session.user.role ?? "")) {
+    if (
+      !session?.user ||
+      !["TEACHER", "ADMIN"].includes(session.user.role ?? "")
+    ) {
       return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
 
     const body = await req.json();
-    const { panelId, lessonId, characterNames, backgroundKey, action, ethnicCulture, saveToPanel } = body as {
+    const {
+      panelId,
+      lessonId,
+      characterNames,
+      backgroundKey,
+      action,
+      ethnicCulture,
+      saveToPanel,
+    } = body as {
       panelId: number;
       lessonId?: string;
       characterNames: string[];
@@ -39,12 +50,23 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const characters: ComicCharacterDTO[] = (dbChars as {
-      id: string; name: string; nameEn: string; role: string; gender: string;
-      ethnicGroupId: string | null; descriptionVi: string; descriptionEn: string;
-      costumePrompt: string; appearancePrompt: string; referenceImageUrl: string | null;
-      thumbnailEmoji: string; isActive: boolean;
-    }[]).map((c) => ({
+    const characters: ComicCharacterDTO[] = (
+      dbChars as {
+        id: string;
+        name: string;
+        nameEn: string;
+        role: string;
+        gender: string;
+        ethnicGroupId: string | null;
+        descriptionVi: string;
+        descriptionEn: string;
+        costumePrompt: string;
+        appearancePrompt: string;
+        referenceImageUrl: string | null;
+        thumbnailEmoji: string;
+        isActive: boolean;
+      }[]
+    ).map(c => ({
       id: c.id,
       name: c.name,
       nameEn: c.nameEn,
@@ -60,7 +82,9 @@ export async function POST(req: NextRequest) {
       isActive: c.isActive,
     }));
 
-    const dbBg = await prisma.comicBackground.findUnique({ where: { key: backgroundKey } });
+    const dbBg = await prisma.comicBackground.findUnique({
+      where: { key: backgroundKey },
+    });
 
     const background: ComicBackgroundDTO = dbBg
       ? {
@@ -68,7 +92,13 @@ export async function POST(req: NextRequest) {
           key: dbBg.key,
           nameVi: dbBg.nameVi,
           nameEn: dbBg.nameEn,
-          category: dbBg.category as "village" | "forest" | "market" | "festival" | "house" | "school",
+          category: dbBg.category as
+            | "village"
+            | "forest"
+            | "market"
+            | "festival"
+            | "house"
+            | "school",
           ethnicGroupId: dbBg.ethnicGroupId,
           prompt: dbBg.prompt,
           imageUrl: dbBg.imageUrl,
@@ -87,27 +117,32 @@ export async function POST(req: NextRequest) {
         };
 
     const seed = lessonId
-      ? Math.abs(parseInt(lessonId.replace(/[^0-9]/g, "").slice(0, 8) || "42", 10) + panelId) % 10000
+      ? Math.abs(
+          parseInt(lessonId.replace(/[^0-9]/g, "").slice(0, 8) || "42", 10) +
+            panelId,
+        ) % 10000
       : 42 + panelId;
 
-    const panelPrompt = await buildPanelPrompt({ background, characters, action, ethnicCulture });
+    const panelPrompt = await buildPanelPrompt({
+      background,
+      characters,
+      action,
+      ethnicCulture,
+    });
     const imageUrl = await generatePanelImage({ panelPrompt, seed });
 
     if (saveToPanel && lessonId) {
       try {
-        const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
+        const lesson = await prisma.lesson.findUnique({
+          where: { id: lessonId },
+        });
         if (lesson) {
-          const panels = lesson.panels as Prisma.JsonArray;
+          const panels = lesson.panels as Record<string, unknown>[];
           const updated = panels.map(p => {
-            const panel = p as Prisma.JsonObject;
-            if (Number(panel.id) === panelId) {
-              return {
-                ...panel,
-                generatedImageUrl: imageUrl,
-              };
+            if (Number(p.id) === panelId) {
+              return { ...p, generatedImageUrl: imageUrl };
             }
-
-            return panel;
+            return p;
           });
           await prisma.lesson.update({
             where: { id: lessonId },
@@ -119,14 +154,22 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    await prisma.aIGenerationLog.create({
-      data: {
-        userId: session.user.id!,
-        lessonId: lessonId || null,
-        input: { panelId, characterNames, backgroundKey, action, ethnicCulture },
-        status: "success",
-      },
-    }).catch(() => {});
+    await prisma.aIGenerationLog
+      .create({
+        data: {
+          userId: session.user.id!,
+          lessonId: lessonId || null,
+          input: {
+            panelId,
+            characterNames,
+            backgroundKey,
+            action,
+            ethnicCulture,
+          },
+          status: "success",
+        },
+      })
+      .catch(() => {});
 
     return NextResponse.json({ imageUrl, cached: false });
   } catch (err) {

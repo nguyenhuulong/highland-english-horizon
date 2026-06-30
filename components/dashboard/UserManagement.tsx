@@ -7,8 +7,8 @@ import { ROLE_LABELS } from "@/lib/rbac";
 import type { UserDTO } from "@/types";
 
 const ROLE_OPTIONS: Record<string, string[]> = {
-  ADMIN: ["STUDENT", "TEACHER"],
-  SUPER_ADMIN: ["STUDENT", "TEACHER", "ADMIN", "SUPER_ADMIN"],
+  TEACHER: ["STUDENT", "TEACHER"],
+  ADMIN: ["STUDENT", "TEACHER", "ADMIN"],
 };
 
 export default function UserManagement({ users, currentUserId, currentRole }: { users: UserDTO[]; currentUserId: string; currentRole: string }) {
@@ -77,7 +77,7 @@ export default function UserManagement({ users, currentUserId, currentRole }: { 
                 <td style={{ padding: "10px 16px", fontWeight: 700 }}>{u.avatar} {u.name}</td>
                 <td style={{ padding: "10px 16px", fontSize: "0.88rem", color: "var(--text-muted)" }}>{u.email}</td>
                 <td style={{ padding: "10px 16px" }}>
-                  {u.id === currentUserId || (currentRole === "ADMIN" && (u.role === "ADMIN" || u.role === "SUPER_ADMIN")) ? (
+                  {u.id === currentUserId || u.role === "ADMIN" ? (
                     <span style={{ fontWeight: 700, fontSize: "0.85rem" }}>{ROLE_LABELS[u.role]}</span>
                   ) : (
                     <select
@@ -92,7 +92,7 @@ export default function UserManagement({ users, currentUserId, currentRole }: { 
                 </td>
                 <td style={{ padding: "10px 16px", fontWeight: 700, color: "var(--primary)" }}>{u.xp}</td>
                 <td style={{ padding: "10px 16px", textAlign: "right" }}>
-                  {u.id !== currentUserId && !(currentRole === "ADMIN" && (u.role === "ADMIN" || u.role === "SUPER_ADMIN")) && (
+                  {u.id !== currentUserId && u.role !== "ADMIN" && (
                     <button onClick={() => removeUser(u.id)} disabled={loadingId === u.id} style={{ padding: "5px 12px", borderRadius: 8, border: "1.5px solid var(--border)", background: "none", color: "#F44336", fontWeight: 700, fontSize: "0.78rem", cursor: "pointer", fontFamily: "var(--font-body)" }}>
                       Xóa
                     </button>

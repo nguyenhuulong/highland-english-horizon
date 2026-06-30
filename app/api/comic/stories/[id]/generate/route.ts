@@ -4,14 +4,21 @@ import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { generateComicPanel } from "@/lib/imageGen";
 import { uploadFromUrl, makeFileName } from "@/lib/storage";
-import type { ComicCharacterDTO, ComicBackgroundDTO, ComicStoryPanel } from "@/types";
+import type {
+  ComicCharacterDTO,
+  ComicBackgroundDTO,
+  ComicStoryPanel,
+} from "@/types";
 
 const AI_BASE_URL = process.env.AI_BASE_URL || "https://api.openai.com/v1";
 const AI_MODEL = process.env.AI_MODEL || "gpt-4o-mini";
 const AI_API_KEY = process.env.AI_API_KEY || "";
 
 // 4 template cố định — định nghĩa cấu trúc panel cho LLM
-const STORY_TEMPLATES: Record<string, { panelCount: number; structure: string }> = {
+const STORY_TEMPLATES: Record<
+  string,
+  { panelCount: number; structure: string }
+> = {
   INTRO_4: {
     panelCount: 4,
     structure: `
@@ -54,7 +61,10 @@ Panel 8: Chia sẻ văn hóa, tạm biệt (sharing culture, farewell)`.trim(),
   },
 };
 
-async function callLLM(systemPrompt: string, userPrompt: string): Promise<string> {
+async function callLLM(
+  systemPrompt: string,
+  userPrompt: string,
+): Promise<string> {
   const res = await fetch(`${AI_BASE_URL}/chat/completions`, {
     method: "POST",
     headers: {
@@ -71,7 +81,10 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
       ],
     }),
   });
-  if (!res.ok) throw new Error(`AI API ${res.status}: ${await res.text().catch(() => "")}`);
+  if (!res.ok)
+    throw new Error(
+      `AI API ${res.status}: ${await res.text().catch(() => "")}`,
+    );
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content;
   if (!content) throw new Error("AI không trả về nội dung");
@@ -79,7 +92,8 @@ async function callLLM(systemPrompt: string, userPrompt: string): Promise<string
 }
 
 function extractJson(raw: string): unknown {
-  const match = raw.match(/```(?:json)?\s*([\s\S]*?)```/) || raw.match(/(\{[\s\S]*\})/);
+  const match =
+    raw.match(/```(?:json)?\s*([\s\S]*?)```/) || raw.match(/(\{[\s\S]*\})/);
   const text = match ? match[1].trim() : raw.trim();
   return JSON.parse(text);
 }
@@ -87,28 +101,43 @@ function extractJson(raw: string): unknown {
 // POST /api/comic/stories/[id]/generate
 // Sinh toàn bộ kịch bản + ảnh cho một story
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
   try {
     const session = await auth();
-    if (!session?.user || !["TEACHER", "ADMIN", "SUPER_ADMIN"].includes(session.user.role ?? "")) {
+    if (
+      !session?.user ||
+      !["TEACHER", "ADMIN"].includes(session.user.role ?? "")
+    ) {
       return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
 
     const { id } = await params;
     const story = await prisma.comicStory.findUnique({
       where: { id },
-      include: { ethnicGroup: { select: { nameVi: true, nameEn: true, slug: true } } },
+      include: {
+        ethnicGroup: { select: { nameVi: true, nameEn: true, slug: true } },
+      },
     });
 
-    if (!story) return NextResponse.json({ error: "Không tìm thấy truyện" }, { status: 404 });
+    if (!story)
+      return NextResponse.json(
+        { error: "Không tìm thấy truyện" },
+        { status: 404 },
+      );
 
-    const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(session.user.role ?? "");
+    const isAdmin = ["ADMIN"].includes(session.user.role ?? "");
     if (!isAdmin && story.authorId !== session.user.id) {
       return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
 
     // Đánh dấu đang generating
-    await prisma.comicStory.update({ where: { id }, data: { status: "generating" } });
+    await prisma.comicStory.update({
+      where: { id },
+      data: { status: "generating" },
+    });
 
     // Lấy characters và backgrounds đã chọn
     const characterIds = story.characterIds as string[];
@@ -119,42 +148,90 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       prisma.comicBackground.findMany({ where: { id: { in: backgroundIds } } }),
     ]);
 
-    const characters: ComicCharacterDTO[] = (dbChars as {
-      id: string; name: string; nameEn: string; role: string; gender: string;
-      ethnicGroupId: string | null; descriptionVi: string; descriptionEn: string;
-      costumePrompt: string; appearancePrompt: string; referenceImageUrl: string | null;
-      characterImageUrl?: string; thumbnailEmoji: string; isActive: boolean;
-    }[]).map((c) => ({
-      id: c.id, name: c.name, nameEn: c.nameEn,
+    const characters: ComicCharacterDTO[] = (
+      dbChars as {
+        id: string;
+        name: string;
+        nameEn: string;
+        role: string;
+        gender: string;
+        ethnicGroupId: string | null;
+        descriptionVi: string;
+        descriptionEn: string;
+        costumePrompt: string;
+        appearancePrompt: string;
+        referenceImageUrl: string | null;
+        characterImageUrl?: string;
+        thumbnailEmoji: string;
+        isActive: boolean;
+      }[]
+    ).map(c => ({
+      id: c.id,
+      name: c.name,
+      nameEn: c.nameEn,
       role: c.role as "child" | "adult" | "elder",
       gender: c.gender as "male" | "female",
-      ethnicGroupId: c.ethnicGroupId, descriptionVi: c.descriptionVi,
-      descriptionEn: c.descriptionEn, costumePrompt: c.costumePrompt,
+      ethnicGroupId: c.ethnicGroupId,
+      descriptionVi: c.descriptionVi,
+      descriptionEn: c.descriptionEn,
+      costumePrompt: c.costumePrompt,
       appearancePrompt: c.appearancePrompt,
       referenceImageUrl: c.referenceImageUrl,
-      characterImageUrl: (c as { characterImageUrl?: string }).characterImageUrl || null,
-      thumbnailEmoji: c.thumbnailEmoji, isActive: c.isActive,
+      characterImageUrl:
+        (c as { characterImageUrl?: string }).characterImageUrl || null,
+      thumbnailEmoji: c.thumbnailEmoji,
+      isActive: c.isActive,
     }));
 
-    const backgrounds: ComicBackgroundDTO[] = (dbBgs as {
-      id: string; key: string; nameVi: string; nameEn: string; category: string;
-      ethnicGroupId: string | null; prompt: string; referenceImageUrl?: string;
-      imageUrl: string | null; thumbnailEmoji: string; isActive: boolean;
-    }[]).map((b) => ({
-      id: b.id, key: b.key, nameVi: b.nameVi, nameEn: b.nameEn,
-      category: b.category as "village" | "forest" | "market" | "festival" | "house" | "school",
-      ethnicGroupId: b.ethnicGroupId, prompt: b.prompt,
-      referenceImageUrl: (b as { referenceImageUrl?: string }).referenceImageUrl || null,
-      imageUrl: b.imageUrl, thumbnailEmoji: b.thumbnailEmoji, isActive: b.isActive,
+    const backgrounds: ComicBackgroundDTO[] = (
+      dbBgs as {
+        id: string;
+        key: string;
+        nameVi: string;
+        nameEn: string;
+        category: string;
+        ethnicGroupId: string | null;
+        prompt: string;
+        referenceImageUrl?: string;
+        imageUrl: string | null;
+        thumbnailEmoji: string;
+        isActive: boolean;
+      }[]
+    ).map(b => ({
+      id: b.id,
+      key: b.key,
+      nameVi: b.nameVi,
+      nameEn: b.nameEn,
+      category: b.category as
+        | "village"
+        | "forest"
+        | "market"
+        | "festival"
+        | "house"
+        | "school",
+      ethnicGroupId: b.ethnicGroupId,
+      prompt: b.prompt,
+      referenceImageUrl:
+        (b as { referenceImageUrl?: string }).referenceImageUrl || null,
+      imageUrl: b.imageUrl,
+      thumbnailEmoji: b.thumbnailEmoji,
+      isActive: b.isActive,
     }));
 
-    const template = STORY_TEMPLATES[story.templateKey] || STORY_TEMPLATES.INTRO_4;
+    const template =
+      STORY_TEMPLATES[story.templateKey] || STORY_TEMPLATES.INTRO_4;
     const ethnicName = story.ethnicGroup?.nameVi || "K'Ho";
     const ethnicNameEn = story.ethnicGroup?.nameEn || "K'Ho";
 
     // ── BƯỚC 1: LLM gen kịch bản ──────────────────────────────────────────────
-    const charList = characters.map((c) => `- ${c.name} (${c.nameEn}): ${c.descriptionEn}`).join("\n");
-    const bgList = backgrounds.map((b, i) => `[${i}] ${b.nameVi} / ${b.nameEn}: ${b.prompt.slice(0, 80)}`).join("\n");
+    const charList = characters
+      .map(c => `- ${c.name} (${c.nameEn}): ${c.descriptionEn}`)
+      .join("\n");
+    const bgList = backgrounds
+      .map(
+        (b, i) => `[${i}] ${b.nameVi} / ${b.nameEn}: ${b.prompt.slice(0, 80)}`,
+      )
+      .join("\n");
 
     const systemPrompt = `Bạn là tác giả truyện tranh thiếu nhi song ngữ Anh-Việt, chuyên về văn hóa dân tộc Tây Nguyên Việt Nam.
 Tạo kịch bản truyện tranh ngắn, phù hợp trẻ em 8-12 tuổi.
@@ -212,25 +289,40 @@ Trả về JSON theo format:
       const raw = await callLLM(systemPrompt, userPrompt);
       scriptData = extractJson(raw) as typeof scriptData;
     } catch (err) {
-      await prisma.comicStory.update({ where: { id }, data: { status: "draft" } });
-      return NextResponse.json({ error: `LLM gen kịch bản thất bại: ${err}` }, { status: 500 });
+      await prisma.comicStory.update({
+        where: { id },
+        data: { status: "draft" },
+      });
+      return NextResponse.json(
+        { error: `LLM gen kịch bản thất bại: ${err}` },
+        { status: 500 },
+      );
     }
 
     // ── BƯỚC 2: Gen ảnh từng panel song song ──────────────────────────────────
     const panelPromises = scriptData.panels.map(async (panelScript, idx) => {
-      const bg = backgrounds[panelScript.backgroundIndex] || backgrounds[0] || {
-        id: "", key: "village", nameVi: "Làng", nameEn: "Village",
-        category: "village" as const, prompt: `${ethnicNameEn} highland village`,
-        thumbnailEmoji: "🌄", isActive: true,
-      };
+      const bg = backgrounds[panelScript.backgroundIndex] ||
+        backgrounds[0] || {
+          id: "",
+          key: "village",
+          nameVi: "Làng",
+          nameEn: "Village",
+          category: "village" as const,
+          prompt: `${ethnicNameEn} highland village`,
+          thumbnailEmoji: "🌄",
+          isActive: true,
+        };
 
-      const panelChars = characters.filter((c) =>
-        panelScript.characterNames.some((n) => n === c.name || n === c.nameEn)
+      const panelChars = characters.filter(c =>
+        panelScript.characterNames.some(n => n === c.name || n === c.nameEn),
       );
-      if (panelChars.length === 0 && characters.length > 0) panelChars.push(characters[0]);
+      if (panelChars.length === 0 && characters.length > 0)
+        panelChars.push(characters[0]);
 
-      const dialogue = panelScript.dialogue.map((d) => {
-        const char = characters.find((c) => c.name === d.characterName || c.nameEn === d.characterName);
+      const dialogue = panelScript.dialogue.map(d => {
+        const char = characters.find(
+          c => c.name === d.characterName || c.nameEn === d.characterName,
+        );
         return {
           characterId: char?.id || "",
           characterName: d.characterName,
@@ -252,8 +344,14 @@ Trả về JSON theo format:
 
         // Lưu vào Supabase Storage
         try {
-          const fileName = makeFileName(`stories/${id}/panel-${idx + 1}`, "jpg");
-          generatedImageUrl = await uploadFromUrl({ sourceUrl: rawUrl, fileName });
+          const fileName = makeFileName(
+            `stories/${id}/panel-${idx + 1}`,
+            "jpg",
+          );
+          generatedImageUrl = await uploadFromUrl({
+            sourceUrl: rawUrl,
+            fileName,
+          });
         } catch {
           generatedImageUrl = rawUrl;
         }
@@ -267,7 +365,7 @@ Trả về JSON theo format:
         backgroundImageUrl: bg.imageUrl || undefined,
         generatedImageUrl,
         action: panelScript.action,
-        characterIds: panelChars.map((c) => c.id),
+        characterIds: panelChars.map(c => c.id),
         dialogue,
       };
 
@@ -279,11 +377,11 @@ Trả về JSON theo format:
     // ── BƯỚC 3: Lưu kết quả ───────────────────────────────────────────────────
     const panelsJson = JSON.parse(
       JSON.stringify(panels),
-    ) as Prisma.InputJsonValue;
-
+    ) as Prisma.InputJsonValue
+    
     const vocabularyJson = JSON.parse(
       JSON.stringify(scriptData.vocabulary ?? []),
-    ) as Prisma.InputJsonValue;
+    ) as Prisma.InputJsonValue
 
     const updatedStory = await prisma.comicStory.update({
       where: { id },
@@ -301,10 +399,12 @@ Trả về JSON theo format:
     console.error("[generate story]", err);
     // Reset về draft nếu lỗi không mong đợi
     const { id } = await params;
-    await prisma.comicStory.update({ where: { id }, data: { status: "draft" } }).catch(() => {});
+    await prisma.comicStory
+      .update({ where: { id }, data: { status: "draft" } })
+      .catch(() => {});
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Lỗi sinh truyện" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

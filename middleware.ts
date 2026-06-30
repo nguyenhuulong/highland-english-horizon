@@ -6,13 +6,9 @@ const ROLE_HOME: Record<string, string> = {
   STUDENT: "/dashboard/student",
   TEACHER: "/dashboard/teacher",
   ADMIN: "/dashboard/admin",
-  SUPER_ADMIN: "/dashboard/super-admin",
 };
 
 export async function middleware(req: NextRequest) {
-  console.log("middleware running");
-  console.log("COOKIE:", req.headers.get("cookie"));
-  console.log("URL:", req.url);
   const { pathname } = req.nextUrl;
   if (pathname.startsWith("/login")) return NextResponse.next();
   if (!pathname.startsWith("/dashboard")) return NextResponse.next();
@@ -31,21 +27,33 @@ export async function middleware(req: NextRequest) {
   const role = (token.role as string) || "STUDENT";
   const home = ROLE_HOME[role] || "/dashboard/student";
 
+  // Redirect /dashboard → role home
   if (pathname === "/dashboard") {
     return NextResponse.redirect(new URL(home, req.url));
   }
 
-  if (role === "SUPER_ADMIN") return NextResponse.next();
-
+  // ADMIN có thể truy cập mọi trang /dashboard/admin/*
   if (role === "ADMIN" && pathname.startsWith("/dashboard/admin")) {
     return NextResponse.next();
   }
 
+  // TEACHER có thể truy cập /dashboard/teacher/* và /dashboard/admin/characters, backgrounds, stories
+  if (role === "TEACHER") {
+    const teacherAllowed = [
+      "/dashboard/teacher",
+      "/dashboard/admin/characters",
+      "/dashboard/admin/backgrounds",
+      "/dashboard/admin/stories",
+    ];
+    if (teacherAllowed.some(p => pathname.startsWith(p))) {
+      return NextResponse.next();
+    }
+  }
+
+  // Các role khác chỉ truy cập được đúng home của mình
   if (!pathname.startsWith(home)) {
     return NextResponse.redirect(new URL(home, req.url));
   }
-  console.log("token:", token);
-  console.log("pathname:", pathname);
 
   return NextResponse.next();
 }

@@ -275,7 +275,7 @@ function ReaderInner() {
       setComicCharacters(charData.characters ?? []);
       setComicBackgrounds(bgData.backgrounds ?? []);
       const role = sessionData?.user?.role ?? "";
-      setIsTeacher(["TEACHER", "ADMIN", "SUPER_ADMIN"].includes(role));
+      setIsTeacher(["TEACHER", "ADMIN"].includes(role));
     });
   }, [story?.id]);
 

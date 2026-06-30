@@ -64,7 +64,7 @@ function getGreeting(pathname: string, role?: string) {
     return "📊 Hệ thống đang hoạt động ổn định.";
   }
 
-  if (role === "SUPER_ADMIN") {
+  if (role === "ADMIN") {
     return "🛠️ Kiểm tra vận hành hệ thống.";
   }
 

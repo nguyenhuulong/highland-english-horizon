@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { canManageUsers } from "@/lib/rbac";
 
 const schema = z.object({
-  role: z.enum(["STUDENT", "TEACHER", "ADMIN", "SUPER_ADMIN"]).optional(),
+  role: z.enum(["STUDENT", "TEACHER", "ADMIN"]).optional(),
   name: z.string().min(2).optional(),
 });
 
@@ -15,20 +15,33 @@ export async function PATCH(req: Request, { params }: Params) {
   const { id } = await params;
   const session = await auth();
   if (!session?.user || !canManageUsers(session.user.role)) {
-    return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
+    return NextResponse.json(
+      { error: "Không có quyền truy cập" },
+      { status: 403 },
+    );
   }
 
   const body = await req.json();
   const parsed = schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  if (!parsed.success)
+    return NextResponse.json(
+      { error: parsed.error.flatten() },
+      { status: 400 },
+    );
 
-  if (session.user.role === "ADMIN" && (parsed.data.role === "ADMIN" || parsed.data.role === "SUPER_ADMIN")) {
-    return NextResponse.json({ error: "Admin không thể gán quyền Admin/Ban tổ chức" }, { status: 403 });
+  if (session.user.role === "ADMIN" && parsed.data.role === "ADMIN") {
+    return NextResponse.json(
+      { error: "Admin không thể gán quyền Admin/Ban tổ chức" },
+      { status: 403 },
+    );
   }
   if (session.user.role === "ADMIN") {
     const target = await prisma.user.findUnique({ where: { id } });
-    if (target && (target.role === "ADMIN" || target.role === "SUPER_ADMIN")) {
-      return NextResponse.json({ error: "Không thể chỉnh sửa tài khoản quản trị cấp cao hơn" }, { status: 403 });
+    if (target && target.role === "ADMIN") {
+      return NextResponse.json(
+        { error: "Không thể chỉnh sửa tài khoản quản trị" },
+        { status: 403 },
+      );
     }
   }
 
@@ -44,15 +57,24 @@ export async function DELETE(_req: Request, { params }: Params) {
   const { id } = await params;
   const session = await auth();
   if (!session?.user || !canManageUsers(session.user.role)) {
-    return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
+    return NextResponse.json(
+      { error: "Không có quyền truy cập" },
+      { status: 403 },
+    );
   }
   if (session.user.id === id) {
-    return NextResponse.json({ error: "Không thể tự xóa tài khoản của mình" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Không thể tự xóa tài khoản của mình" },
+      { status: 400 },
+    );
   }
   if (session.user.role === "ADMIN") {
     const target = await prisma.user.findUnique({ where: { id } });
-    if (target && (target.role === "ADMIN" || target.role === "SUPER_ADMIN")) {
-      return NextResponse.json({ error: "Không có quyền xóa tài khoản này" }, { status: 403 });
+    if (target && target.role === "ADMIN") {
+      return NextResponse.json(
+        { error: "Không có quyền xóa tài khoản này" },
+        { status: 403 },
+      );
     }
   }
   await prisma.user.delete({ where: { id } });

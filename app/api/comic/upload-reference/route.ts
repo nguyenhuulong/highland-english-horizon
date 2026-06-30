@@ -9,7 +9,10 @@ import { uploadToSupabase, makeFileName } from "@/lib/storage";
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user || !["TEACHER", "ADMIN", "SUPER_ADMIN"].includes(session.user.role ?? "")) {
+    if (
+      !session?.user ||
+      !["TEACHER", "ADMIN"].includes(session.user.role ?? "")
+    ) {
       return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
 
@@ -23,16 +26,27 @@ export async function POST(req: NextRequest) {
 
     // Validate loại file
     if (!file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "Chỉ chấp nhận file ảnh" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Chỉ chấp nhận file ảnh" },
+        { status: 400 },
+      );
     }
 
     // Giới hạn 10MB
     if (file.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: "File quá lớn (tối đa 10MB)" }, { status: 400 });
+      return NextResponse.json(
+        { error: "File quá lớn (tối đa 10MB)" },
+        { status: 400 },
+      );
     }
 
-    const ext = file.type.includes("png") ? "png" : file.type.includes("webp") ? "webp" : "jpg";
-    const prefix = type === "background" ? "backgrounds/refs" : "characters/refs";
+    const ext = file.type.includes("png")
+      ? "png"
+      : file.type.includes("webp")
+        ? "webp"
+        : "jpg";
+    const prefix =
+      type === "background" ? "backgrounds/refs" : "characters/refs";
     const fileName = makeFileName(prefix, ext);
 
     const arrayBuffer = await file.arrayBuffer();
@@ -47,7 +61,7 @@ export async function POST(req: NextRequest) {
     console.error("[upload-reference]", err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Lỗi upload" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -12,16 +12,23 @@ const schema = z.object({
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+  if (!session?.user)
+    return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
 
   const body = await req.json();
   const parsed = schema.safeParse(body);
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+  if (!parsed.success)
+    return NextResponse.json(
+      { error: parsed.error.flatten() },
+      { status: 400 },
+    );
 
   const { lessonId, missionId, correct } = parsed.data;
   const userId = session.user.id;
 
-  await prisma.missionAttempt.create({ data: { userId, lessonId, missionId, correct } });
+  await prisma.missionAttempt.create({
+    data: { userId, lessonId, missionId, correct },
+  });
 
   let xpGain = 0;
   if (correct) {

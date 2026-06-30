@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { canCreateComicResource } from "@/lib/rbac";
 
 export async function GET(req: NextRequest) {
   try {
@@ -23,29 +24,37 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user || !["ADMIN", "SUPER_ADMIN"].includes(session.user.role ?? "")) {
+    if (!session?.user || !canCreateComicResource(session.user.role ?? "")) {
       return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
     const body = await req.json();
-    const { key, nameVi, nameEn, category, ethnicGroupId, prompt, thumbnailEmoji } = body;
-    if (!key || !nameVi || !nameEn || !prompt) {
-      return NextResponse.json({ error: "Thiếu thông tin bắt buộc" }, { status: 400 });
+    const {
+      key,
+      nameVi,
+      nameEn,
+      category,
+      ethnicGroupId,
+      prompt,
+      thumbnailEmoji,
+      referenceImageUrl,
+    } = body;
+    if (!key || !nameVi || !prompt) {
+      return NextResponse.json(
+        { error: "Thiếu key, nameVi hoặc prompt" },
+        { status: 400 },
+      );
     }
     const background = await prisma.comicBackground.create({
       data: {
         key,
         nameVi,
-        nameEn,
+        nameEn: nameEn || nameVi,
         category: category ?? "village",
         ethnicGroupId: ethnicGroupId || null,
         prompt,
         thumbnailEmoji: thumbnailEmoji ?? "🌄",
-
-        createdBy: {
-          connect: {
-            id: session.user.id!,
-          },
-        },
+        referenceImageUrl: referenceImageUrl || null,
+        createdById: session.user.id!,
       },
     });
     return NextResponse.json({ background }, { status: 201 });

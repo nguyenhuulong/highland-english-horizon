@@ -48,7 +48,7 @@ async function main() {
       name: "Ban Tổ Chức",
       email: "superadmin@highlandenglish.vn",
       password,
-      role: "SUPER_ADMIN",
+      role: "ADMIN",
       avatar: "🛡️",
     },
     update: {},
@@ -92,21 +92,21 @@ async function main() {
     update: {},
   });
 
-  console.log("Seeding sample class...");
-  const cls = await prisma.class.upsert({
-    where: { joinCode: "DEMO01" },
-    create: {
-      name: "Lớp 5A - Trường Tiểu học Lạc Dương",
-      teacherId: teacher.id,
-      joinCode: "DEMO01",
-    },
-    update: {},
-  });
-  await prisma.classMember.upsert({
-    where: { classId_studentId: { classId: cls.id, studentId: student.id } },
-    create: { classId: cls.id, studentId: student.id },
-    update: {},
-  });
+  // console.log("Seeding sample class...");
+  // const cls = await prisma.class.upsert({
+  //   where: { joinCode: "DEMO01" },
+  //   create: {
+  //     name: "Lớp 5A - Trường Tiểu học Lạc Dương",
+  //     teacherId: teacher.id,
+  //     joinCode: "DEMO01",
+  //   },
+  //   update: {},
+  // });
+  // await prisma.classMember.upsert({
+  //   where: { classId_studentId: { classId: cls.id, studentId: student.id } },
+  //   create: { classId: cls.id, studentId: student.id },
+  //   update: {},
+  // });
 
   console.log("Seeding sample lessons from STORIES...");
   const ethnicMap: Record<string, string> = {

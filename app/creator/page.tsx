@@ -12,7 +12,7 @@ export default async function CreatorPage() {
 
   if (
     !session ||
-    !["TEACHER", "ADMIN", "SUPER_ADMIN"].includes(
+    !["TEACHER", "ADMIN"].includes(
       session.user.role
     )
   ) {

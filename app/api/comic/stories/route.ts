@@ -5,7 +5,8 @@ import { prisma } from "@/lib/prisma";
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user) return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
+    if (!session?.user)
+      return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
 
     const { searchParams } = new URL(req.url);
     const ethnicGroupId = searchParams.get("ethnicGroupId");
@@ -13,7 +14,7 @@ export async function GET(req: NextRequest) {
 
     const where: Record<string, unknown> = {};
     // Teacher chỉ thấy truyện của mình; Admin thấy tất cả
-    if (!["ADMIN", "SUPER_ADMIN"].includes(session.user.role ?? "")) {
+    if (!["ADMIN"].includes(session.user.role ?? "")) {
       where.authorId = session.user.id;
     }
     if (ethnicGroupId) where.ethnicGroupId = ethnicGroupId;
@@ -37,15 +38,29 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user || !["TEACHER", "ADMIN", "SUPER_ADMIN"].includes(session.user.role ?? "")) {
+    if (
+      !session?.user ||
+      !["TEACHER", "ADMIN"].includes(session.user.role ?? "")
+    ) {
       return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
 
     const body = await req.json();
-    const { title, titleEn, topic, templateKey, ethnicGroupId, characterIds, backgroundIds } = body;
+    const {
+      title,
+      titleEn,
+      topic,
+      templateKey,
+      ethnicGroupId,
+      characterIds,
+      backgroundIds,
+    } = body;
 
     if (!title || !topic || !templateKey) {
-      return NextResponse.json({ error: "Thiếu title, topic hoặc templateKey" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Thiếu title, topic hoặc templateKey" },
+        { status: 400 },
+      );
     }
 
     const story = await prisma.comicStory.create({

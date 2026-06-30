@@ -91,7 +91,7 @@ export interface Badge {
 
 // ===== Highland English Horizon — Platform types =====
 
-export type AppRole = "STUDENT" | "TEACHER" | "ADMIN" | "SUPER_ADMIN";
+export type AppRole = "STUDENT" | "TEACHER" | "ADMIN";
 
 export type LessonStatus = "DRAFT" | "PUBLISHED";
 export type LessonSource = "MANUAL" | "AI" | "SAMPLE";

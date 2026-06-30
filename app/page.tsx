@@ -192,7 +192,7 @@ export default function HomePage() {
           {status === "authenticated" && session?.user ? (
             <Link
               href={
-                session.user.role === "ADMIN" || session.user.role === "SUPER_ADMIN"
+                session.user.role === "ADMIN"
                   ? "/dashboard/admin"
                   : session.user.role === "TEACHER"
                     ? "/dashboard/teacher"

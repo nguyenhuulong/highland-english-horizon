@@ -8,6 +8,23 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum LessonStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum LessonSource {
+  MANUAL
+  AI
+  SAMPLE
+}
+
 model User {
   id                String                 @id @default(cuid())
   name              String
@@ -24,8 +41,6 @@ model User {
   updatedAt         DateTime               @updatedAt
   aiLogs            AIGenerationLog[]
   aiTemplates       AITemplate[]
-  classesTeaching   Class[]                @relation("TeacherClasses")
-  classMemberships  ClassMember[]
   lessonsAuthored   Lesson[]               @relation("LessonAuthor")
   progress          LessonProgress[]
   missionAttempts   MissionAttempt[]
@@ -36,48 +51,28 @@ model User {
   comicStories      ComicStory[]
 }
 
-model Class {
-  id        String        @id @default(cuid())
-  name      String
-  joinCode  String        @unique
-  teacherId String
-  createdAt DateTime      @default(now())
-  teacher   User          @relation("TeacherClasses", fields: [teacherId], references: [id], onDelete: Cascade)
-  members   ClassMember[]
-  lessons   Lesson[]
-}
-
-model ClassMember {
-  id        String   @id @default(cuid())
-  classId   String
-  studentId String
-  joinedAt  DateTime @default(now())
-  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
-  student   User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
-
-  @@unique([classId, studentId])
-}
-
 model EthnicGroup {
   id           String            @id @default(cuid())
   slug         String            @unique
   nameVi       String
   nameEn       String
   emoji        String            @default("🌄")
-  description  String
+  description  String            @db.Text
   costume      Json
   festivals    Json
   instruments  Json
   crafts       Json
   cuisine      Json
   locations    Json
-  architecture String
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  architecture String            @db.Text
+
+  lessons      Lesson[]
   comicBackgrounds  ComicBackground[]
   comicCharacters   ComicCharacter[]
-  lessons      Lesson[]
   comicStories ComicStory[]
+
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 }
 
 model Lesson {
@@ -97,17 +92,16 @@ model Lesson {
   status          LessonStatus           @default(DRAFT)
   source          LessonSource           @default(MANUAL)
   authorId        String
-  classId         String?
-  ethnicGroupId   String?
-  createdAt       DateTime               @default(now())
-  updatedAt       DateTime               @updatedAt
-  aiLogs          AIGenerationLog[]
   author          User                   @relation("LessonAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  class           Class?                 @relation(fields: [classId], references: [id])
+  ethnicGroupId   String?
   ethnicGroup     EthnicGroup?           @relation(fields: [ethnicGroupId], references: [id])
   progress        LessonProgress[]
-  missionAttempts MissionAttempt[]
   pronunciation   PronunciationAttempt[]
+  missionAttempts MissionAttempt[]
+  aiLogs          AIGenerationLog[]
+
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
 }
 
 model LessonProgress {
@@ -122,9 +116,10 @@ model LessonProgress {
   matchScore Int?
   pronScore  Int?
   xpEarned   Int       @default(0)
-  lesson     Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson     Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
   @@unique([userId, lessonId])
 }
 
@@ -136,6 +131,7 @@ model PronunciationAttempt {
   transcript String
   score      Int
   createdAt  DateTime @default(now())
+
   lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -147,8 +143,9 @@ model MissionAttempt {
   missionId String
   correct   Boolean
   createdAt DateTime @default(now())
-  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 }
 
 model Badge {
@@ -158,6 +155,7 @@ model Badge {
   name        String
   description String
   criteria    Json
+
   users       UserBadge[]
 }
 
@@ -166,6 +164,7 @@ model UserBadge {
   userId   String
   badgeId  String
   earnedAt DateTime @default(now())
+
   badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -176,10 +175,10 @@ model AITemplate {
   id             String   @id @default(cuid())
   name           String
   description    String
-  promptTemplate String
+  promptTemplate String   @db.Text
   createdById    String
-  createdAt      DateTime @default(now())
   createdBy      User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
 }
 
 model AIGenerationLog {
@@ -189,8 +188,9 @@ model AIGenerationLog {
   input     Json
   status    String   @default("success")
   createdAt DateTime @default(now())
-  lesson    Lesson?  @relation(fields: [lessonId], references: [id])
+
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson    Lesson?  @relation(fields: [lessonId], references: [id])
 }
 
 model ComicCharacter {
@@ -200,98 +200,68 @@ model ComicCharacter {
   role              String       @default("child")
   gender            String       @default("female")
   ethnicGroupId     String?
-  descriptionVi     String
-  descriptionEn     String
-  costumePrompt     String
-  appearancePrompt  String
-  referenceImageUrl String?
-  characterImageUrl String?
+  ethnicGroup       EthnicGroup? @relation(fields: [ethnicGroupId], references: [id])
+  descriptionVi     String       @db.Text
+  descriptionEn     String       @db.Text
+  costumePrompt     String       @db.Text
+  appearancePrompt  String       @db.Text
+  referenceImageUrl String?      @db.Text
+  characterImageUrl String?      @db.Text
   thumbnailEmoji    String       @default("🧒")
   isActive          Boolean      @default(true)
   createdById       String
+  createdBy         User         @relation("CharacterCreator", fields: [createdById], references: [id], onDelete: Cascade)
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
-  createdBy         User         @relation("CharacterCreator", fields: [createdById], references: [id], onDelete: Cascade)
-  ethnicGroup       EthnicGroup? @relation(fields: [ethnicGroupId], references: [id])
 
   @@index([ethnicGroupId])
 }
 
 model ComicBackground {
-  id             String   @id @default(cuid())
-  key            String   @unique
-  nameVi         String
-  nameEn         String
-  category       String   @default("village")
-  ethnicGroupId  String?
-
-  prompt         String
-  imageUrl       String?
-
-  thumbnailEmoji String       @default("🌄")
-  isActive       Boolean      @default(true)
-
-  createdById    String
-
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-
-  createdBy      User         @relation("BackgroundCreator", fields: [createdById], references: [id], onDelete: Cascade)
-  ethnicGroup    EthnicGroup? @relation(fields: [ethnicGroupId], references: [id])
+  id                String       @id @default(cuid())
+  key               String       @unique
+  nameVi            String
+  nameEn            String
+  category          String       @default("village")
+  ethnicGroupId     String?
+  ethnicGroup       EthnicGroup? @relation(fields: [ethnicGroupId], references: [id])
+  prompt            String       @db.Text
+  referenceImageUrl String?      @db.Text
+  imageUrl          String?      @db.Text
+  thumbnailEmoji    String       @default("🌄")
+  isActive          Boolean      @default(true)
+  createdById       String
+  createdBy         User         @relation("BackgroundCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 
   @@index([key])
   @@index([category])
 }
 
 model ComicStory {
-  id              String   @id @default(cuid())
-
+  id              String       @id @default(cuid())
   title           String
   titleEn         String
-
   topic           String
-
-  templateKey     String
-
-  status          String   @default("draft")
+  templateKey     String       @default("INTRO_4")
+  status          String       @default("draft")
   // draft
   // generating
   // ready
-
-  authorId        String
   ethnicGroupId   String?
-
-  characterIds    Json
-  backgroundIds   Json
-
-  panels          Json
-  vocabulary      Json
-
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  author          User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
   ethnicGroup     EthnicGroup? @relation(fields: [ethnicGroupId], references: [id], onDelete: SetNull)
+  authorId        String
+  author          User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  panels          Json         @default("[]")
+  vocabulary      Json         @default("[]")
+  characterIds    Json         @default("[]")
+  backgroundIds   Json         @default("[]")
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   @@index([authorId])
   @@index([ethnicGroupId])
   @@index([status])
-}
-
-enum Role {
-  STUDENT
-  TEACHER
-  ADMIN
-  SUPER_ADMIN
-}
-
-enum LessonStatus {
-  DRAFT
-  PUBLISHED
-}
-
-enum LessonSource {
-  MANUAL
-  AI
-  SAMPLE
 }

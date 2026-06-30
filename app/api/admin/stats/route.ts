@@ -6,16 +6,26 @@ import { canManageUsers } from "@/lib/rbac";
 export async function GET() {
   const session = await auth();
   if (!session?.user || !canManageUsers(session.user.role)) {
-    return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
+    return NextResponse.json(
+      { error: "Không có quyền truy cập" },
+      { status: 403 },
+    );
   }
 
-  const [students, teachers, admins, lessons, published, classes, ethnicGroups, aiLogs] = await Promise.all([
+  const [
+    students,
+    teachers,
+    admins,
+    lessons,
+    published,
+    ethnicGroups,
+    aiLogs,
+  ] = await Promise.all([
     prisma.user.count({ where: { role: "STUDENT" } }),
     prisma.user.count({ where: { role: "TEACHER" } }),
-    prisma.user.count({ where: { role: { in: ["ADMIN", "SUPER_ADMIN"] } } }),
+    prisma.user.count({ where: { role: { in: ["ADMIN"] } } }),
     prisma.lesson.count(),
     prisma.lesson.count({ where: { status: "PUBLISHED" } }),
-    prisma.class.count(),
     prisma.ethnicGroup.count(),
     prisma.aIGenerationLog.count(),
   ]);
@@ -27,8 +37,16 @@ export async function GET() {
   });
 
   return NextResponse.json({
-    stats: { students, teachers, admins, lessons, published, classes, ethnicGroups, aiLogs },
-    recentLessons: recentLessons.map((l) => ({
+    stats: {
+      students,
+      teachers,
+      admins,
+      lessons,
+      published,
+      ethnicGroups,
+      aiLogs,
+    },
+    recentLessons: recentLessons.map(l => ({
       id: l.id,
       titleVi: l.titleVi,
       status: l.status,

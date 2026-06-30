@@ -17,13 +17,19 @@ const schema = z.object({
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user || !isStaff(session.user.role)) {
-    return NextResponse.json({ error: "Không có quyền truy cập" }, { status: 403 });
+    return NextResponse.json(
+      { error: "Không có quyền truy cập" },
+      { status: 403 },
+    );
   }
 
   const body = await req.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.flatten() },
+      { status: 400 },
+    );
   }
 
   try {

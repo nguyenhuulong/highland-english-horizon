@@ -16,13 +16,19 @@ export async function POST(req: Request) {
   const body = await req.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json(
+      { error: parsed.error.flatten() },
+      { status: 400 },
+    );
   }
   const { name, email, password, role, ethnicGroup, ageGroup } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
-    return NextResponse.json({ error: "Email đã được sử dụng" }, { status: 409 });
+    return NextResponse.json(
+      { error: "Email đã được sử dụng" },
+      { status: 409 },
+    );
   }
 
   const hashed = await bcrypt.hash(password, 10);

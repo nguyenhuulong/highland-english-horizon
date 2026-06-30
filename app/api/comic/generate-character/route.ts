@@ -11,7 +11,10 @@ import { uploadFromUrl, makeFileName } from "@/lib/storage";
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user || !["TEACHER", "ADMIN", "SUPER_ADMIN"].includes(session.user.role ?? "")) {
+    if (
+      !session?.user ||
+      !["TEACHER", "ADMIN"].includes(session.user.role ?? "")
+    ) {
       return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
 
@@ -20,9 +23,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Thiếu characterId" }, { status: 400 });
     }
 
-    const character = await prisma.comicCharacter.findUnique({ where: { id: characterId } });
+    const character = await prisma.comicCharacter.findUnique({
+      where: { id: characterId },
+    });
     if (!character) {
-      return NextResponse.json({ error: "Không tìm thấy nhân vật" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Không tìm thấy nhân vật" },
+        { status: 404 },
+      );
     }
 
     // Lấy tên dân tộc để đưa vào prompt
@@ -51,7 +59,10 @@ export async function POST(req: NextRequest) {
       const fileName = makeFileName(`characters/sheets/${characterId}`, "jpg");
       characterImageUrl = await uploadFromUrl({ sourceUrl: rawUrl, fileName });
     } catch (storageErr) {
-      console.warn("[generate-character] Storage upload failed, dùng URL gốc:", storageErr);
+      console.warn(
+        "[generate-character] Storage upload failed, dùng URL gốc:",
+        storageErr,
+      );
     }
 
     // Cập nhật DB
@@ -65,7 +76,7 @@ export async function POST(req: NextRequest) {
     console.error("[generate-character]", err);
     return NextResponse.json(
       { error: err instanceof Error ? err.message : "Lỗi sinh ảnh nhân vật" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
