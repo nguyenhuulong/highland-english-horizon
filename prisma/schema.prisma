@@ -26,12 +26,14 @@ model User {
   aiTemplates       AITemplate[]
   classesTeaching   Class[]                @relation("TeacherClasses")
   classMemberships  ClassMember[]
-  createdCharacters ComicCharacter[]
   lessonsAuthored   Lesson[]               @relation("LessonAuthor")
   progress          LessonProgress[]
   missionAttempts   MissionAttempt[]
   pronunciation     PronunciationAttempt[]
   badges            UserBadge[]
+  comicCharacters   ComicCharacter[]  @relation("CharacterCreator")
+  comicBackgrounds  ComicBackground[] @relation("BackgroundCreator")
+  comicStories      ComicStory[]
 }
 
 model Class {
@@ -72,9 +74,10 @@ model EthnicGroup {
   architecture String
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
-  backgrounds  ComicBackground[]
-  characters   ComicCharacter[]
+  comicBackgrounds  ComicBackground[]
+  comicCharacters   ComicCharacter[]
   lessons      Lesson[]
+  comicStories ComicStory[]
 }
 
 model Lesson {
@@ -208,29 +211,71 @@ model ComicCharacter {
   createdById       String
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
-  createdBy         User         @relation(fields: [createdById], references: [id])
+  createdBy         User         @relation("CharacterCreator", fields: [createdById], references: [id], onDelete: Cascade)
   ethnicGroup       EthnicGroup? @relation(fields: [ethnicGroupId], references: [id])
 
   @@index([ethnicGroupId])
 }
 
 model ComicBackground {
-  id             String       @id @default(cuid())
-  key            String       @unique
+  id             String   @id @default(cuid())
+  key            String   @unique
   nameVi         String
   nameEn         String
-  category       String       @default("village")
+  category       String   @default("village")
   ethnicGroupId  String?
+
   prompt         String
   imageUrl       String?
+
   thumbnailEmoji String       @default("🌄")
   isActive       Boolean      @default(true)
+
+  createdById    String
+
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+
+  createdBy      User         @relation("BackgroundCreator", fields: [createdById], references: [id], onDelete: Cascade)
   ethnicGroup    EthnicGroup? @relation(fields: [ethnicGroupId], references: [id])
 
   @@index([key])
   @@index([category])
+}
+
+model ComicStory {
+  id              String   @id @default(cuid())
+
+  title           String
+  titleEn         String
+
+  topic           String
+
+  templateKey     String
+
+  status          String   @default("draft")
+  // draft
+  // generating
+  // ready
+
+  authorId        String
+  ethnicGroupId   String?
+
+  characterIds    Json
+  backgroundIds   Json
+
+  panels          Json
+  vocabulary      Json
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  author          User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  ethnicGroup     EthnicGroup? @relation(fields: [ethnicGroupId], references: [id], onDelete: SetNull)
+
+  @@index([authorId])
+  @@index([ethnicGroupId])
+  @@index([status])
 }
 
 enum Role {

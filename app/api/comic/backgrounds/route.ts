@@ -40,6 +40,12 @@ export async function POST(req: NextRequest) {
         ethnicGroupId: ethnicGroupId || null,
         prompt,
         thumbnailEmoji: thumbnailEmoji ?? "🌄",
+
+        createdBy: {
+          connect: {
+            id: session.user.id!,
+          },
+        },
       },
     });
     return NextResponse.json({ background }, { status: 201 });

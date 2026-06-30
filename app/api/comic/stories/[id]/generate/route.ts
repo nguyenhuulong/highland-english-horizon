@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { generateComicPanel } from "@/lib/imageGen";
 import { uploadFromUrl, makeFileName } from "@/lib/storage";
 import type { ComicCharacterDTO, ComicBackgroundDTO, ComicStoryPanel } from "@/types";
@@ -276,13 +277,21 @@ Trả về JSON theo format:
     const panels = await Promise.all(panelPromises);
 
     // ── BƯỚC 3: Lưu kết quả ───────────────────────────────────────────────────
+    const panelsJson = JSON.parse(
+      JSON.stringify(panels),
+    ) as Prisma.InputJsonValue;
+
+    const vocabularyJson = JSON.parse(
+      JSON.stringify(scriptData.vocabulary ?? []),
+    ) as Prisma.InputJsonValue;
+
     const updatedStory = await prisma.comicStory.update({
       where: { id },
       data: {
         title: scriptData.titleVi || story.title,
         titleEn: scriptData.titleEn || story.titleEn,
-        panels,
-        vocabulary: scriptData.vocabulary || [],
+        panels: panelsJson,
+        vocabulary: vocabularyJson,
         status: "ready",
       },
     });

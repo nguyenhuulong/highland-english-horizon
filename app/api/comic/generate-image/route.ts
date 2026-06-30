@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { buildPanelPrompt, generatePanelImage } from "@/lib/imageGen";
 import type { ComicCharacterDTO, ComicBackgroundDTO } from "@/types";
 
@@ -96,14 +97,22 @@ export async function POST(req: NextRequest) {
       try {
         const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
         if (lesson) {
-          const panels = lesson.panels as Record<string, unknown>[];
-          const updated = panels.map((p) => {
-            if (Number(p.id) === panelId) {
-              return { ...p, generatedImageUrl: imageUrl };
+          const panels = lesson.panels as Prisma.JsonArray;
+          const updated = panels.map(p => {
+            const panel = p as Prisma.JsonObject;
+            if (Number(panel.id) === panelId) {
+              return {
+                ...panel,
+                generatedImageUrl: imageUrl,
+              };
             }
-            return p;
+
+            return panel;
           });
-          await prisma.lesson.update({ where: { id: lessonId }, data: { panels: updated } });
+          await prisma.lesson.update({
+            where: { id: lessonId },
+            data: { panels: updated as Prisma.InputJsonValue },
+          });
         }
       } catch (e) {
         console.error("[generate-image] Failed to save to panel:", e);

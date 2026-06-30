@@ -280,6 +280,7 @@ async function main() {
       thumbnailEmoji: "🌅",
       prompt:
         "K'Ho highland village at sunrise, traditional wooden stilt houses with thatched roofs, green mountains in background, morning mist, golden warm light, lush tropical vegetation, peaceful rural scene, children book illustration style",
+      createdById: teacher.id,
     },
     {
       key: "festival_ground",
@@ -289,6 +290,7 @@ async function main() {
       thumbnailEmoji: "🎉",
       prompt:
         "K'Ho gong festival celebration ground, colorful triangle banners hanging between bamboo poles, central bonfire, circle of villagers in traditional costumes, night sky with stars, warm orange firelight, children book illustration style",
+      createdById: teacher.id,
     },
     {
       key: "market_morning",
@@ -298,6 +300,7 @@ async function main() {
       thumbnailEmoji: "🛒",
       prompt:
         "vibrant highland ethnic market at morning, colorful fabric stalls with red and green awnings, vegetable and handicraft displays, mountain ethnic minority people in traditional costumes, mountains visible in background, children book illustration style",
+      createdById: teacher.id,
     },
     {
       key: "forest_entrance",
@@ -307,6 +310,7 @@ async function main() {
       thumbnailEmoji: "🌲",
       prompt:
         "entrance to tropical highland forest, tall ancient trees with hanging vines, dappled sunlight through canopy, colorful tropical birds, lush green ferns and undergrowth, children book illustration style, vibrant colors",
+      createdById: teacher.id,
     },
     {
       key: "big_tree",
@@ -316,6 +320,7 @@ async function main() {
       thumbnailEmoji: "🌳",
       prompt:
         "enormous ancient tree in highland forest, massive trunk with gnarled roots, children playing near the base, shafts of golden light through dense canopy, magical forest atmosphere, children book illustration style",
+      createdById: teacher.id,
     },
     {
       key: "cloth_stall",
@@ -325,6 +330,7 @@ async function main() {
       thumbnailEmoji: "🧵",
       prompt:
         "colorful fabric stall at highland market, bolts of traditional ethnic patterned cloth in red blue and gold, friendly vendor in traditional costume, children admiring the colorful fabrics, children book illustration style",
+      createdById: teacher.id,
     },
     {
       key: "vegetable_stall",
@@ -334,6 +340,7 @@ async function main() {
       thumbnailEmoji: "🥬",
       prompt:
         "fresh vegetable stall at highland market, colorful arrangement of mountain vegetables and herbs, bamboo baskets full of produce, friendly market scene, morning sunlight, children book illustration style",
+      createdById: teacher.id,
     },
     {
       key: "harvest",
@@ -343,6 +350,7 @@ async function main() {
       thumbnailEmoji: "🌾",
       prompt:
         "golden rice terrace harvest season in highland, rows of golden rice stalks ready for harvest, farmers in traditional costumes working together, beautiful mountain landscape background, children book illustration style",
+      createdById: teacher.id,
     },
     {
       key: "costume",
@@ -352,6 +360,7 @@ async function main() {
       thumbnailEmoji: "👘",
       prompt:
         "inside traditional K'Ho wooden house, family preparing traditional costumes for festival, colorful ethnic garments hanging and being dressed, warm interior light, carved wooden details, children book illustration style",
+      createdById: teacher.id,
     },
     {
       key: "drum",
@@ -361,6 +370,7 @@ async function main() {
       thumbnailEmoji: "🥁",
       prompt:
         "K'Ho gong and drum ceremony, musicians playing traditional gongs and drums around bonfire, night festival scene with dancing flames, villagers in traditional red costumes, children book illustration style",
+      createdById: teacher.id,
     },
     {
       key: "dance",
@@ -370,6 +380,7 @@ async function main() {
       thumbnailEmoji: "💃",
       prompt:
         "highland traditional dance performance, circle of dancers in colorful ethnic costumes, graceful movements with arms raised, festival ground with lanterns and bonfire in background, children book illustration style",
+      createdById: teacher.id,
     },
     {
       key: "birds",
@@ -379,6 +390,7 @@ async function main() {
       thumbnailEmoji: "🦜",
       prompt:
         "colorful tropical birds in highland forest canopy, hornbills and kingfishers perched on branches, children looking up in wonder, lush green jungle background, gentle morning light, children book illustration style",
+      createdById: teacher.id,
     },
     {
       key: "butterfly",
@@ -388,6 +400,7 @@ async function main() {
       thumbnailEmoji: "🦋",
       prompt:
         "magical highland forest clearing full of colorful butterflies, children chasing butterflies through wildflowers, golden afternoon light filtering through trees, enchanting fairy-tale atmosphere, children book illustration style",
+      createdById: teacher.id,
     },
     {
       key: "bargain",
@@ -397,6 +410,7 @@ async function main() {
       thumbnailEmoji: "🤝",
       prompt:
         "friendly bargaining scene at highland market, ethnic minority vendor and young customer discussing price with smiles, colorful market goods displayed, lively market atmosphere, children book illustration style",
+      createdById: teacher.id,
     },
   ];
 
@@ -405,7 +419,9 @@ async function main() {
       where: { key: b.key },
     });
     if (!existing) {
-      await prisma.comicBackground.create({ data: b });
+      await prisma.comicBackground.create({
+        data: b,
+      });
     }
   }
 
