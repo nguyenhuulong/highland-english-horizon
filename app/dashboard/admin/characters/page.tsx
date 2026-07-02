@@ -6,7 +6,7 @@ import type { ComicCharacterDTO } from "@/types";
 
 export default async function CharactersPage() {
   const session = await auth();
-  if (!session?.user || !["ADMIN"].includes(session.user.role ?? "")) {
+  if (!session?.user || !["TEACHER", "ADMIN"].includes(session.user.role ?? "")) {
     redirect("/dashboard");
   }
 

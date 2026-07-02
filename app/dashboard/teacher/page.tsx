@@ -6,14 +6,15 @@ import StatCard from "@/components/dashboard/StatCard";
 export default async function TeacherDashboard() {
   const session = await auth();
   const teacherId = session!.user.id;
-
-  const [lessons, aiLogs, characters, comicStories] = await Promise.all([
+  
+  const [lessons, aiLogs, characters] = await Promise.all([
     prisma.lesson.findMany({ where: { authorId: teacherId }, orderBy: { createdAt: "desc" } }),
     prisma.aIGenerationLog.count({ where: { userId: teacherId } }),
     prisma.comicCharacter.count({ where: { createdById: teacherId } }),
-    prisma.comicStory.count({ where: { authorId: teacherId } }),
+    // prisma.comicStory.count({ where: { authorId: teacherId } }),
   ]);
-
+  
+  const comicLessons = lessons.filter((l) => l.source === "COMIC").length;
   const published = lessons.filter((l) => l.status === "PUBLISHED").length;
   const aiGenerated = lessons.filter((l) => l.source === "AI").length;
 
@@ -27,12 +28,12 @@ export default async function TeacherDashboard() {
           <h1 style={{ marginBottom: 4 }}>Xin chào, {session?.user.name}! 🧑‍🏫</h1>
           <p style={{ color: "var(--text-muted)" }}>Tạo nội dung học tiếng Anh cho học sinh vùng cao.</p>
         </div>
-        <Link href="/dashboard/teacher/ai-generator"
+        <Link href="/dashboard/teacher/stories"
           style={{
             padding: "12px 22px", borderRadius: 12, background: "var(--primary)",
             color: "white", fontWeight: 800, textDecoration: "none"
           }}>
-          🤖 Tạo bài học bằng AI
+          🎨 Tạo bài học mới
         </Link>
       </div>
 
@@ -44,7 +45,8 @@ export default async function TeacherDashboard() {
         <StatCard icon="✅" label="Đã xuất bản" value={published} color="#E8F5E9" />
         <StatCard icon="🤖" label="AI tạo" value={aiGenerated} color="#F3E5F5" />
         <StatCard icon="🧒" label="Nhân vật tôi tạo" value={characters} color="#FFF3E0" />
-        <StatCard icon="🎨" label="Truyện tranh" value={comicStories} color="#FBE9E7" />
+        {/* <StatCard icon="🎨" label="Truyện tranh" value={comicStories} color="#FBE9E7" /> */}
+        <StatCard icon="🎨" label="Bài học truyện tranh" value={comicLessons} color="#FBE9E7" />
         <StatCard icon="⚡" label="Lần dùng AI" value={aiLogs} color="#FFFDE7" />
       </div>
 
@@ -54,11 +56,10 @@ export default async function TeacherDashboard() {
       }}>🚀 Tác vụ nhanh</h2>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 }}>
         {[
-          { href: "/dashboard/teacher/ai-generator", icon: "🤖", title: "Tạo bài học AI", desc: "LLM viết kịch bản truyện tự động" },
-          { href: "/dashboard/teacher/lessons", icon: "📝", title: "Bài học của tôi", desc: "Xem, sửa, publish bài học" },
-          { href: "/dashboard/admin/characters", icon: "🧒", title: "Quản lý nhân vật", desc: "Tạo nhân vật dân tộc 2D" },
-          { href: "/dashboard/admin/backgrounds", icon: "🌄", title: "Quản lý bối cảnh", desc: "Tạo ảnh bối cảnh Tây Nguyên" },
-          { href: "/dashboard/admin/stories", icon: "🎨", title: "Tạo truyện tranh", desc: "Chọn nhân vật + bối cảnh + AI gen" },
+          { href: "/dashboard/teacher/stories", icon: "🎨", title: "Tạo bài học mới", desc: "Truyện tranh song ngữ với ảnh AI" },
+          { href: "/dashboard/teacher/characters", icon: "🧒", title: "Quản lý nhân vật", desc: "Tạo nhân vật dân tộc 2D" },
+          { href: "/dashboard/teacher/backgrounds", icon: "🌄", title: "Quản lý bối cảnh", desc: "Tạo ảnh bối cảnh Tây Nguyên" },
+          { href: "/dashboard/admin/students", icon: "📊", title: "Tiến độ học sinh", desc: "Bảng xếp hạng và thành tích" },
         ].map((item) => (
           <Link key={item.href} href={item.href}
             style={{

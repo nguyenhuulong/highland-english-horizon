@@ -49,6 +49,11 @@ export async function POST(req: Request) {
   if (!session?.user)
     return NextResponse.json({ error: "Chưa đăng nhập" }, { status: 401 });
 
+  // Chỉ STUDENT được lưu thành tích / XP
+  if (session.user.role !== "STUDENT") {
+    return NextResponse.json({ ok: true, xpGain: 0, newBadges: [] });
+  }
+
   const body = await req.json();
   const parsed = schema.safeParse(body);
   if (!parsed.success)

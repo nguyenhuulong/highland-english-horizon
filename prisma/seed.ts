@@ -3,7 +3,6 @@ import bcrypt from "bcryptjs";
 import { CULTURAL_GROUPS } from "../data/culture";
 import { DEFAULT_BADGES } from "../data/badges";
 import { STORIES } from "../data/stories";
-import { Prisma } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -42,18 +41,6 @@ async function main() {
   console.log("Seeding default accounts...");
   const password = await bcrypt.hash("Highland@2026", 10);
 
-  const superAdmin = await prisma.user.upsert({
-    where: { email: "superadmin@highlandenglish.vn" },
-    create: {
-      name: "Ban Tổ Chức",
-      email: "superadmin@highlandenglish.vn",
-      password,
-      role: "ADMIN",
-      avatar: "🛡️",
-    },
-    update: {},
-  });
-
   await prisma.user.upsert({
     where: { email: "admin@highlandenglish.vn" },
     create: {
@@ -78,7 +65,7 @@ async function main() {
     update: {},
   });
 
-  const student = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: "student@highlandenglish.vn" },
     create: {
       name: "Ya Đin",
@@ -190,258 +177,217 @@ async function main() {
     where: { slug: "nung" },
   });
 
-const charData = [
-  // =========================
-  // H'MÔNG
-  // =========================
-  {
-    name: "Sùng Mỷ",
-    nameEn: "Sung My",
-    role: "child",
-    gender: "female",
-    ethnicGroupId: hmongGroup?.id ?? null,
-    descriptionVi:
-      "Bé gái H'Mông 9 tuổi, hiền lành, thích thêu váy và theo mẹ đến chợ phiên.",
-    descriptionEn:
-      "9-year-old H'Mong girl, gentle and curious, enjoys embroidery and visiting the mountain market with her mother.",
-    costumePrompt:
-      "wearing H'Mong traditional pleated indigo skirt with colorful embroidered geometric patterns, white long-sleeve blouse, embroidered apron, silver coin necklace, colorful headscarf",
-    appearancePrompt:
-      "9-year-old girl, round face, rosy cheeks, warm light-brown skin, bright dark eyes, straight black hair tied into two short braids, petite build, gentle smile",
-    thumbnailEmoji: "🪡",
-    createdById: teacher.id,
-  },
+  // descriptionVi/En và thumbnailEmoji được tự điền từ appearancePrompt (theo logic đã đơn giản hoá ở CharacterManager)
+  const charData = [
+    // ── Trẻ em ────────────────────────────────────────────────────────────
+    {
+      name: "Sùng Mỷ",
+      nameEn: "Sung My",
+      role: "child",
+      gender: "female",
+      ethnicGroupId: hmongGroup?.id ?? null,
+      appearancePrompt:
+        "9-year-old H'Mong girl, round face, rosy cheeks, warm skin, bright dark eyes, black hair in two short braids, gentle smile",
+      costumePrompt:
+        "H'Mong traditional costume",
+      descriptionVi:
+        "Bé gái H'Mông 9 tuổi, hiền lành, thích thêu váy và đi chợ phiên.",
+      descriptionEn:
+        "9-year-old H'Mong girl, gentle, enjoys embroidery and the mountain market.",
+      thumbnailEmoji: "🧒",
+      createdById: teacher.id,
+    },
+    {
+      name: "N'Thao",
+      nameEn: "N'Thao",
+      role: "child",
+      gender: "male",
+      ethnicGroupId: mnongGroup?.id ?? null,
+      appearancePrompt:
+        "10-year-old M'Nong boy, oval face, warm brown skin, bright dark eyes, short black hair, cheerful smile",
+      costumePrompt:
+        "M'Nong traditional costume",
+      descriptionVi:
+        "Bé trai M'Nông 10 tuổi, năng động, thích theo cha ra rẫy.",
+      descriptionEn:
+        "10-year-old M'Nong boy, energetic, enjoys helping on the farm.",
+      thumbnailEmoji: "🧒",
+      createdById: teacher.id,
+    },
+    {
+      name: "Ya Đin",
+      nameEn: "Ya Din",
+      role: "child",
+      gender: "female",
+      ethnicGroupId: khoGroup?.id ?? null,
+      appearancePrompt:
+        "10-year-old K'Ho girl, oval face, warm brown skin, bright dark eyes, long black hair in two braids, friendly smile",
+      costumePrompt:
+        "K'Ho traditional costume",
+      descriptionVi:
+        "Bé gái K'Ho 10 tuổi, ham học hỏi, yêu thích nghe bà kể chuyện.",
+      descriptionEn:
+        "10-year-old K'Ho girl, curious and cheerful, loves listening to traditional stories.",
+      thumbnailEmoji: "🧒",
+      createdById: teacher.id,
+    },
+    {
+      name: "Pơ Mai",
+      nameEn: "Po Mai",
+      role: "child",
+      gender: "female",
+      ethnicGroupId: maGroup?.id ?? null,
+      appearancePrompt:
+        "9-year-old Ma girl, heart-shaped face, warm brown skin, lively dark eyes, slightly wavy black hair tied back, joyful expression",
+      costumePrompt:
+        "Ma traditional costume",
+      descriptionVi:
+        "Bé gái Mạ 9 tuổi, hoạt bát, thích khám phá rừng cùng gia đình.",
+      descriptionEn:
+        "9-year-old Ma girl, lively, enjoys exploring the forest with her family.",
+      thumbnailEmoji: "🧒",
+      createdById: teacher.id,
+    },
+    {
+      name: "Lường Khánh",
+      nameEn: "Luong Khanh",
+      role: "child",
+      gender: "female",
+      ethnicGroupId: nungGroup?.id ?? null,
+      appearancePrompt:
+        "10-year-old Nung girl, oval face, fair warm skin, calm dark eyes, straight black hair, gentle smile",
+      costumePrompt:
+        "Nung traditional costume",
+      descriptionVi: "Bé gái Nùng 10 tuổi, chăm chỉ, thích học hát dân ca.",
+      descriptionEn:
+        "10-year-old Nung girl, diligent, enjoys folk songs and weaving.",
+      thumbnailEmoji: "🧒",
+      createdById: teacher.id,
+    },
+    {
+      name: "Lâm Bảo",
+      nameEn: "Lam Bao",
+      role: "child",
+      gender: "male",
+      ethnicGroupId: tayGroup?.id ?? null,
+      appearancePrompt:
+        "11-year-old Tay boy, round face, warm light-brown skin, bright dark eyes, short black hair, confident smile",
+      costumePrompt:
+        "Tay traditional costume",
+      descriptionVi:
+        "Bé trai Tày 11 tuổi, thông minh, thích câu cá và nghe ông kể chuyện.",
+      descriptionEn:
+        "11-year-old Tay boy, smart, enjoys fishing and village stories.",
+      thumbnailEmoji: "🧒",
+      createdById: teacher.id,
+    },
 
-  // =========================
-  // M'NÔNG
-  // =========================
-  {
-    name: "N'Thao",
-    nameEn: "N'Thao",
-    role: "child",
-    gender: "male",
-    ethnicGroupId: mnongGroup?.id ?? null,
-    descriptionVi:
-      "Bé trai M'Nông 10 tuổi, năng động, thích theo cha ra rẫy và chăm sóc voi.",
-    descriptionEn:
-      "10-year-old M'Nong boy, energetic and adventurous, enjoys helping his father on the farm and learning about elephants.",
-    costumePrompt:
-      "wearing M'Nong traditional black woven sleeveless shirt with red and white woven stripes, black shorts, woven belt, simple woven shoulder cloth",
-    appearancePrompt:
-      "10-year-old boy, oval face, warm brown skin, bright dark eyes, short black hair, slim athletic build, cheerful smile",
-    thumbnailEmoji: "🐘",
-    createdById: teacher.id,
-  },
+    // ── Người lớn ─────────────────────────────────────────────────────────
+    {
+      name: "H'Brih",
+      nameEn: "H'Brih",
+      role: "adult",
+      gender: "female",
+      ethnicGroupId: khoGroup?.id ?? null,
+      appearancePrompt:
+        "28-year-old K'Ho woman, oval face, warm brown skin, kind dark eyes, long black hair in a low bun, graceful posture",
+      costumePrompt:
+        "K'Ho traditional costume",
+      descriptionVi:
+        "Nghệ nhân dệt thổ cẩm K'Ho 28 tuổi, hiền hậu, thích hướng dẫn trẻ em.",
+      descriptionEn:
+        "28-year-old K'Ho woman, skilled weaver, kind and patient.",
+      thumbnailEmoji: "🧒",
+      createdById: teacher.id,
+    },
+    {
+      name: "A Chư",
+      nameEn: "A Chu",
+      role: "adult",
+      gender: "male",
+      ethnicGroupId: hmongGroup?.id ?? null,
+      appearancePrompt:
+        "31-year-old H'Mong man, square face, sun-tanned skin, dark eyes, short black hair, lean muscular build, confident expression",
+      costumePrompt:
+        "H'Mong traditional costume",
+      descriptionVi:
+        "Người đàn ông H'Mông 31 tuổi, chăm chỉ, giỏi chế tác khèn.",
+      descriptionEn:
+        "31-year-old H'Mong man, hardworking farmer and khene craftsman.",
+      thumbnailEmoji: "🧒",
+      createdById: teacher.id,
+    },
+    {
+      name: "Y Điớp",
+      nameEn: "Y Diep",
+      role: "adult",
+      gender: "female",
+      ethnicGroupId: mnongGroup?.id ?? null,
+      appearancePrompt:
+        "27-year-old M'Nong woman, oval face, warm brown skin, bright dark eyes, long black hair tied back, friendly smile",
+      costumePrompt:
+        "M'Nong traditional costume",
+      descriptionVi:
+        "Người phụ nữ M'Nông 27 tuổi, trồng cà phê, khéo đan gùi mây tre.",
+      descriptionEn:
+        "27-year-old M'Nong woman, coffee farmer and skilled basket weaver.",
+      thumbnailEmoji: "🧒",
+      createdById: teacher.id,
+    },
+    {
+      name: "Nông Văn Hiếu",
+      nameEn: "Nong Van Hieu",
+      role: "adult",
+      gender: "male",
+      ethnicGroupId: tayGroup?.id ?? null,
+      appearancePrompt:
+        "33-year-old Tay man, oval face, warm light-brown skin, bright dark eyes, neatly trimmed short black hair, confident smile",
+      costumePrompt:
+        "Tay traditional costume",
+      descriptionVi:
+        "Giáo viên Tày 33 tuổi, yêu văn hóa dân tộc và dạy tiếng Anh.",
+      descriptionEn:
+        "33-year-old Tay teacher, preserves traditional culture while teaching English.",
+      thumbnailEmoji: "🧒",
+      createdById: teacher.id,
+    },
 
-  // =========================
-  // K'HO
-  // =========================
-  {
-    name: "Ya Đin",
-    nameEn: "Ya Din",
-    role: "child",
-    gender: "female",
-    ethnicGroupId: khoGroup?.id ?? null,
-    descriptionVi:
-      "Bé gái K'Ho 10 tuổi, ham học hỏi, yêu thích nghe bà kể chuyện và tìm hiểu văn hóa dân tộc.",
-    descriptionEn:
-      "10-year-old K'Ho girl, curious and cheerful, enjoys listening to traditional stories and learning about her culture.",
-    costumePrompt:
-      "wearing K'Ho traditional red woven blouse with black and yellow geometric patterns, dark indigo skirt, silver bead necklace, woven sash",
-    appearancePrompt:
-      "10-year-old girl, oval face, warm brown skin, bright dark brown eyes, long black hair in two braids, friendly smile, average build",
-    thumbnailEmoji: "🌸",
-    createdById: teacher.id,
-  },
-
-  // =========================
-  // MẠ
-  // =========================
-  {
-    name: "Pơ Mai",
-    nameEn: "Po Mai",
-    role: "child",
-    gender: "female",
-    ethnicGroupId: maGroup?.id ?? null,
-    descriptionVi:
-      "Bé gái Mạ 9 tuổi, hoạt bát, thích khám phá rừng và hái các loại quả cùng gia đình.",
-    descriptionEn:
-      "9-year-old Ma girl, lively and adventurous, enjoys exploring the forest and gathering wild fruits with her family.",
-    costumePrompt:
-      "wearing Ma traditional indigo woven blouse with simple red embroidery, dark wrap skirt, rattan bracelet, beaded necklace",
-    appearancePrompt:
-      "9-year-old girl, heart-shaped face, warm brown skin, lively dark eyes, slightly wavy black hair tied back, slim build, joyful expression",
-    thumbnailEmoji: "🌿",
-    createdById: teacher.id,
-  },
-
-  // =========================
-  // NÙNG
-  // =========================
-  {
-    name: "Lường Khánh",
-    nameEn: "Luong Khanh",
-    role: "child",
-    gender: "female",
-    ethnicGroupId: nungGroup?.id ?? null,
-    descriptionVi:
-      "Bé gái Nùng 10 tuổi, chăm chỉ, thích học hát dân ca và giúp mẹ dệt vải.",
-    descriptionEn:
-      "10-year-old Nung girl, diligent and kind, enjoys learning folk songs and helping her mother weave fabric.",
-    costumePrompt:
-      "wearing Nung traditional indigo tunic with subtle embroidered cuffs, black trousers, silver necklace, dark indigo headscarf",
-    appearancePrompt:
-      "10-year-old girl, oval face, fair warm skin, calm dark eyes, straight black hair tucked under headscarf, gentle smile, slender build",
-    thumbnailEmoji: "🧵",
-    createdById: teacher.id,
-  },
-
-  // =========================
-  // TÀY
-  // =========================
-  {
-    name: "Lâm Bảo",
-    nameEn: "Lam Bao",
-    role: "child",
-    gender: "male",
-    ethnicGroupId: tayGroup?.id ?? null,
-    descriptionVi:
-      "Bé trai Tày 11 tuổi, thông minh, thích câu cá, bơi suối và nghe ông kể chuyện làng.",
-    descriptionEn:
-      "11-year-old Tay boy, friendly and curious, enjoys fishing, swimming in streams and listening to village stories.",
-    costumePrompt:
-      "wearing Tay traditional indigo shirt with standing collar, black trousers, woven cloth belt, dark indigo headscarf",
-    appearancePrompt:
-      "11-year-old boy, round face, warm light-brown skin, bright dark eyes, short black hair, lean build, confident smile",
-    thumbnailEmoji: "🐟",
-    createdById: teacher.id,
-  },
-  // =========================
-  // K'HO - ADULT
-  // =========================
-  {
-    name: "H'Brih",
-    nameEn: "H'Brih",
-    role: "adult",
-    gender: "female",
-    ethnicGroupId: khoGroup?.id ?? null,
-    descriptionVi:
-      "Người phụ nữ K'Ho 28 tuổi, nghệ nhân dệt thổ cẩm, hiền hậu và luôn sẵn sàng hướng dẫn trẻ em học nghề truyền thống.",
-    descriptionEn:
-      "28-year-old K'Ho woman, skilled brocade weaver, kind and patient, enjoys teaching children traditional weaving.",
-    costumePrompt:
-      "wearing K'Ho traditional red woven blouse with black and yellow geometric patterns, dark indigo skirt, silver bead necklace, woven sash",
-    appearancePrompt:
-      "28-year-old woman, oval face, warm brown skin, kind dark brown eyes, long black hair tied into a low bun, graceful posture, gentle smile",
-    thumbnailEmoji: "🧶",
-    createdById: teacher.id,
-  },
-
-  // =========================
-  // H'MÔNG - ADULT
-  // =========================
-  {
-    name: "A Chư",
-    nameEn: "A Chu",
-    role: "adult",
-    gender: "male",
-    ethnicGroupId: hmongGroup?.id ?? null,
-    descriptionVi:
-      "Người đàn ông H'Mông 31 tuổi, chăm chỉ làm nương, giỏi chế tác khèn và luôn giúp đỡ bà con trong bản.",
-    descriptionEn:
-      "31-year-old H'Mong man, hardworking farmer and khene craftsman, respected for helping people in his village.",
-    costumePrompt:
-      "wearing H'Mong traditional indigo jacket with colorful embroidered trim, black trousers, embroidered sash, black headscarf",
-    appearancePrompt:
-      "31-year-old man, square face, sun-tanned skin, dark eyes, short black hair, lean muscular build, calm and confident expression",
-    thumbnailEmoji: "🎋",
-    createdById: teacher.id,
-  },
-
-  // =========================
-  // M'NÔNG - ADULT
-  // =========================
-  {
-    name: "Y Điớp",
-    nameEn: "Y Diep",
-    role: "adult",
-    gender: "female",
-    ethnicGroupId: mnongGroup?.id ?? null,
-    descriptionVi:
-      "Người phụ nữ M'Nông 27 tuổi, chăm sóc rẫy cà phê của gia đình và nổi tiếng khéo dệt gùi mây tre.",
-    descriptionEn:
-      "27-year-old M'Nong woman, coffee farmer and skilled basket weaver, energetic and caring.",
-    costumePrompt:
-      "wearing M'Nong traditional black woven dress with red and white woven stripes, beaded necklace, woven belt",
-    appearancePrompt:
-      "27-year-old woman, oval face, warm brown skin, bright dark eyes, long black hair tied back, healthy build, warm friendly smile",
-    thumbnailEmoji: "☕",
-    createdById: teacher.id,
-  },
-
-  // =========================
-  // TÀY - ADULT
-  // =========================
-  {
-    name: "Nông Văn Hiếu",
-    nameEn: "Nong Van Hieu",
-    role: "adult",
-    gender: "male",
-    ethnicGroupId: tayGroup?.id ?? null,
-    descriptionVi:
-      "Người đàn ông Tày 33 tuổi, giáo viên địa phương, yêu văn hóa dân tộc và thường hướng dẫn trẻ em học tiếng Anh.",
-    descriptionEn:
-      "33-year-old Tay man, local teacher who enjoys preserving traditional culture while teaching English to children.",
-    costumePrompt:
-      "wearing Tay traditional indigo long tunic with standing collar, black trousers, woven cloth belt, dark indigo headscarf",
-    appearancePrompt:
-      "33-year-old man, oval face, warm light-brown skin, bright dark eyes, neatly trimmed short black hair, average build, confident smile",
-    thumbnailEmoji: "📚",
-    createdById: teacher.id,
-  },
-
-  // =========================
-  // MẠ - ELDER
-  // =========================
-  {
-    name: "Ama K'Bram",
-    nameEn: "Ama K'Bram",
-    role: "elder",
-    gender: "male",
-    ethnicGroupId: maGroup?.id ?? null,
-    descriptionVi:
-      "Già làng Mạ 68 tuổi, hiểu biết phong tục truyền thống, thường kể chuyện và dạy thanh niên gìn giữ văn hóa dân tộc.",
-    descriptionEn:
-      "68-year-old Ma village elder, knowledgeable about traditions, enjoys storytelling and teaching young people about their culture.",
-    costumePrompt:
-      "wearing Ma traditional indigo long tunic with simple woven red embroidery, dark trousers, rattan bracelet, woven shoulder cloth",
-    appearancePrompt:
-      "68-year-old man, weathered face, warm brown skin, kind dark eyes, gray-black hair, thin gray beard, upright posture, wise gentle expression",
-    thumbnailEmoji: "🪵",
-    createdById: teacher.id,
-  },
-
-  // =========================
-  // NÙNG - ELDER
-  // =========================
-  {
-    name: "Bà Then Lan",
-    nameEn: "Then Lan",
-    role: "elder",
-    gender: "female",
-    ethnicGroupId: nungGroup?.id ?? null,
-    descriptionVi:
-      "Nghệ nhân Nùng 65 tuổi, am hiểu hát Then và nghề dệt truyền thống, được trẻ em trong làng rất yêu quý.",
-    descriptionEn:
-      "65-year-old Nung artisan, experienced Then folk singer and traditional weaver, beloved by children in the village.",
-    costumePrompt:
-      "wearing Nung traditional indigo tunic with elegant embroidered cuffs, black skirt, silver necklace, indigo headscarf",
-    appearancePrompt:
-      "65-year-old woman, gentle oval face with light wrinkles, fair warm skin, kind dark eyes, gray-black hair neatly tied in a bun, warm welcoming smile",
-    thumbnailEmoji: "🎶",
-    createdById: teacher.id,
-  },
-];
+    // ── Người cao tuổi ────────────────────────────────────────────────────
+    {
+      name: "Ama K'Bram",
+      nameEn: "Ama K'Bram",
+      role: "elder",
+      gender: "male",
+      ethnicGroupId: maGroup?.id ?? null,
+      appearancePrompt:
+        "68-year-old Ma village elder, weathered face, warm brown skin, kind dark eyes, gray-black hair, thin gray beard, upright posture",
+      costumePrompt:
+        "Ma traditional costume",
+      descriptionVi:
+        "Già làng Mạ 68 tuổi, am hiểu phong tục, thích kể chuyện truyền thống.",
+      descriptionEn:
+        "68-year-old Ma village elder, storyteller and culture keeper.",
+      thumbnailEmoji: "🧒",
+      createdById: teacher.id,
+    },
+    {
+      name: "Bà Then Lan",
+      nameEn: "Then Lan",
+      role: "elder",
+      gender: "female",
+      ethnicGroupId: nungGroup?.id ?? null,
+      appearancePrompt:
+        "65-year-old Nung woman, gentle oval face with light wrinkles, fair warm skin, kind dark eyes, gray-black hair in a bun",
+      costumePrompt:
+        "Nung traditional costume",
+      descriptionVi:
+        "Nghệ nhân hát Then Nùng 65 tuổi, được trẻ em trong làng yêu quý.",
+      descriptionEn:
+        "65-year-old Nung Then folk singer and traditional weaver.",
+      thumbnailEmoji: "🧒",
+      createdById: teacher.id,
+    },
+  ];
 
   for (const c of charData) {
     const existing = await prisma.comicCharacter.findFirst({
@@ -461,7 +407,7 @@ const charData = [
       category: "village",
       thumbnailEmoji: "🌅",
       prompt:
-        "K'Ho highland village at sunrise, traditional wooden stilt houses with thatched roofs, green mountains in background, morning mist, golden warm light, lush tropical vegetation, peaceful rural scene, children book illustration style",
+        "K'Ho highland village at sunrise, traditional wooden stilt houses with thatched roofs, green mountains in background, morning mist, golden warm light, peaceful rural scene, children book illustration style",
       createdById: teacher.id,
     },
     {
@@ -471,7 +417,7 @@ const charData = [
       category: "festival",
       thumbnailEmoji: "🎉",
       prompt:
-        "K'Ho gong festival celebration ground, colorful triangle banners hanging between bamboo poles, central bonfire, circle of villagers in traditional costumes, night sky with stars, warm orange firelight, children book illustration style",
+        "K'Ho gong festival celebration ground, colorful triangle banners, central bonfire, circle of villagers in traditional costumes, night sky with stars, warm orange firelight, children book illustration style",
       createdById: teacher.id,
     },
     {
@@ -481,7 +427,7 @@ const charData = [
       category: "market",
       thumbnailEmoji: "🛒",
       prompt:
-        "vibrant highland ethnic market at morning, colorful fabric stalls with red and green awnings, vegetable and handicraft displays, mountain ethnic minority people in traditional costumes, mountains visible in background, children book illustration style",
+        "vibrant highland ethnic market at morning, colorful fabric stalls, vegetable and handicraft displays, ethnic minority people in traditional costumes, mountains in background, children book illustration style",
       createdById: teacher.id,
     },
     {
@@ -491,7 +437,7 @@ const charData = [
       category: "forest",
       thumbnailEmoji: "🌲",
       prompt:
-        "entrance to tropical highland forest, tall ancient trees with hanging vines, dappled sunlight through canopy, colorful tropical birds, lush green ferns and undergrowth, children book illustration style, vibrant colors",
+        "entrance to tropical highland forest, tall ancient trees with hanging vines, dappled sunlight through canopy, colorful tropical birds, lush green ferns, children book illustration style",
       createdById: teacher.id,
     },
     {
@@ -501,7 +447,7 @@ const charData = [
       category: "forest",
       thumbnailEmoji: "🌳",
       prompt:
-        "enormous ancient tree in highland forest, massive trunk with gnarled roots, children playing near the base, shafts of golden light through dense canopy, magical forest atmosphere, children book illustration style",
+        "enormous ancient tree in highland forest, massive trunk with gnarled roots, shafts of golden light through dense canopy, magical forest atmosphere, children book illustration style",
       createdById: teacher.id,
     },
     {
@@ -511,7 +457,7 @@ const charData = [
       category: "market",
       thumbnailEmoji: "🧵",
       prompt:
-        "colorful fabric stall at highland market, bolts of traditional ethnic patterned cloth in red blue and gold, friendly vendor in traditional costume, children admiring the colorful fabrics, children book illustration style",
+        "colorful fabric stall at highland market, bolts of traditional ethnic patterned cloth in red blue and gold, friendly vendor in traditional costume, children book illustration style",
       createdById: teacher.id,
     },
     {
@@ -521,7 +467,7 @@ const charData = [
       category: "market",
       thumbnailEmoji: "🥬",
       prompt:
-        "fresh vegetable stall at highland market, colorful arrangement of mountain vegetables and herbs, bamboo baskets full of produce, friendly market scene, morning sunlight, children book illustration style",
+        "fresh vegetable stall at highland market, colorful mountain vegetables and herbs, bamboo baskets full of produce, morning sunlight, children book illustration style",
       createdById: teacher.id,
     },
     {
@@ -531,7 +477,7 @@ const charData = [
       category: "village",
       thumbnailEmoji: "🌾",
       prompt:
-        "golden rice terrace harvest season in highland, rows of golden rice stalks ready for harvest, farmers in traditional costumes working together, beautiful mountain landscape background, children book illustration style",
+        "golden rice terrace harvest season in highland, rows of golden rice stalks ready for harvest, farmers in traditional costumes, beautiful mountain landscape background, children book illustration style",
       createdById: teacher.id,
     },
     {
@@ -541,7 +487,7 @@ const charData = [
       category: "house",
       thumbnailEmoji: "👘",
       prompt:
-        "inside traditional K'Ho wooden house, family preparing traditional costumes for festival, colorful ethnic garments hanging and being dressed, warm interior light, carved wooden details, children book illustration style",
+        "inside traditional K'Ho wooden house, family preparing traditional costumes for festival, colorful ethnic garments, warm interior light, carved wooden details, children book illustration style",
       createdById: teacher.id,
     },
     {
@@ -551,7 +497,7 @@ const charData = [
       category: "festival",
       thumbnailEmoji: "🥁",
       prompt:
-        "K'Ho gong and drum ceremony, musicians playing traditional gongs and drums around bonfire, night festival scene with dancing flames, villagers in traditional red costumes, children book illustration style",
+        "K'Ho gong and drum ceremony, musicians playing traditional gongs around bonfire, night festival scene with dancing flames, villagers in traditional red costumes, children book illustration style",
       createdById: teacher.id,
     },
     {
@@ -561,7 +507,7 @@ const charData = [
       category: "festival",
       thumbnailEmoji: "💃",
       prompt:
-        "highland traditional dance performance, circle of dancers in colorful ethnic costumes, graceful movements with arms raised, festival ground with lanterns and bonfire in background, children book illustration style",
+        "highland traditional dance performance, circle of dancers in colorful ethnic costumes, graceful movements, festival ground with lanterns and bonfire, children book illustration style",
       createdById: teacher.id,
     },
     {
@@ -571,7 +517,7 @@ const charData = [
       category: "forest",
       thumbnailEmoji: "🦜",
       prompt:
-        "colorful tropical birds in highland forest canopy, hornbills and kingfishers perched on branches, children looking up in wonder, lush green jungle background, gentle morning light, children book illustration style",
+        "colorful tropical birds in highland forest canopy, hornbills and kingfishers on branches, children looking up in wonder, lush green jungle background, gentle morning light, children book illustration style",
       createdById: teacher.id,
     },
     {
@@ -581,7 +527,7 @@ const charData = [
       category: "forest",
       thumbnailEmoji: "🦋",
       prompt:
-        "magical highland forest clearing full of colorful butterflies, children chasing butterflies through wildflowers, golden afternoon light filtering through trees, enchanting fairy-tale atmosphere, children book illustration style",
+        "magical highland forest clearing full of colorful butterflies, children chasing butterflies through wildflowers, golden afternoon light filtering through trees, children book illustration style",
       createdById: teacher.id,
     },
     {
@@ -591,7 +537,7 @@ const charData = [
       category: "market",
       thumbnailEmoji: "🤝",
       prompt:
-        "friendly bargaining scene at highland market, ethnic minority vendor and young customer discussing price with smiles, colorful market goods displayed, lively market atmosphere, children book illustration style",
+        "friendly bargaining scene at highland market, ethnic minority vendor and young customer discussing price with smiles, colorful market goods, lively market atmosphere, children book illustration style",
       createdById: teacher.id,
     },
   ];
@@ -601,9 +547,7 @@ const charData = [
       where: { key: b.key },
     });
     if (!existing) {
-      await prisma.comicBackground.create({
-        data: b,
-      });
+      await prisma.comicBackground.create({ data: b });
     }
   }
 }

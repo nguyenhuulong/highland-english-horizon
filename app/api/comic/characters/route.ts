@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { canCreateComicResource } from "@/lib/rbac";
+import { canManageComicResources } from "@/lib/rbac";
 
 export async function GET(req: NextRequest) {
   try {
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user || !canCreateComicResource(session.user.role ?? "")) {
+    if (!session?.user || session.user.role !== "TEACHER") {
       return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
     const body = await req.json();

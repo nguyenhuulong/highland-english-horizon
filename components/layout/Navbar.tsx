@@ -7,39 +7,29 @@ import { useState } from "react";
 import { useSettings } from "@/lib/hooks";
 import { ROLE_HOME, ROLE_LABELS } from "@/lib/rbac";
 
-const GUEST_LINKS = [
-  { href: "/", label: "Trang chủ", icon: "🏠" },
-  { href: "/library", label: "Bài học mẫu", icon: "📚" },
-];
-
-const STUDENT_LINKS = [
+const PUBLIC_LINKS = [
   { href: "/library", label: "Thư viện", icon: "📚" },
   { href: "/games", label: "Trò chơi", icon: "🎮" },
+];
+const STUDENT_ONLY_LINKS = [
   { href: "/progress", label: "Tiến độ", icon: "📊" },
 ];
-
-const TEACHER_LINKS = [
-  { href: "/dashboard/teacher", label: "Bảng điều khiển", icon: "🏠" },
-  { href: "/creator", label: "Tạo bài học", icon: "✏️" },
+const TEACHER_ONLY_LINKS = [
+  { href: "/dashboard/teacher/stories", label: "Tạo bài học", icon: "✏️" },
+  { href: "/dashboard/teacher/characters", label: "Nhân vật", icon: "🧒" },
+  { href: "/dashboard/teacher/backgrounds", label: "Bối cảnh", icon: "🌄" },
 ];
-
-const ADMIN_LINKS = [
-  { href: "/dashboard/admin", label: "Quản trị", icon: "🛡️" },
+const ADMIN_ONLY_LINKS = [
+  { href: "/dashboard/admin/users", label: "Người dùng", icon: "👥" },
 ];
 
 function getNavLinks(role?: string) {
+  if (!role) return PUBLIC_LINKS;
   switch (role) {
-    case "STUDENT":
-      return STUDENT_LINKS;
-
-    case "TEACHER":
-      return [...STUDENT_LINKS, ...TEACHER_LINKS];
-
-    case "ADMIN":
-      return [...STUDENT_LINKS, ...TEACHER_LINKS, ...ADMIN_LINKS];
-
-    default:
-      return GUEST_LINKS;
+    case "STUDENT": return [...PUBLIC_LINKS, ...STUDENT_ONLY_LINKS];
+    case "TEACHER": return [...PUBLIC_LINKS, ...TEACHER_ONLY_LINKS];
+    case "ADMIN": return [...PUBLIC_LINKS, ...ADMIN_ONLY_LINKS];
+    default: return PUBLIC_LINKS;
   }
 }
 
@@ -49,137 +39,162 @@ export default function Navbar() {
   const { data: session, status } = useSession();
   const navLinks = getNavLinks(session?.user?.role);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <nav
-      style={{
+    <>
+      <nav style={{
         position: "sticky", top: 0, zIndex: 100,
         background: "var(--bg-card)", borderBottom: "2px solid var(--border)",
-        padding: "0 24px", display: "flex", alignItems: "center",
-        height: 64, gap: 16,
+        padding: "0 16px", display: "flex", alignItems: "center",
+        height: 64, gap: 12,
         boxShadow: "0 2px 12px rgba(232,100,58,0.08)",
-      }}
-    >
-      <Link
-        href="/"
-        style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none", color: "var(--text)" }}
-      >
-        <div
-          style={{
-            width: 40, height: 40, borderRadius: 10,
-            background: "linear-gradient(135deg, var(--primary), var(--accent))",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            fontSize: "1.3rem", flexShrink: 0,
-          }}
-        >
-          🌄
-        </div>
-        <div>
-          <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "1.1rem", color: "var(--primary)" }}>
-            Highland English Horizon
+      }}>
+        {/* Logo */}
+        <Link href="/" style={{ display: "flex", alignItems: "center", gap: 8, textDecoration: "none", color: "var(--text)", flexShrink: 0 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: "linear-gradient(135deg, var(--primary), var(--accent))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem" }}>
+            🌄
           </div>
-          <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", fontWeight: 600, letterSpacing: "0.5px" }}>
-            HỌC TIẾNG ANH · VĂN HÓA TÂY NGUYÊN
+          <div className="nav-logo-text">
+            <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "1rem", color: "var(--primary)", whiteSpace: "nowrap" }}>
+              Highland English Horizon
+            </div>
+            <div style={{ fontSize: "0.6rem", color: "var(--text-muted)", fontWeight: 600, letterSpacing: "0.5px", whiteSpace: "nowrap" }}>
+              HỌC TIẾNG ANH · VĂN HÓA TÂY NGUYÊN
+            </div>
           </div>
-        </div>
-      </Link>
-
-      <div style={{ display: "flex", gap: 4, marginLeft: "auto", alignItems: "center" }}>
-        {navLinks.map((link) => {
-          const isActive = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
-          return (
-            <Link
-              key={link.href}
-              href={link.href}
-              style={{
-                display: "flex", alignItems: "center", gap: 6,
-                padding: "8px 14px", borderRadius: 10,
-                textDecoration: "none",
-                color: isActive ? "var(--primary)" : "var(--text-light)",
-                background: isActive ? "var(--surface)" : "transparent",
-                fontWeight: 600, fontSize: "0.9rem",
-                transition: "all 0.2s",
-              }}
-            >
-              <span style={{ fontSize: "1.1rem" }}>{link.icon}</span>
-              <span className="hidden md:inline">{link.label}</span>
-            </Link>
-          );
-        })}
-      </div>
-
-      <button
-        onClick={toggleTheme}
-        title="Đổi giao diện"
-        style={{
-          width: 38, height: 38, borderRadius: 10,
-          border: "1.5px solid var(--border)", background: "var(--surface)",
-          cursor: "pointer", fontSize: "1.1rem",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          transition: "all 0.2s", color: "var(--text)", flexShrink: 0,
-        }}
-      >
-        {settings.theme === "dark" ? "☀️" : "🌙"}
-      </button>
-
-      {status === "authenticated" && session?.user ? (
-        <div style={{ position: "relative" }}>
-          <button
-            onClick={() => setMenuOpen((v) => !v)}
-            style={{
-              display: "flex", alignItems: "center", gap: 8, padding: "6px 12px 6px 6px",
-              borderRadius: 10, border: "1.5px solid var(--border)", background: "var(--surface)",
-              cursor: "pointer", fontFamily: "var(--font-body)",
-            }}
-          >
-            <span style={{ fontSize: "1.4rem", width: 30, height: 30, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: "var(--bg-card)" }}>
-              {session.user.avatar || "🧑"}
-            </span>
-            <div style={{ textAlign: "left" }}>
-              <div style={{ fontWeight: 700, fontSize: "0.85rem", color: "var(--text)" }}>{session.user.name}</div>
-              <div style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: 600 }}>
-                {ROLE_LABELS[session.user.role] || session.user.role}
-              </div>
-            </div>
-          </button>
-
-          {menuOpen && (
-            <div
-              style={{
-                position: "absolute", top: "calc(100% + 8px)", right: 0,
-                background: "var(--bg-card)", border: "1.5px solid var(--border)",
-                borderRadius: 12, boxShadow: "var(--shadow-lg)", minWidth: 180,
-                overflow: "hidden", zIndex: 200,
-              }}
-            >
-              <Link
-                href={ROLE_HOME[session.user.role] || "/dashboard/student"}
-                onClick={() => setMenuOpen(false)}
-                style={{ display: "block", padding: "10px 16px", textDecoration: "none", color: "var(--text)", fontWeight: 600, fontSize: "0.9rem", borderBottom: "1px solid var(--border)" }}
-              >
-                📊 Bảng điều khiển
-              </Link>
-              <button
-                onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/" }); }}
-                style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 16px", border: "none", background: "none", color: "#F44336", fontWeight: 600, fontSize: "0.9rem", cursor: "pointer", fontFamily: "var(--font-body)" }}
-              >
-                🚪 Đăng xuất
-              </button>
-            </div>
-          )}
-        </div>
-      ) : status === "unauthenticated" ? (
-        <Link
-          href="/login"
-          style={{
-            padding: "8px 18px", borderRadius: 10, background: "var(--primary)",
-            color: "white", textDecoration: "none", fontWeight: 700, fontSize: "0.9rem",
-            flexShrink: 0,
-          }}
-        >
-          Đăng nhập
         </Link>
-      ) : null}
-    </nav>
+
+        {/* Desktop nav links */}
+        <div className="nav-links-desktop" style={{ display: "flex", gap: 2, marginLeft: "auto", alignItems: "center" }}>
+          {navLinks.map((link) => {
+            const isActive = pathname.startsWith(link.href);
+            return (
+              <Link key={link.href} href={link.href}
+                style={{
+                  display: "flex", alignItems: "center", gap: 5,
+                  padding: "7px 11px", borderRadius: 10, textDecoration: "none",
+                  color: isActive ? "var(--primary)" : "var(--text-light)",
+                  background: isActive ? "var(--surface)" : "transparent",
+                  fontWeight: 600, fontSize: "0.88rem", whiteSpace: "nowrap",
+                }}>
+                <span>{link.icon}</span>
+                <span>{link.label}</span>
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Theme toggle */}
+        <button onClick={toggleTheme}
+          style={{ width: 36, height: 36, borderRadius: 10, border: "1.5px solid var(--border)", background: "var(--surface)", cursor: "pointer", fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          {settings.theme === "dark" ? "☀️" : "🌙"}
+        </button>
+
+        {/* User menu (desktop) */}
+        {status === "authenticated" && session?.user ? (
+          <div style={{ position: "relative", flexShrink: 0 }}>
+            <button onClick={() => setMenuOpen((v) => !v)}
+              style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 10px 5px 5px", borderRadius: 10, border: "1.5px solid var(--border)", background: "var(--surface)", cursor: "pointer", fontFamily: "var(--font-body)" }}>
+              <span style={{ fontSize: "1.3rem", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "50%", background: "var(--bg-card)" }}>
+                {session.user.avatar || "🧑"}
+              </span>
+              <div style={{ textAlign: "left" }} className="nav-user-text">
+                <div style={{ fontWeight: 700, fontSize: "0.82rem", color: "var(--text)", whiteSpace: "nowrap" }}>{session.user.name}</div>
+                <div style={{ fontSize: "0.68rem", color: "var(--text-muted)", fontWeight: 600 }}>
+                  {ROLE_LABELS[session.user.role] || session.user.role}
+                </div>
+              </div>
+            </button>
+            {menuOpen && (
+              <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "var(--bg-card)", border: "1.5px solid var(--border)", borderRadius: 12, boxShadow: "var(--shadow-lg)", minWidth: 180, overflow: "hidden", zIndex: 200 }}>
+                <Link href={ROLE_HOME[session.user.role] || "/dashboard/student"} onClick={() => setMenuOpen(false)}
+                  style={{ display: "block", padding: "10px 16px", textDecoration: "none", color: "var(--text)", fontWeight: 600, fontSize: "0.9rem", borderBottom: "1px solid var(--border)" }}>
+                  📊 Bảng điều khiển
+                </Link>
+                <button onClick={() => { setMenuOpen(false); signOut({ callbackUrl: "/" }); }}
+                  style={{ display: "block", width: "100%", textAlign: "left", padding: "10px 16px", border: "none", background: "none", color: "#F44336", fontWeight: 600, fontSize: "0.9rem", cursor: "pointer", fontFamily: "var(--font-body)" }}>
+                  🚪 Đăng xuất
+                </button>
+              </div>
+            )}
+          </div>
+        ) : status === "unauthenticated" ? (
+          <Link href="/login" className="nav-login-btn"
+            style={{ padding: "7px 16px", borderRadius: 10, background: "var(--primary)", color: "white", textDecoration: "none", fontWeight: 700, fontSize: "0.88rem", flexShrink: 0, whiteSpace: "nowrap" }}>
+            Đăng nhập
+          </Link>
+        ) : null}
+
+        {/* Hamburger (mobile) */}
+        <button className="nav-hamburger" onClick={() => setMobileOpen((v) => !v)}
+          style={{ display: "none", width: 36, height: 36, borderRadius: 10, border: "1.5px solid var(--border)", background: "var(--surface)", cursor: "pointer", fontSize: "1.1rem", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+          {mobileOpen ? "✕" : "☰"}
+        </button>
+      </nav>
+
+      {/* Mobile dropdown */}
+      {mobileOpen && (
+        <div className="nav-mobile-menu" style={{
+          position: "fixed", top: 64, left: 0, right: 0, zIndex: 99,
+          background: "var(--bg-card)", borderBottom: "2px solid var(--border)",
+          padding: "12px 16px", display: "flex", flexDirection: "column", gap: 4,
+          boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+        }}>
+          {navLinks.map((link) => {
+            const isActive = pathname.startsWith(link.href);
+            return (
+              <Link key={link.href} href={link.href} onClick={() => setMobileOpen(false)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10,
+                  padding: "10px 14px", borderRadius: 10, textDecoration: "none",
+                  color: isActive ? "var(--primary)" : "var(--text)",
+                  background: isActive ? "var(--surface)" : "transparent",
+                  fontWeight: 600, fontSize: "0.95rem",
+                }}>
+                <span>{link.icon}</span>
+                <span>{link.label}</span>
+              </Link>
+            );
+          })}
+
+          <div style={{ borderTop: "1px solid var(--border)", marginTop: 4, paddingTop: 8, display: "flex", gap: 8, alignItems: "center" }}>
+            {status === "authenticated" && session?.user ? (
+              <>
+                <span style={{ flex: 1, fontWeight: 700, fontSize: "0.88rem" }}>
+                  {session.user.avatar} {session.user.name}
+                </span>
+                <Link href={ROLE_HOME[session.user.role] || "/dashboard/student"} onClick={() => setMobileOpen(false)}
+                  style={{ padding: "7px 12px", borderRadius: 8, background: "var(--surface)", border: "1.5px solid var(--border)", textDecoration: "none", color: "var(--text)", fontWeight: 600, fontSize: "0.82rem" }}>
+                  📊 Dashboard
+                </Link>
+                <button onClick={() => { setMobileOpen(false); signOut({ callbackUrl: "/" }); }}
+                  style={{ padding: "7px 12px", borderRadius: 8, border: "none", background: "#fff5f5", color: "#dc2626", fontWeight: 600, fontSize: "0.82rem", cursor: "pointer", fontFamily: "var(--font-body)" }}>
+                  Đăng xuất
+                </button>
+              </>
+            ) : (
+              <Link href="/login" onClick={() => setMobileOpen(false)}
+                style={{ flex: 1, textAlign: "center", padding: "10px", borderRadius: 10, background: "var(--primary)", color: "white", textDecoration: "none", fontWeight: 700 }}>
+                Đăng nhập
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @media (max-width: 768px) {
+          .nav-links-desktop { display: none !important; }
+          .nav-hamburger { display: flex !important; }
+          .nav-logo-text div:last-child { display: none; }
+          .nav-user-text { display: none; }
+          .nav-login-btn { display: none !important; }
+        }
+        @media (max-width: 480px) {
+          .nav-logo-text div:first-child { font-size: 0.85rem !important; }
+        }
+      `}</style>
+    </>
   );
 }

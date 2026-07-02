@@ -7,7 +7,7 @@ import { uploadFromUrl, makeFileName } from "@/lib/storage";
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user || !["TEACHER", "ADMIN"].includes(session.user.role ?? "")) {
+    if (!session?.user || !["TEACHER"].includes(session.user.role ?? "")) {
       return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
 

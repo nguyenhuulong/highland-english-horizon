@@ -27,85 +27,82 @@ enum LessonSource {
 }
 
 model User {
-  id                String                 @id @default(cuid())
-  name              String
-  email             String                 @unique
-  password          String
-  role              Role                   @default(STUDENT)
-  ethnicGroup       String?
-  ageGroup          Int?
-  avatar            String                 @default("🧒")
-  xp                Int                    @default(0)
-  streak            Int                    @default(0)
-  lastActiveAt      DateTime?
-  createdAt         DateTime               @default(now())
-  updatedAt         DateTime               @updatedAt
-  aiLogs            AIGenerationLog[]
-  aiTemplates       AITemplate[]
-  lessonsAuthored   Lesson[]               @relation("LessonAuthor")
-  progress          LessonProgress[]
-  missionAttempts   MissionAttempt[]
-  pronunciation     PronunciationAttempt[]
-  badges            UserBadge[]
-  comicCharacters   ComicCharacter[]  @relation("CharacterCreator")
-  comicBackgrounds  ComicBackground[] @relation("BackgroundCreator")
-  comicStories      ComicStory[]
+  id               String                 @id @default(cuid())
+  name             String
+  email            String                 @unique
+  password         String
+  role             Role                   @default(STUDENT)
+  ethnicGroup      String?
+  ageGroup         Int?
+  avatar           String                 @default("🧒")
+  xp               Int                    @default(0)
+  streak           Int                    @default(0)
+  lastActiveAt     DateTime?
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  aiLogs           AIGenerationLog[]
+  aiTemplates      AITemplate[]
+  lessonsAuthored  Lesson[]               @relation("LessonAuthor")
+  progress         LessonProgress[]
+  missionAttempts  MissionAttempt[]
+  pronunciation    PronunciationAttempt[]
+  badges           UserBadge[]
+  comicCharacters  ComicCharacter[]       @relation("CharacterCreator")
+  comicBackgrounds ComicBackground[]      @relation("BackgroundCreator")
 }
 
 model EthnicGroup {
-  id           String            @id @default(cuid())
-  slug         String            @unique
-  nameVi       String
-  nameEn       String
-  emoji        String            @default("🌄")
-  description  String            @db.Text
-  costume      Json
-  festivals    Json
-  instruments  Json
-  crafts       Json
-  cuisine      Json
-  locations    Json
-  architecture String            @db.Text
-
-  lessons      Lesson[]
-  comicBackgrounds  ComicBackground[]
-  comicCharacters   ComicCharacter[]
-  comicStories ComicStory[]
-
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
+  id               String            @id @default(cuid())
+  slug             String            @unique
+  nameVi           String
+  nameEn           String
+  emoji            String            @default("🌄")
+  description      String            @db.Text
+  costume          Json
+  festivals        Json
+  instruments      Json
+  crafts           Json
+  cuisine          Json
+  locations        Json
+  architecture     String            @db.Text
+  lessons          Lesson[]
+  comicBackgrounds ComicBackground[]
+  comicCharacters  ComicCharacter[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 }
 
+// Lesson là entity DUY NHẤT — tích hợp cả nội dung học và comic
 model Lesson {
-  id              String                 @id @default(cuid())
-  titleVi         String
-  titleEn         String
-  topic           String
-  level           Int                    @default(1)
-  ageGroup        Int                    @default(10)
-  color           String                 @default("#E8643A")
-  emoji           String                 @default("📖")
-  descriptionVi   String
-  vocabulary      Json
-  panels          Json
-  quiz            Json
-  missions        Json                   @default("[]")
-  status          LessonStatus           @default(DRAFT)
-  source          LessonSource           @default(MANUAL)
-  authorId        String
-  author          User                   @relation("LessonAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  ethnicGroupId   String?
-  ethnicGroup     EthnicGroup?           @relation(fields: [ethnicGroupId], references: [id])
-  characterIds    Json                   @default("[]")
-  backgroundIds   Json                   @default("[]")
-  templateKey     String?
-  progress        LessonProgress[]
-  pronunciation   PronunciationAttempt[]
+  id            String                 @id @default(cuid())
+  titleVi       String
+  titleEn       String
+  topic         String
+  level         Int                    @default(1)
+  ageGroup      Int                    @default(10)
+  color         String                 @default("#E8643A")
+  emoji         String                 @default("📖")
+  descriptionVi String
+  vocabulary    Json
+  panels        Json
+  quiz          Json
+  missions      Json                   @default("[]")
+  status        LessonStatus           @default(DRAFT)
+  source        LessonSource           @default(MANUAL)
+  authorId      String
+  author        User                   @relation("LessonAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  ethnicGroupId String?
+  ethnicGroup   EthnicGroup?           @relation(fields: [ethnicGroupId], references: [id])
+  // Comic metadata — chỉ có khi source=COMIC
+  characterIds  Json                   @default("[]")
+  backgroundIds Json                   @default("[]")
+  templateKey   String?
+  progress      LessonProgress[]
+  pronunciation PronunciationAttempt[]
   missionAttempts MissionAttempt[]
-  aiLogs          AIGenerationLog[]
-
-  createdAt       DateTime               @default(now())
-  updatedAt       DateTime               @updatedAt
+  aiLogs        AIGenerationLog[]
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
 }
 
 model LessonProgress {
@@ -120,10 +117,8 @@ model LessonProgress {
   matchScore Int?
   pronScore  Int?
   xpEarned   Int       @default(0)
-
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson     Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  
   @@unique([userId, lessonId])
 }
 
@@ -135,7 +130,6 @@ model PronunciationAttempt {
   transcript String
   score      Int
   createdAt  DateTime @default(now())
-
   lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -147,7 +141,6 @@ model MissionAttempt {
   missionId String
   correct   Boolean
   createdAt DateTime @default(now())
-
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 }
@@ -159,7 +152,6 @@ model Badge {
   name        String
   description String
   criteria    Json
-
   users       UserBadge[]
 }
 
@@ -168,10 +160,8 @@ model UserBadge {
   userId   String
   badgeId  String
   earnedAt DateTime @default(now())
-
   badge    Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   @@unique([userId, badgeId])
 }
 
@@ -192,7 +182,6 @@ model AIGenerationLog {
   input     Json
   status    String   @default("success")
   createdAt DateTime @default(now())
-
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson    Lesson?  @relation(fields: [lessonId], references: [id])
 }
@@ -217,7 +206,6 @@ model ComicCharacter {
   createdBy         User         @relation("CharacterCreator", fields: [createdById], references: [id], onDelete: Cascade)
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
-
   @@index([ethnicGroupId])
 }
 
@@ -238,34 +226,6 @@ model ComicBackground {
   createdBy         User         @relation("BackgroundCreator", fields: [createdById], references: [id], onDelete: Cascade)
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
-
   @@index([key])
   @@index([category])
-}
-
-model ComicStory {
-  id              String       @id @default(cuid())
-  title           String
-  titleEn         String
-  topic           String
-  templateKey     String       @default("INTRO_4")
-  status          String       @default("draft") // draft | generating | ready | published
-  ethnicGroupId   String?
-  ethnicGroup     EthnicGroup? @relation(fields: [ethnicGroupId], references: [id], onDelete: SetNull)
-  authorId        String
-  author          User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  panels          Json         @default("[]")
-  vocabulary      Json         @default("[]")
-  quiz            Json         @default("[]")
-  missions        Json         @default("[]")
-  characterIds    Json         @default("[]")
-  backgroundIds   Json         @default("[]")
-  lessonId        String?      @unique
-
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-
-  @@index([authorId])
-  @@index([ethnicGroupId])
-  @@index([status])
 }

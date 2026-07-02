@@ -25,7 +25,12 @@ export default function DashboardSidebar({ items, title }: { items: NavItem[]; t
       </div>
       <nav style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {items.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          const isActive =
+            pathname === item.href ||
+            (pathname.startsWith(item.href + "/") &&
+              item.href !== "/dashboard/teacher" &&
+              item.href !== "/dashboard/admin" &&
+              item.href !== "/dashboard/student");
           return (
             <Link
               key={item.href}

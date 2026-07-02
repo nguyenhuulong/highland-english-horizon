@@ -3,7 +3,7 @@ import { z } from "zod";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateLessonWithAI } from "@/lib/ai";
-import { isStaff } from "@/lib/rbac";
+import { canCreateLessons } from "@/lib/rbac";
 
 const schema = z.object({
   topic: z.string().min(2),
@@ -16,7 +16,7 @@ const schema = z.object({
 
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user || !isStaff(session.user.role)) {
+  if (!session?.user || !canCreateLessons(session.user.role)) {
     return NextResponse.json(
       { error: "Không có quyền truy cập" },
       { status: 403 },

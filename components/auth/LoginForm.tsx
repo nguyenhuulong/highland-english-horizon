@@ -28,12 +28,25 @@ export default function LoginForm() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await signIn("credentials", {
+    setLoading(true);
+    setError("");
+    const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+    const res = await signIn("credentials", {
       email,
       password,
-      redirect: true,
-      callbackUrl: "/dashboard",
+      redirect: false,
     });
+    setLoading(false);
+    if (!res) {
+      setError("Lỗi không xác định, thử lại sau.");
+      return;
+    }
+    if (res.error) {
+      setError("Email hoặc mật khẩu không đúng.");
+      return;
+    }
+    router.push(callbackUrl);
+    router.refresh();
   };
 
   return (

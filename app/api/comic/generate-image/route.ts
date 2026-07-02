@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
 import { generateComicPanel } from "@/lib/imageGen";
 import { uploadFromUrl, makeFileName } from "@/lib/storage";
 import type { ComicCharacterDTO, ComicBackgroundDTO } from "@/types";
@@ -125,7 +124,7 @@ export async function POST(req: NextRequest) {
         );
         await prisma.lesson.update({
           where: { id: lessonId },
-          data: { panels: updated as unknown as Prisma.InputJsonValue },
+          data: { panels: updated as never[] },
         });
       }
     }

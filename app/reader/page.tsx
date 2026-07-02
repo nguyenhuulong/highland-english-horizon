@@ -330,7 +330,7 @@ function ReaderInner() {
           <div>
             <div key={panelIdx} style={{ borderRadius: 24, overflow: "hidden", border: "2px solid var(--border)", boxShadow: "var(--shadow)", animation: "slideUp 0.3s ease", background: "var(--bg-card)" }}>
               {/* Scene */}
-              <div style={{ position: "relative", minHeight: 280, background: panel.bg }}>
+              <div style={{ position: "relative", background: panel.bg }}>
                 <ComicPanel
                   panel={panel}
                   characters={comicCharacters}

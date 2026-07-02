@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { showToast } from "@/components/ui/Feedback";
-import type { ComicCharacterDTO, ComicBackgroundDTO, ComicStoryDTO, StoryTemplateKey } from "@/types";
+import type { ComicCharacterDTO, ComicBackgroundDTO, StoryTemplateKey } from "@/types";
 
 interface Props {
   ethnicGroups: { id: string; slug: string; nameVi: string; nameEn: string; emoji: string }[];
-  onStoryReady?: (story: ComicStoryDTO, lessonId?: string) => void;
+  onStoryReady?: (lessonId: string) => void;
 }
 
 const TEMPLATES: {
@@ -64,37 +64,30 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
     if (selectedCharIds.length === 0) { showToast("Chọn ít nhất 1 nhân vật", "error"); return; }
 
     setGenerating(true);
-    setGenStep("Đang tạo bài học trong hệ thống...");
+    setGenStep("AI đang viết kịch bản truyện tranh...");
 
     try {
-      const createRes = await fetch("/api/comic/stories", {
+      const res = await fetch("/api/lessons/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          title: titleVi || topic.slice(0, 80),
-          titleEn: topic.slice(0, 80),
           topic,
+          titleVi: titleVi || undefined,
           templateKey: selectedTemplate,
           ethnicGroupId: selectedEthnic || null,
           characterIds: selectedCharIds,
           backgroundIds: selectedBgIds,
         }),
       });
-      if (!createRes.ok) throw new Error("Không thể tạo bài học");
-      const { story } = await createRes.json();
-
-      setGenStep("AI đang viết kịch bản truyện tranh...");
-
-      const genRes = await fetch(`/api/comic/stories/${story.id}/generate`, { method: "POST" });
-      if (!genRes.ok) {
-        const err = await genRes.json();
+      if (!res.ok) {
+        const err = await res.json();
         throw new Error(err.error || "Lỗi sinh bài học");
       }
-      const { story: readyStory, lessonId } = await genRes.json();
+      const { lesson } = await res.json();
 
       setGenStep("Hoàn thành!");
-      showToast(lessonId ? "Bài học đã được xuất bản vào thư viện! 🎉" : "Truyện đã sẵn sàng! 🎉", "success");
-      onStoryReady?.(readyStory, lessonId);
+      showToast("Bài học đã được xuất bản vào thư viện! 🎉", "success");
+      onStoryReady?.(lesson.id);
       setStep("setup");
       setTopic(""); setTitleVi(""); setSelectedCharIds([]); setSelectedBgIds([]);
     } catch (err) {
@@ -157,7 +150,7 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
               Tên bài học (để trống AI sẽ tự đặt)
             </label>
             <input value={titleVi} onChange={(e) => setTitleVi(e.target.value)} style={inp}
-              placeholder="Tên bài học tiếng Việt — hấp dẫn, không generic" />
+              placeholder="Tên bài học tiếng Việt" />
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>

@@ -11,8 +11,7 @@ interface Props {
 
 const emptyForm = {
   name: "", nameEn: "", role: "child", gender: "female",
-  ethnicGroupId: "", descriptionVi: "", descriptionEn: "",
-  costumePrompt: "", appearancePrompt: "", thumbnailEmoji: "🧒",
+  ethnicGroupId: "", appearancePrompt: "", costumePrompt: "",
 };
 
 const ROLES = [
@@ -45,9 +44,9 @@ export default function CharacterManager({ initialCharacters, ethnicGroups }: Pr
   function openEdit(c: ComicCharacterDTO) {
     setForm({
       name: c.name, nameEn: c.nameEn, role: c.role, gender: c.gender,
-      ethnicGroupId: c.ethnicGroupId ?? "", descriptionVi: c.descriptionVi,
-      descriptionEn: c.descriptionEn, costumePrompt: c.costumePrompt,
-      appearancePrompt: c.appearancePrompt, thumbnailEmoji: c.thumbnailEmoji,
+      ethnicGroupId: c.ethnicGroupId ?? "",
+      costumePrompt: c.costumePrompt,
+      appearancePrompt: c.appearancePrompt,
     });
     setPendingRefUrl(c.referenceImageUrl ?? null);
     setEditId(c.id);
@@ -72,7 +71,7 @@ export default function CharacterManager({ initialCharacters, ethnicGroups }: Pr
   }
 
   async function handleSave() {
-    if (!form.name || !form.descriptionVi || !form.costumePrompt || !form.appearancePrompt) {
+    if (!form.name || !form.costumePrompt || !form.appearancePrompt) {
       showToast("Vui lòng điền đầy đủ các trường bắt buộc", "error");
       return;
     }
@@ -85,6 +84,9 @@ export default function CharacterManager({ initialCharacters, ethnicGroups }: Pr
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
+          descriptionVi: form.appearancePrompt,
+          descriptionEn: form.appearancePrompt,
+          thumbnailEmoji: '🧒',
           ethnicGroupId: form.ethnicGroupId || null,
           referenceImageUrl: pendingRefUrl || null,
         }),
@@ -149,6 +151,8 @@ export default function CharacterManager({ initialCharacters, ethnicGroups }: Pr
     fontSize: "0.78rem", fontWeight: 700, color: "var(--text-muted)", marginBottom: 4, display: "block",
   };
 
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+
   return (
     <div>
       {/* Toolbar */}
@@ -173,64 +177,84 @@ export default function CharacterManager({ initialCharacters, ethnicGroups }: Pr
       )}
 
       {/* Grid cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 16 }}>
         {displayed.map((c) => (
           <div key={c.id} style={{
             background: "var(--bg-card)", borderRadius: 16, border: "1.5px solid var(--border)",
             overflow: "hidden", boxShadow: "var(--shadow)",
+            display: "flex", flexDirection: "column",
           }}>
-            {/* Ảnh character sheet hoặc reference */}
-            <div style={{ height: 200, position: "relative", background: "var(--surface)", overflow: "hidden" }}>
+            {/* Ảnh full width, tỉ lệ 4:3 cố định */}
+            <div
+              style={{ background: "var(--surface)" }}
+              onMouseEnter={() => setHoveredId(c.id)}
+              onMouseLeave={() => setHoveredId(null)}
+            >
               {c.characterImageUrl ? (
                 <img src={c.characterImageUrl} alt={c.name}
-                  style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                  style={{
+                    width: "100%", height: "auto", display: "block",
+                    opacity: hoveredId === c.id ? 1 : 0.8,
+                    cursor: hoveredId === c.id ? "pointer" : "default",
+                    transition: "opacity 0.2s ease",
+                  }} />
               ) : c.referenceImageUrl ? (
                 <>
                   <img src={c.referenceImageUrl} alt="reference"
-                    style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.5 }} />
+                    style={{ width: "100%", height: "auto", display: "block" }} />
                   <div style={{
-                    position: "absolute", inset: 0, display: "flex", alignItems: "center",
-                    justifyContent: "center", fontSize: "2.5rem"
+                    height: 160, display: "flex", alignItems: "center",
+                    justifyContent: "center", fontSize: "4rem"
                   }}>{c.thumbnailEmoji}</div>
                 </>
               ) : (
                 <div style={{
-                  height: "100%", display: "flex", alignItems: "center",
+                  position: "absolute", inset: 0, display: "flex", alignItems: "center",
                   justifyContent: "center", fontSize: "4rem"
                 }}>{c.thumbnailEmoji}</div>
               )}
-              {generatingId === c.id && (
-                <div style={{
-                  position: "absolute", inset: 0, background: "rgba(255,255,255,0.85)",
-                  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8
-                }}>
+              <div style={{ background: "var(--surface)", position: "relative" }}>
+                {generatingId === c.id && (
                   <div style={{
-                    width: 36, height: 36, border: "3px solid var(--border)",
-                    borderTopColor: "var(--primary)", borderRadius: "50%", animation: "spin 0.8s linear infinite"
-                  }} />
-                  <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)" }}>AI đang vẽ...</span>
-                </div>
-              )}
+                    position: "absolute", inset: 0, background: "rgba(255,255,255,0.85)",
+                    display: "flex", flexDirection: "column", alignItems: "center",
+                    justifyContent: "center", gap: 8, minHeight: 80,
+                  }}>
+                    <div style={{
+                      width: 36, height: 36, border: "3px solid var(--border)",
+                      borderTopColor: "var(--primary)", borderRadius: "50%", animation: "spin 0.8s linear infinite"
+                    }} />
+                    <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--text-muted)" }}>AI đang vẽ...</span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div style={{ padding: 14 }}>
-              <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "1rem" }}>{c.name}</div>
-                  <div style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>{c.nameEn}</div>
-                  <div style={{ display: "flex", gap: 5, marginTop: 5, flexWrap: "wrap" }}>
-                    {[c.role, c.gender, ethnicGroups.find((g) => g.id === c.ethnicGroupId)?.nameVi].filter(Boolean).map((tag) => (
-                      <span key={tag} style={{
-                        background: "var(--surface)", borderRadius: 6,
-                        padding: "2px 8px", fontSize: "0.72rem", fontWeight: 600
-                      }}>{tag}</span>
-                    ))}
-                  </div>
+            {/* Nội dung — flex:1 để card cùng hàng cao bằng nhau */}
+            <div style={{ padding: 14, display: "flex", flexDirection: "column", flex: 1 }}>
+              <div>
+                <div style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: "1rem" }}>{c.name}</div>
+                <div style={{ color: "var(--text-muted)", fontSize: "0.8rem" }}>{c.nameEn}</div>
+                <div style={{ display: "flex", gap: 5, marginTop: 5, flexWrap: "wrap" }}>
+                  {[c.role, c.gender, ethnicGroups.find((g) => g.id === c.ethnicGroupId)?.nameVi].filter(Boolean).map((tag) => (
+                    <span key={tag} style={{
+                      background: "var(--surface)", borderRadius: 6,
+                      padding: "2px 8px", fontSize: "0.72rem", fontWeight: 600
+                    }}>{tag}</span>
+                  ))}
                 </div>
               </div>
 
-              <div style={{ marginTop: 10, fontSize: "0.78rem", color: "var(--text-muted)", lineHeight: 1.4 }}>
-                {c.descriptionVi.slice(0, 80)}{c.descriptionVi.length > 80 ? "..." : ""}
+              {/* Mô tả ngoại hình + trang phục, flex:1 đẩy nút xuống cuối */}
+              <div style={{ flex: 1, marginTop: 10, display: "flex", flexDirection: "column", gap: 5 }}>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", lineHeight: 1.45 }}>
+                  <span style={{ fontWeight: 700, color: "var(--text-light)" }}>Ngoại hình: </span>
+                  {c.appearancePrompt.slice(0, 70)}{c.appearancePrompt.length > 70 ? "..." : ""}
+                </div>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", lineHeight: 1.45 }}>
+                  <span style={{ fontWeight: 700, color: "var(--text-light)" }}>Trang phục: </span>
+                  {c.costumePrompt.slice(0, 60)}{c.costumePrompt.length > 60 ? "..." : ""}
+                </div>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginTop: 12 }}>
@@ -310,11 +334,7 @@ export default function CharacterManager({ initialCharacters, ethnicGroups }: Pr
                   {ethnicGroups.map((g) => <option key={g.id} value={g.id}>{g.nameVi}</option>)}
                 </select>
               </div>
-              <div>
-                <label style={lbl}>Emoji đại diện</label>
-                <input value={form.thumbnailEmoji} onChange={(e) => setForm((f) => ({ ...f, thumbnailEmoji: e.target.value }))}
-                  style={inp} placeholder="🧒" />
-              </div>
+
 
               {/* Upload ảnh trang phục tham chiếu */}
               <div style={{ gridColumn: "1 / -1" }}>
@@ -360,20 +380,8 @@ export default function CharacterManager({ initialCharacters, ethnicGroups }: Pr
                   style={{ ...inp, minHeight: 60, resize: "vertical" }}
                   placeholder="wearing K'Ho traditional red blouse with gold geometric patterns, silver bead necklace, dark blue skirt" />
               </div>
-              <div>
-                <label style={lbl}>Mô tả (tiếng Việt) *</label>
-                <textarea value={form.descriptionVi}
-                  onChange={(e) => setForm((f) => ({ ...f, descriptionVi: e.target.value }))}
-                  style={{ ...inp, minHeight: 56, resize: "vertical" }}
-                  placeholder="Bé gái K'Ho 10 tuổi, vui vẻ, tò mò..." />
-              </div>
-              <div>
-                <label style={lbl}>Description (English)</label>
-                <textarea value={form.descriptionEn}
-                  onChange={(e) => setForm((f) => ({ ...f, descriptionEn: e.target.value }))}
-                  style={{ ...inp, minHeight: 56, resize: "vertical" }}
-                  placeholder="10-year-old K'Ho girl, cheerful, curious..." />
-              </div>
+
+
             </div>
 
             <div style={{ display: "flex", gap: 10, marginTop: 20 }}>

@@ -196,61 +196,12 @@ export interface PanelV2 extends Panel {
   characterAction?: string;
 }
 
-// ===== Comic Studio v2 Types =====
-
-export type StoryStatus = "draft" | "generating" | "ready" | "published";
-
+// Template keys cho tạo truyện tranh
 export type StoryTemplateKey =
   | "INTRO_4"
   | "DIALOGUE_6"
   | "ADVENTURE_6"
-  | "FESTIVAL_8"
-  | "MARKET_6"
-  | "FESTIVAL_6"
-  | "EXPLORE_8";
-
-export interface StoryTemplate {
-  key: StoryTemplateKey;
-  nameVi: string;
-  nameEn: string;
-  panelCount: number;
-  description: string;
-  structure: { label: string; hint: string }[];
-}
-
-export interface ComicStoryPanel {
-  id: number;
-  backgroundId: string;
-  backgroundImageUrl?: string;
-  generatedImageUrl?: string;
-  action: string;
-  characterIds: string[];
-  dialogue: {
-    characterId: string;
-    characterName: string;
-    en: string;
-    vi: string;
-  }[];
-}
-
-export interface ComicStoryDTO {
-  id: string;
-  title: string;
-  titleEn: string;
-  topic: string;
-  templateKey: StoryTemplateKey;
-  status: StoryStatus;
-  ethnicGroupId?: string | null;
-  authorId: string;
-  panels: ComicStoryPanel[];
-  vocabulary: { en: string; vi: string }[];
-  quiz: QuizQuestion[];
-  missions: CulturalMission[];
-  characterIds: string[];
-  backgroundIds: string[];
-  lessonId?: string | null;
-  createdAt: string;
-}
+  | "FESTIVAL_8";
 
 // Extended DTOs with image fields
 export interface ComicCharacterDTO {

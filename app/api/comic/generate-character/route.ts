@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     if (
       !session?.user ||
-      !["TEACHER", "ADMIN"].includes(session.user.role ?? "")
+      !["TEACHER"].includes(session.user.role ?? "")
     ) {
       return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
@@ -42,6 +42,16 @@ export async function POST(req: NextRequest) {
       });
       if (eg) ethnicCulture = eg.nameEn;
     }
+
+    console.log({
+      name: character.name,
+      appearancePrompt: character.appearancePrompt,
+      costumePrompt: character.costumePrompt,
+      ethnicCulture,
+      gender: character.gender,
+      role: character.role,
+      referenceImageUrl: character.referenceImageUrl,
+    });
 
     // Sinh ảnh character sheet
     const rawUrl = await generateCharacterSheet({

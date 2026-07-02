@@ -118,7 +118,7 @@ export async function generateCharacterSheet(opts: {
         "Full body.",
         "Centered composition.",
         "White background.",
-        "Flat children's book illustration.",
+        "anime style 2D illustration, Studio Ghibli inspired, flat cartoon, cel shading, NOT photorealistic",
         "Clean vector-like outlines.",
         "Bright harmonious colors.",
         "Friendly facial expression.",
@@ -137,7 +137,7 @@ export async function generateCharacterSheet(opts: {
         "full body",
         "centered",
         "white background",
-        "flat children's book illustration",
+        "anime style 2D illustration, Studio Ghibli inspired, flat cartoon, cel shading, NOT photorealistic",
         "clean outline",
         "bright colors",
         "high quality character sheet",
@@ -167,6 +167,13 @@ export async function generateCharacterSheet(opts: {
     "photograph",
     "photo",
     "realistic",
+    "3D render",
+    "CGI",
+    "hyperrealistic",
+    "photorealistic",
+    "portrait photography",
+    "DSLR photo",
+    "skin pores",
     "real person",
     "human model",
     "fashion model",
@@ -279,31 +286,66 @@ export async function generateComicPanel(opts: {
 }): Promise<string> {
   const { background, characters, action, ethnicCulture, panelSeed } = opts;
 
-  const charDesc = characters
-    .map(c => `${c.appearancePrompt}, ${c.costumePrompt}`)
-    .join("; ");
+  // Mô tả nhân vật chi tiết để tăng nhất quán
+  const charDescriptions = characters.map(c => {
+    const parts = [c.appearancePrompt, c.costumePrompt].filter(Boolean);
+    return parts.join(", ");
+  });
+  const charBlock = charDescriptions.length
+    ? `Characters: ${charDescriptions.join("; ")}`
+    : "";
+
+  const bgPrompt = background.prompt || `${ethnicCulture} highland village`;
 
   const prompt = [
-    background.prompt || `${ethnicCulture} highland village scene`,
-    charDesc,
+    // Phong cách nhất quán
+    "anime style 2D illustration, Studio Ghibli inspired, flat cartoon, cel shading, vibrant warm colors, NOT photorealistic, NOT realistic",
+    // Bối cảnh
+    bgPrompt,
+    // Nhân vật
+    charBlock,
+    // Hành động
     action,
-    "children book illustration style, flat design, vibrant warm colors",
-    `${ethnicCulture} ethnic minority culture, Tay Nguyen highlands`,
-    "safe for children, no text, no watermark, high quality comic panel",
+    // Văn hóa
+    `${ethnicCulture} ethnic minority Tay Nguyen Vietnam`,
+    // Chất lượng
+    "safe for children, no text, no watermark, landscape orientation, wide scene",
   ]
     .filter(Boolean)
-    .join(", ");
+    .join(". ");
 
-  const referenceChar = characters.find(c => c.characterImageUrl);
+  const negativePrompt = [
+    "portrait orientation",
+    "vertical image",
+    "photo",
+    "realistic",
+    "3D render",
+    "CGI",
+    "hyperrealistic",
+    "photorealistic",
+    "portrait photography",
+    "text",
+    "watermark",
+    "logo",
+    "multiple panels",
+    "comic grid",
+    "ugly",
+    "deformed",
+    "extra limbs",
+  ].join(", ");
+
+  // Ưu tiên nhân vật có ảnh đã gen sẵn để dùng image-to-image (nhất quán hơn)
+  const refChar = characters.find(c => c.characterImageUrl);
   const seed = panelSeed ?? 42;
 
   try {
     return await togetherGenerate({
       prompt,
+      negativePrompt,
       width: 896,
       height: 512,
       seed,
-      referenceImageUrl: referenceChar?.characterImageUrl || undefined,
+      referenceImageUrl: refChar?.characterImageUrl || undefined,
     });
   } catch (err) {
     console.error("[imageGen] generateComicPanel failed:", err);

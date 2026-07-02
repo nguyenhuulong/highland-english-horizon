@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     if (
       !session?.user ||
-      !["TEACHER", "ADMIN"].includes(session.user.role ?? "")
+      !["TEACHER"].includes(session.user.role ?? "")
     ) {
       return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
