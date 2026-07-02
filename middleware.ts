@@ -1,6 +1,5 @@
+import { auth } from "@/auth";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { getToken } from "next-auth/jwt";
 
 const ROLE_HOME: Record<string, string> = {
   STUDENT: "/dashboard/student",
@@ -8,55 +7,40 @@ const ROLE_HOME: Record<string, string> = {
   ADMIN: "/dashboard/admin",
 };
 
-// TEACHER được phép truy cập các trang này
-const TEACHER_ALLOWED = ["/dashboard/teacher", "/creator"];
+const ROLE_ALLOWED: Record<string, string[]> = {
+  STUDENT: ["/dashboard/student"],
+  TEACHER: ["/dashboard/teacher", "/creator"],
+  ADMIN: ["/dashboard/admin"],
+};
 
-// ADMIN được phép truy cập các trang này
-const ADMIN_ALLOWED = ["/dashboard/admin"];
-
-export async function middleware(req: NextRequest) {
+export default auth(req => {
   const { pathname } = req.nextUrl;
   const isProtected =
     pathname.startsWith("/dashboard") || pathname.startsWith("/creator");
   if (!isProtected) return NextResponse.next();
 
-  const token = await getToken({
-    req,
-    secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
-  });
+  const session = req.auth;
 
-  if (!token) {
+  if (!session?.user) {
     const url = new URL("/login", req.url);
     url.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(url);
   }
 
-  const role = (token.role as string) || "STUDENT";
+  const role = session.user.role || "STUDENT";
   const home = ROLE_HOME[role] || "/dashboard/student";
+  const allowed = ROLE_ALLOWED[role] || [home];
 
   if (pathname === "/dashboard") {
     return NextResponse.redirect(new URL(home, req.url));
   }
 
-  if (role === "TEACHER" && TEACHER_ALLOWED.some(p => pathname.startsWith(p))) {
+  if (allowed.some(p => pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
-  if (role === "ADMIN" && ADMIN_ALLOWED.some(p => pathname.startsWith(p))) {
-    return NextResponse.next();
-  }
-
-  if (role === "STUDENT" && pathname.startsWith("/dashboard/student")) {
-    return NextResponse.next();
-  }
-
-  // Redirect về home nếu không có quyền
-  if (!pathname.startsWith(home)) {
-    return NextResponse.redirect(new URL(home, req.url));
-  }
-
-  return NextResponse.next();
-}
+  return NextResponse.redirect(new URL(home, req.url));
+});
 
 export const config = {
   matcher: ["/dashboard/:path*", "/creator/:path*"],

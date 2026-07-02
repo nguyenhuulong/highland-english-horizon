@@ -20,6 +20,38 @@ const TEMPLATES: {
 
 type Step = "setup" | "characters" | "backgrounds" | "generate";
 
+// Preset demo — nhân vật cùng dân tộc để đảm bảo tính hợp lý văn hóa
+const DEMO_PRESETS = [
+  {
+    label: "Ya Đin học dệt K'Ho", emoji: "🧵",
+    ethnicSlug: "kho", template: "DIALOGUE_6" as StoryTemplateKey,
+    topic: "Ya Đin (10 tuổi, K'Ho) theo mẹ H'Brih học dệt thổ cẩm tại nhà sàn buổi chiều. Em học tên các hoa văn truyền thống (hươu nai, chim chóc), màu sắc từ cây rừng và ý nghĩa của từng hoa văn bằng tiếng Anh. Có tiếng khung cửi và mùi chỉ nhuộm chàm.",
+    characterNames: ["Ya Đin", "H'Brih"],
+    backgroundKeys: ["costume", "morning_village"],
+  },
+  {
+    label: "Sùng Mỷ đi chợ phiên H'Mông", emoji: "🛒",
+    ethnicSlug: "hmong", template: "INTRO_4" as StoryTemplateKey,
+    topic: "Sùng Mỷ (9 tuổi, H'Mông) cùng A Chư đi chợ phiên vùng cao buổi sáng. Em học từ vựng về mua bán, mặc cả, tên các mặt hàng thổ cẩm và rau củ núi rừng bằng tiếng Anh.",
+    characterNames: ["Sùng Mỷ", "A Chư"],
+    backgroundKeys: ["market_morning", "cloth_stall"],
+  },
+  {
+    label: "Pơ Mai khám phá rừng Mạ", emoji: "🌲",
+    ethnicSlug: "ma", template: "ADVENTURE_6" as StoryTemplateKey,
+    topic: "Pơ Mai (9 tuổi, Mạ) cùng già làng Ama K'Bram đi vào rừng tìm cây thuốc. Ông giải thích tên các loài cây, con vật và tác dụng của chúng bằng tiếng Anh. Có cảnh ngắm chim rừng và nghe tiếng suối.",
+    characterNames: ["Pơ Mai", "Ama K'Bram"],
+    backgroundKeys: ["forest_entrance", "big_tree"],
+  },
+  {
+    label: "Lâm Bảo dự lễ hội Tày", emoji: "🎉",
+    ethnicSlug: "tay", template: "FESTIVAL_8" as StoryTemplateKey,
+    topic: "Lâm Bảo (11 tuổi, Tày) tham dự lễ hội Lồng Tồng cùng thầy Nông Văn Hiếu. Em học tên các hoạt động lễ hội, nhạc cụ Then Tày, món ăn truyền thống và trang phục chàm đặc trưng bằng tiếng Anh.",
+    characterNames: ["Lâm Bảo", "Nông Văn Hiếu"],
+    backgroundKeys: ["festival_ground", "drum"],
+  },
+];
+
 export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
   const [step, setStep] = useState<Step>("setup");
   const [topic, setTopic] = useState("");
@@ -32,6 +64,46 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
   const [selectedBgIds, setSelectedBgIds] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
   const [genStep, setGenStep] = useState("");
+  const [loadingDemo, setLoadingDemo] = useState(false);
+
+  async function applyDemo(preset: typeof DEMO_PRESETS[0]) {
+    setLoadingDemo(true);
+    try {
+      const eg = ethnicGroups.find((g) => g.slug === preset.ethnicSlug);
+      if (!eg) return;
+
+      const [cd, bd] = await Promise.all([
+        fetch(`/api/comic/characters?ethnicGroupId=${eg.id}`).then((r) => r.json()).catch(() => ({ characters: [] })),
+        fetch(`/api/comic/backgrounds?ethnicGroupId=${eg.id}`).then((r) => r.json()).catch(() => ({ backgrounds: [] })),
+      ]);
+
+      const chars: ComicCharacterDTO[] = cd.characters ?? [];
+      const bgs: ComicBackgroundDTO[] = bd.backgrounds ?? [];
+
+      // Chọn nhân vật theo tên — đảm bảo cùng dân tộc, hợp lý văn hóa
+      const charIds = preset.characterNames
+        .map((name) => chars.find((c) => c.name === name)?.id)
+        .filter(Boolean) as string[];
+      if (charIds.length === 0 && chars.length > 0) charIds.push(chars[0].id);
+
+      // Chọn background theo key
+      const bgIds = preset.backgroundKeys
+        .map((key) => bgs.find((b) => b.key === key)?.id)
+        .filter(Boolean) as string[];
+
+      setTopic(preset.topic);
+      setTitleVi("");
+      setSelectedEthnic(eg.id);
+      setSelectedTemplate(preset.template);
+      setAllChars(chars);
+      setAllBgs(bgs);
+      setSelectedCharIds(charIds);
+      setSelectedBgIds(bgIds);
+      setStep("generate"); // Nhảy thẳng đến bước xem lại & tạo
+    } finally {
+      setLoadingDemo(false);
+    }
+  }
 
   const template = TEMPLATES.find((t) => t.key === selectedTemplate)!;
 
@@ -134,6 +206,39 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
       </div>
 
       {/* ─── STEP 1: Nội dung ─────────────────────────────────────────────────── */}
+      {/* ─── Banner demo nhanh — chỉ show ở step setup ─────────────── */}
+      {step === "setup" && (
+        <div style={{ marginBottom: 20, padding: "16px 18px", background: "linear-gradient(135deg,#fff5f0,#ffecd2)", borderRadius: 14, border: "2px solid var(--primary)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <span style={{ fontSize: "1.2rem" }}>🎯</span>
+            <span style={{ fontWeight: 800, fontSize: "0.95rem", color: "var(--primary)" }}>Demo nhanh</span>
+            <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", marginLeft: 4 }}>— nhấn để tự điền sẵn nội dung mẫu</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 8 }}>
+            {DEMO_PRESETS.map((preset) => (
+              <button key={preset.label} onClick={() => applyDemo(preset)} disabled={loadingDemo}
+                style={{
+                  padding: "10px 12px", borderRadius: 10, cursor: loadingDemo ? "not-allowed" : "pointer",
+                  border: "1.5px solid var(--border)", background: "var(--bg-card)",
+                  textAlign: "left", fontFamily: "var(--font-body)", transition: "all 0.15s",
+                  opacity: loadingDemo ? 0.6 : 1,
+                }}>
+                <div style={{ fontSize: "1.3rem", marginBottom: 3 }}>{preset.emoji}</div>
+                <div style={{ fontWeight: 700, fontSize: "0.82rem", color: "var(--text)" }}>{preset.label}</div>
+                <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 2 }}>
+                  {preset.characterNames.join(" & ")} · {TEMPLATES.find(t => t.key === preset.template)?.panelCount} panel
+                </div>
+              </button>
+            ))}
+          </div>
+          {loadingDemo && (
+            <div style={{ marginTop: 10, fontSize: "0.82rem", color: "var(--primary)", fontWeight: 600 }}>
+              ⏳ Đang tải dữ liệu...
+            </div>
+          )}
+        </div>
+      )}
+
       {step === "setup" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
           <div>

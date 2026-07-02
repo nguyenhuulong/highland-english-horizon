@@ -334,8 +334,10 @@ export async function generateComicPanel(opts: {
     "extra limbs",
   ].join(", ");
 
-  // Ưu tiên nhân vật có ảnh đã gen sẵn để dùng image-to-image (nhất quán hơn)
-  const refChar = characters.find(c => c.characterImageUrl);
+  // KHÔNG dùng characterImageUrl làm reference vì:
+  // 1. characterImageUrl là ảnh dọc 512×768 → FLUX Kontext tạo ảnh dọc theo
+  // 2. Gây mất nhất quán nhân vật qua các panel vì style bị override
+  // Thay vào đó mô tả nhân vật chi tiết trong prompt (charBlock ở trên)
   const seed = panelSeed ?? 42;
 
   try {
@@ -345,7 +347,6 @@ export async function generateComicPanel(opts: {
       width: 896,
       height: 512,
       seed,
-      referenceImageUrl: refChar?.characterImageUrl || undefined,
     });
   } catch (err) {
     console.error("[imageGen] generateComicPanel failed:", err);

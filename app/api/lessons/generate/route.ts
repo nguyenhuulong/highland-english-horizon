@@ -4,9 +4,15 @@ import { prisma } from "@/lib/prisma";
 import { generateComicPanel } from "@/lib/imageGen";
 import { uploadFromUrl, makeFileName } from "@/lib/storage";
 import { getCulturalGroup } from "@/data/culture";
-import type { ComicCharacterDTO, ComicBackgroundDTO, CulturalMission } from "@/types";
+import type {
+  ComicCharacterDTO,
+  ComicBackgroundDTO,
+  CulturalMission,
+} from "@/types";
 
-const AI_BASE_URL = (process.env.AI_BASE_URL || "https://api.groq.com/openai/v1").replace(/\/+$/, "");
+const AI_BASE_URL = (
+  process.env.AI_BASE_URL || "https://api.groq.com/openai/v1"
+).replace(/\/+$/, "");
 const AI_MODEL = process.env.AI_MODEL || "llama-3.3-70b-versatile";
 const AI_API_KEY = process.env.AI_API_KEY || "";
 
@@ -58,15 +64,16 @@ async function callLLM(system: string, user: string): Promise<string> {
     },
     body: JSON.stringify({
       model: AI_MODEL,
-      temperature: 0.8,
-      max_tokens: 5000,
+      temperature: 0.75,
+      max_tokens: 8000,
       messages: [
         { role: "system", content: system },
         { role: "user", content: user },
       ],
     }),
   });
-  if (!res.ok) throw new Error(`AI ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  if (!res.ok)
+    throw new Error(`AI ${res.status}: ${(await res.text()).slice(0, 200)}`);
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content;
   if (!content) throw new Error("AI không trả về nội dung");
@@ -74,8 +81,13 @@ async function callLLM(system: string, user: string): Promise<string> {
 }
 
 function parseJson(raw: string): unknown {
-  let s = raw.trim().replace(/^```(?:json)?\s*/m, "").replace(/\s*```$/m, "").trim();
-  const a = s.indexOf("{"), b = s.lastIndexOf("}");
+  let s = raw
+    .trim()
+    .replace(/^```(?:json)?\s*/m, "")
+    .replace(/\s*```$/m, "")
+    .trim();
+  const a = s.indexOf("{"),
+    b = s.lastIndexOf("}");
   if (a !== -1 && b !== -1) s = s.slice(a, b + 1);
   return JSON.parse(s);
 }
@@ -100,11 +112,21 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user || session.user.role !== "TEACHER") {
-      return NextResponse.json({ error: "Chỉ giáo viên mới tạo được bài học" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Chỉ giáo viên mới tạo được bài học" },
+        { status: 403 },
+      );
     }
 
     const body = await req.json();
-    const { topic, templateKey, ethnicGroupId, characterIds, backgroundIds, titleVi } = body as {
+    const {
+      topic,
+      templateKey,
+      ethnicGroupId,
+      characterIds,
+      backgroundIds,
+      titleVi,
+    } = body as {
       topic: string;
       templateKey: string;
       ethnicGroupId?: string;
@@ -114,7 +136,10 @@ export async function POST(req: NextRequest) {
     };
 
     if (!topic || !templateKey) {
-      return NextResponse.json({ error: "Thiếu topic hoặc templateKey" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Thiếu topic hoặc templateKey" },
+        { status: 400 },
+      );
     }
 
     const tmpl = TEMPLATES[templateKey] || TEMPLATES.INTRO_4;
@@ -124,25 +149,46 @@ export async function POST(req: NextRequest) {
     const [dbChars, dbBgs, ethnicGroup] = await Promise.all([
       prisma.comicCharacter.findMany({ where: { id: { in: charIds } } }),
       prisma.comicBackground.findMany({ where: { id: { in: bgIds } } }),
-      ethnicGroupId ? prisma.ethnicGroup.findUnique({ where: { id: ethnicGroupId } }) : null,
+      ethnicGroupId
+        ? prisma.ethnicGroup.findUnique({ where: { id: ethnicGroupId } })
+        : null,
     ]);
 
-    const characters: ComicCharacterDTO[] = dbChars.map((c) => ({
-      id: c.id, name: c.name, nameEn: c.nameEn,
+    const characters: ComicCharacterDTO[] = dbChars.map(c => ({
+      id: c.id,
+      name: c.name,
+      nameEn: c.nameEn,
       role: c.role as "child" | "adult" | "elder",
       gender: c.gender as "male" | "female",
-      ethnicGroupId: c.ethnicGroupId, descriptionVi: c.descriptionVi, descriptionEn: c.descriptionEn,
-      costumePrompt: c.costumePrompt, appearancePrompt: c.appearancePrompt,
-      referenceImageUrl: c.referenceImageUrl, characterImageUrl: c.characterImageUrl,
-      thumbnailEmoji: c.thumbnailEmoji, isActive: c.isActive,
+      ethnicGroupId: c.ethnicGroupId,
+      descriptionVi: c.descriptionVi,
+      descriptionEn: c.descriptionEn,
+      costumePrompt: c.costumePrompt,
+      appearancePrompt: c.appearancePrompt,
+      referenceImageUrl: c.referenceImageUrl,
+      characterImageUrl: c.characterImageUrl,
+      thumbnailEmoji: c.thumbnailEmoji,
+      isActive: c.isActive,
     }));
 
-    const backgrounds: ComicBackgroundDTO[] = dbBgs.map((b) => ({
-      id: b.id, key: b.key, nameVi: b.nameVi, nameEn: b.nameEn,
-      category: b.category as "village" | "forest" | "market" | "festival" | "house" | "school",
-      ethnicGroupId: b.ethnicGroupId, prompt: b.prompt,
-      referenceImageUrl: b.referenceImageUrl, imageUrl: b.imageUrl,
-      thumbnailEmoji: b.thumbnailEmoji, isActive: b.isActive,
+    const backgrounds: ComicBackgroundDTO[] = dbBgs.map(b => ({
+      id: b.id,
+      key: b.key,
+      nameVi: b.nameVi,
+      nameEn: b.nameEn,
+      category: b.category as
+        | "village"
+        | "forest"
+        | "market"
+        | "festival"
+        | "house"
+        | "school",
+      ethnicGroupId: b.ethnicGroupId,
+      prompt: b.prompt,
+      referenceImageUrl: b.referenceImageUrl,
+      imageUrl: b.imageUrl,
+      thumbnailEmoji: b.thumbnailEmoji,
+      isActive: b.isActive,
     }));
 
     const ethnicNameVi = ethnicGroup?.nameVi ?? "K'Ho";
@@ -156,7 +202,9 @@ export async function POST(req: NextRequest) {
       : "";
 
     const charHint = characters.length
-      ? characters.map((c) => `${c.name}: ${c.descriptionEn}, ${c.costumePrompt}`).join(" | ")
+      ? characters
+          .map(c => `${c.name}: ${c.descriptionEn}, ${c.costumePrompt}`)
+          .join(" | ")
       : "Tự đặt tên nhân vật phù hợp";
 
     const bgHint = backgrounds.length
@@ -164,58 +212,76 @@ export async function POST(req: NextRequest) {
       : "Tự mô tả bối cảnh";
 
     // Prompt ngắn gọn, tự nhiên như truyện tranh thiếu nhi thực sự
-    const systemPrompt = `Bạn viết truyện tranh thiếu nhi song ngữ Anh-Việt cho học sinh dân tộc thiểu số 9-12 tuổi. Phong cách giống Doraemon, Conan hay Shin-chan: lời thoại ngắn, tự nhiên, sinh động. Không dài dòng, không giải thích như sách giáo khoa.
+    const systemPrompt = `Bạn là tác giả truyện tranh giáo dục song ngữ Anh-Việt cho học sinh dân tộc thiểu số 9-12 tuổi tại Tây Nguyên Việt Nam.
 
-QUAN TRỌNG:
-- Mỗi lượt thoại tiếng Anh: 4-10 từ, tự nhiên như trẻ em thực sự nói
-- Mỗi panel: 2-3 lượt thoại ngắn gọn
-- Từ vựng xuất hiện tự nhiên trong câu chuyện, không nhồi nhét
-- Viết để đọc thấy vui, không phải để học ngữ pháp
+TIÊU CHUẨN BẮT BUỘC cho mỗi lượt thoại tiếng Anh:
+- Độ dài: 6-15 từ, KHÔNG được ngắn hơn 6 từ
+- Phải chứa ít nhất 1 từ vựng mục tiêu hoặc thông tin văn hóa cụ thể
+- Câu hoàn chỉnh, có chủ ngữ và vị ngữ rõ ràng
+- TUYỆT ĐỐI KHÔNG dùng: "Let's go", "Okay", "Me too", "I love you", "Yes", "No", "Really?" hay bất kỳ câu dưới 6 từ
+- Mỗi panel 2-3 lượt thoại, câu sau phản hồi và mở rộng câu trước
 
-Chỉ trả về JSON, không markdown.`;
+Mục tiêu: Học sinh đọc xong phải học được ít nhất 8 từ/cụm từ tiếng Anh mới liên quan đến văn hóa dân tộc.
+Phong cách: Tự nhiên, sinh động — nhưng mỗi câu phải có nội dung thực chất, không câu chào hỏi xã giao rỗng tuếch.
 
-    const userPrompt = `Tạo truyện tranh ${tmpl.panelCount} panel.
+Chỉ trả về JSON thuần túy, không markdown, không giải thích.`;
 
-Chủ đề: ${topic}
+    const userPrompt = `Tạo truyện tranh ${tmpl.panelCount} panel về chủ đề: "${topic}"
+
 Dân tộc: ${ethnicNameVi}
 ${cultureHint}
 
-Nhân vật: ${charHint}
-Bối cảnh: ${bgHint}
+Nhân vật có trong truyện: ${charHint}
+Bối cảnh có sẵn (chọn theo index): ${bgHint}
 
-Gợi ý cấu trúc:
+Cấu trúc từng panel:
 ${tmpl.guide}
 
-JSON output:
+Ví dụ hội thoại ĐẠT CHUẨN:
+✓ "Mom, look at this beautiful indigo fabric with traditional deer patterns!" (có từ vựng: indigo, fabric, deer patterns)
+✓ "This brocade cloth takes three months to weave by hand." (có từ vựng: brocade, weave)
+✓ "How much does one kilogram of bamboo shoots cost today?" (có từ vựng: kilogram, bamboo shoots)
+✓ "The gong ceremony is held every year after the harvest season." (có từ vựng: gong ceremony, harvest season)
+
+Ví dụ hội thoại CẤM DÙNG:
+✗ "Let's go" — quá ngắn, không có nội dung
+✗ "I love this" — không có từ vựng
+✗ "Okay dear" — vô nghĩa về giáo dục
+✗ "Me too" — không đạt chuẩn 6 từ
+
+Trả về JSON:
 {
-  "titleVi": "Tên truyện tiếng Việt (ngắn gọn, hấp dẫn)",
-  "titleEn": "English title",
-  "descriptionVi": "1-2 câu giới thiệu truyện",
-  "vocabulary": [{"en": "word", "vi": "nghĩa"}],
-  "quiz": [{"question_en": "...", "options": ["A","B","C","D"], "answer": 0}],
-  "missions": [{"id":"m1","type":"select","title":"...","prompt":"...","options":[{"id":"a","label":"...","emoji":"🎵","correct":true},{"id":"b","label":"...","emoji":"🌿","correct":false}],"fact":"..."}],
+  "titleVi": "Tên truyện tiếng Việt hấp dẫn, cụ thể",
+  "titleEn": "Specific engaging English title",
+  "descriptionVi": "1-2 câu mô tả nội dung và điều học sinh học được",
+  "vocabulary": [{"en": "từ hoặc cụm từ", "vi": "nghĩa tiếng Việt"}],
+  "quiz": [{"question_en": "Câu hỏi kiểm tra hiểu biết về nội dung truyện", "options": ["A","B","C","D"], "answer": 0}],
+  "missions": [{"id":"m1","type":"select","title":"Tiêu đề nhiệm vụ","prompt":"Câu hỏi về phong tục văn hóa trong truyện","options":[{"id":"a","label":"Đáp án đúng","emoji":"🎵","correct":true},{"id":"b","label":"Đáp án sai","emoji":"🌿","correct":false},{"id":"c","label":"Đáp án sai","emoji":"🏺","correct":false}],"fact":"Thông tin văn hóa thú vị 2-3 câu giải thích đáp án"}],
   "panels": [
     {
       "id": 1,
       "backgroundIndex": 0,
-      "characterNames": ["tên nhân vật"],
-      "action": "Nhân vật đang làm gì, tư thế thế nào (để gen ảnh AI)",
+      "characterNames": ["tên nhân vật xuất hiện trong panel này"],
+      "action": "Mô tả chi tiết hành động, vị trí, cảm xúc của nhân vật bằng tiếng Anh để gen ảnh AI",
       "dialogue": [
-        {"characterName": "...", "en": "Short natural line", "vi": "Dịch tự nhiên"},
-        {"characterName": "...", "en": "Reply in 4-8 words", "vi": "Dịch tự nhiên"}
+        {"characterName": "tên", "en": "Complete sentence with 6-15 words containing cultural vocabulary", "vi": "Bản dịch tự nhiên tiếng Việt"},
+        {"characterName": "tên khác", "en": "Meaningful response that continues and expands the topic", "vi": "Bản dịch tự nhiên"},
+        {"characterName": "tên", "en": "Follow-up with more specific cultural information or question", "vi": "Bản dịch tự nhiên"}
       ]
     }
   ]
 }
 
-Số lượng: vocabulary 6-10 từ, quiz đúng 4 câu, missions 1-2, panels đúng ${tmpl.panelCount}.`;
-
+Yêu cầu số lượng: vocabulary 8-12 mục, quiz đúng 4 câu, missions 1-2, panels đúng ${tmpl.panelCount} panel.`;
     let script: ScriptData;
     try {
       const raw = await callLLM(systemPrompt, userPrompt);
       script = parseJson(raw) as ScriptData;
     } catch (err) {
-      return NextResponse.json({ error: `LLM thất bại: ${err}` }, { status: 500 });
+      return NextResponse.json(
+        { error: `LLM thất bại: ${err}` },
+        { status: 500 },
+      );
     }
 
     // Tạo lesson trước để có ID
@@ -242,49 +308,76 @@ Số lượng: vocabulary 6-10 từ, quiz đúng 4 câu, missions 1-2, panels đ
 
     // Generate ảnh từng panel tuần tự
     const SCENE_MAP: Record<string, string> = {
-      village: "morning_village", forest: "forest_entrance", market: "market_morning",
-      festival: "drum", house: "costume", school: "morning_village",
+      village: "morning_village",
+      forest: "forest_entrance",
+      market: "market_morning",
+      festival: "drum",
+      house: "costume",
+      school: "morning_village",
     };
 
     const panelData: {
-      id: number; bg: string; scene: string; generatedImageUrl?: string;
+      id: number;
+      bg: string;
+      scene: string;
+      generatedImageUrl?: string;
       dialogue: { character: string; vi: string; en: string }[];
-      characterIds: string[]; backgroundId: string; action: string;
+      characterIds: string[];
+      backgroundId: string;
+      action: string;
     }[] = [];
 
     for (let i = 0; i < script.panels.length; i++) {
       const ps = script.panels[i];
-      const bg = backgrounds[ps.backgroundIndex] ?? backgrounds[i % Math.max(backgrounds.length, 1)] ?? {
-        id: "", key: "village", nameVi: "Làng", nameEn: "Village",
-        category: "village" as const, prompt: `${ethnicNameEn} highland village`,
-        thumbnailEmoji: "🌄", isActive: true,
-      };
+      const bg = backgrounds[ps.backgroundIndex] ??
+        backgrounds[i % Math.max(backgrounds.length, 1)] ?? {
+          id: "",
+          key: "village",
+          nameVi: "Làng",
+          nameEn: "Village",
+          category: "village" as const,
+          prompt: `${ethnicNameEn} highland village`,
+          thumbnailEmoji: "🌄",
+          isActive: true,
+        };
 
-      const panelChars = characters.filter((c) =>
-        ps.characterNames?.some((n) => n === c.name || n === c.nameEn)
+      const panelChars = characters.filter(c =>
+        ps.characterNames?.some(n => n === c.name || n === c.nameEn),
       );
-      if (panelChars.length === 0 && characters.length > 0) panelChars.push(characters[0]);
+      if (panelChars.length === 0 && characters.length > 0)
+        panelChars.push(characters[0]);
 
-      const dialogue = (ps.dialogue || []).map((d) => ({
+      const dialogue = (ps.dialogue || []).map(d => ({
         character: d.characterName,
         vi: d.vi,
         en: d.en,
       }));
 
       // Seed nhất quán: dùng lesson.id + panel index để mọi lần gen cùng panel có kết quả tương tự
-      const panelSeed = (parseInt(lesson.id.replace(/[^0-9]/g, "").slice(0, 6) || "100", 10) + i * 17) % 9999;
+      const panelSeed =
+        (parseInt(lesson.id.replace(/[^0-9]/g, "").slice(0, 6) || "100", 10) +
+          i * 17) %
+        9999;
 
       let generatedImageUrl: string | undefined;
       try {
         const rawUrl = await generateComicPanel({
           background: bg,
           characters: panelChars,
-          action: ps.action || `${ethnicNameEn} characters in traditional setting, panel ${i + 1}`,
+          action:
+            ps.action ||
+            `${ethnicNameEn} characters in traditional setting, panel ${i + 1}`,
           ethnicCulture: ethnicNameEn,
           panelSeed,
         });
-        const fileName = makeFileName(`lessons/${lesson.id}/panel-${i + 1}`, "jpg");
-        generatedImageUrl = await uploadFromUrl({ sourceUrl: rawUrl, fileName }).catch(() => rawUrl);
+        const fileName = makeFileName(
+          `lessons/${lesson.id}/panel-${i + 1}`,
+          "jpg",
+        );
+        generatedImageUrl = await uploadFromUrl({
+          sourceUrl: rawUrl,
+          fileName,
+        }).catch(() => rawUrl);
       } catch (imgErr) {
         console.error(`[generate] Panel ${i + 1} image failed:`, imgErr);
       }
@@ -298,7 +391,7 @@ Số lượng: vocabulary 6-10 từ, quiz đúng 4 câu, missions 1-2, panels đ
         scene: sceneKey,
         generatedImageUrl,
         dialogue,
-        characterIds: panelChars.map((c) => c.id),
+        characterIds: panelChars.map(c => c.id),
         backgroundId: bg.id,
         action: ps.action,
       });
@@ -314,18 +407,28 @@ Số lượng: vocabulary 6-10 từ, quiz đúng 4 câu, missions 1-2, panels đ
       },
     });
 
-    await prisma.aIGenerationLog.create({
-      data: {
-        userId: session.user.id!,
-        lessonId: lesson.id,
-        input: { topic, templateKey, characterIds: charIds, backgroundIds: bgIds },
-        status: "success",
-      },
-    }).catch(() => {});
+    await prisma.aIGenerationLog
+      .create({
+        data: {
+          userId: session.user.id!,
+          lessonId: lesson.id,
+          input: {
+            topic,
+            templateKey,
+            characterIds: charIds,
+            backgroundIds: bgIds,
+          },
+          status: "success",
+        },
+      })
+      .catch(() => {});
 
     return NextResponse.json({ lesson: updated });
   } catch (err) {
     console.error("[generate lesson]", err);
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Lỗi server" }, { status: 500 });
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Lỗi server" },
+      { status: 500 },
+    );
   }
 }
