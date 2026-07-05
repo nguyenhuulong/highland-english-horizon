@@ -89,7 +89,7 @@ export default function TeacherStoriesPage() {
           characterNames: panel.characterIds,
           backgroundKey: panel.scene,
           action: panel.action + (extraNote ? `. ${extraNote}` : ""),
-          ethnicCulture: (editLesson as LessonDTO & { ethnicGroupId?: string }).ethnicGroupId ?? "K'Ho",
+          ethnicCulture: "K'Ho",
           saveToPanel: true,
         }),
       });
@@ -154,7 +154,11 @@ export default function TeacherStoriesPage() {
         {/* Từ vựng */}
         <div style={{ background: "var(--bg-card)", borderRadius: 16, border: "1.5px solid var(--border)", padding: 20, marginBottom: 20 }}>
           <h3 style={{ fontFamily: "var(--font-display)", marginBottom: 14 }}>📚 Từ vựng ({editVocab.length} từ)</h3>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px,1fr))", gap: 10 }}>
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "1fr",
+            gap: 10,
+          }}>
             {editVocab.map((v, i) => (
               <div key={i} style={{ display: "flex", gap: 6, alignItems: "center" }}>
                 <input value={v.en} onChange={(e) => setEditVocab((prev) => prev.map((x, j) => j === i ? { ...x, en: e.target.value } : x))}
@@ -217,7 +221,7 @@ export default function TeacherStoriesPage() {
                   <input
                     value={regenExtra[panel.id] || ""}
                     onChange={(e) => setRegenExtra((prev) => ({ ...prev, [panel.id]: e.target.value }))}
-                    placeholder="Ghi chú thêm cho AI (tùy chọn): nhân vật đứng gần khung cửi, nền có núi xanh..."
+                    placeholder="Ghi chú thêm cho AI (tùy chọn)"
                     style={{ flex: 1, padding: "6px 10px", borderRadius: 8, border: "1.5px solid var(--border)", background: "var(--surface)", fontFamily: "var(--font-body)", fontSize: "0.78rem" }} />
                   <button onClick={() => regenPanelImage(panel)} disabled={regenPanel !== null}
                     style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: "#ede9fe", color: "#7c3aed", cursor: regenPanel !== null ? "not-allowed" : "pointer", fontWeight: 700, fontFamily: "var(--font-body)", fontSize: "0.78rem", whiteSpace: "nowrap" }}>
@@ -261,7 +265,7 @@ export default function TeacherStoriesPage() {
           const panels = l.panels as { generatedImageUrl?: string }[];
           const thumb = panels?.[0]?.generatedImageUrl;
           const lvl = l.level ?? 1;
-          const lvlLabel = lvl === 1 ? "🌱 Starter" : lvl === 2 ? "🌿 Basic" : "🌳 Trung cấp";
+          const lvlLabel = lvl === 1 ? "🌱 Starter" : lvl === 2 ? "🌿 Basic" : "🌳 Intermediate";
           return (
             <div key={l.id} style={{ background: "var(--bg-card)", borderRadius: 16, border: "1.5px solid var(--border)", overflow: "hidden" }}>
               <div style={{ height: 160, background: "linear-gradient(135deg,#ffecd2,#fcb69f)", position: "relative" }}>

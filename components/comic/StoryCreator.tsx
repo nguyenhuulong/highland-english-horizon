@@ -23,31 +23,46 @@ type Step = "setup" | "characters" | "backgrounds" | "generate";
 // Preset demo — nhân vật cùng dân tộc để đảm bảo tính hợp lý văn hóa
 const DEMO_PRESETS = [
   {
+    // K'Ho: Ya Đin (child, K'Ho female) + H'Brih (adult, K'Ho female) — cùng dân tộc, hợp lý mẹ-con
+    // Background: costume (nhà sàn mặc trang phục) + morning_village (làng buổi sáng)
     label: "Ya Đin học dệt K'Ho", emoji: "🧵",
     ethnicSlug: "kho", template: "DIALOGUE_6" as StoryTemplateKey,
-    topic: "Ya Đin (10 tuổi, K'Ho) theo mẹ H'Brih học dệt thổ cẩm tại nhà sàn buổi chiều. Em học tên các hoa văn truyền thống (hươu nai, chim chóc), màu sắc từ cây rừng và ý nghĩa của từng hoa văn bằng tiếng Anh. Có tiếng khung cửi và mùi chỉ nhuộm chàm.",
+    level: 1 as const,
+    topic: "Ya Din (10 years old, K'Ho) sits with her mother H'Brih at the loom inside their stilt house. She learns English words for weaving tools (loom, thread, pattern), colors from forest plants (indigo, red), and the names of traditional brocade patterns. Keep all K'Ho cultural terms in Vietnamese as-is, do not translate proper names.",
     characterNames: ["Ya Đin", "H'Brih"],
     backgroundKeys: ["costume", "morning_village"],
   },
   {
-    label: "H'Linh học dệt thổ cẩm Ê Đê", emoji: "🧵",
-    ethnicSlug: "ede", template: "DIALOGUE_6" as StoryTemplateKey,
-    topic: "H'Linh (9 tuổi, Ê Đê) theo bà học dệt thổ cẩm trong nhà dài. Em học tên các hoa văn truyền thống, màu chỉ và ý nghĩa của từng họa tiết bằng tiếng Anh.",
-    characterNames: ["H'Linh", "Y Blô"],
-    backgroundKeys: ["market_morning", "cloth_stall"],
-  },
-  {
+    // Mạ: Pơ Mai (child, Mạ female) + Ama K'Bram (elder, Mạ male) — cùng dân tộc, ông-cháu hợp lý
+    // Background: forest_entrance + big_tree — đúng chủ đề khám phá rừng
     label: "Pơ Mai khám phá rừng Mạ", emoji: "🌲",
     ethnicSlug: "ma", template: "ADVENTURE_6" as StoryTemplateKey,
-    topic: "Pơ Mai (9 tuổi, Mạ) cùng già làng Ama K'Bram đi vào rừng tìm cây thuốc. Ông giải thích tên các loài cây, con vật và tác dụng của chúng bằng tiếng Anh. Có cảnh ngắm chim rừng và nghe tiếng suối.",
+    level: 2 as const,
+    topic: "Po Mai (9 years old, Ma people) walks into the forest with elder Ama K'Bram to find medicinal plants. She learns English names of trees, birds, and forest sounds. Ama K'Bram explains forest knowledge in simple sentences. Keep names 'Ama K'Bram', 'Po Mai', 'Ma people' unchanged in both English and Vietnamese dialogue.",
     characterNames: ["Pơ Mai", "Ama K'Bram"],
     backgroundKeys: ["forest_entrance", "big_tree"],
   },
   {
-    label: "A Linh khám phá nhà rông Ba Na", emoji: "🪵",
+    // M'Nông: N'Thao (child, M'Nong male) + Y Điớp (adult, M'Nong female) — cùng dân tộc
+    // Chủ đề: chợ phiên buổi sáng — học mua bán, từ vựng thực tế
+    // Background: market_morning + bargain
+    label: "N'Thao đi chợ phiên M'Nông", emoji: "🛒",
+    ethnicSlug: "mnong", template: "INTRO_4" as StoryTemplateKey,
+    level: 2 as const,
+    topic: "N'Thao (10 years old, M'Nong) goes to the highland market with Y Diep in the morning. He learns English words for buying and selling: price, cheap, expensive, bargain, pay. They visit vegetable stalls and a fabric stall. Keep names 'N'Thao', 'Y Diep', 'M'Nong' unchanged in dialogue.",
+    characterNames: ["N'Thao", "Y Điớp"],
+    backgroundKeys: ["market_morning", "bargain"],
+  },
+  {
+    // Ba Na: A Linh → thay bằng Ksor Phước (child Gia Rai male) + Ông Đinh Hòa (elder Ba Na male)
+    // LƯU Ý: không có child Ba Na trong DB, dùng Ksor Phước (Gia Rai) làm khách đến thăm nhà rông
+    // Đây là kịch bản hợp lý: trẻ em dân tộc khác đến thăm làng Ba Na
+    // Background: festival_ground + drum
+    label: "Ksor Phước thăm nhà rông Ba Na", emoji: "🪵",
     ethnicSlug: "bana", template: "ADVENTURE_6" as StoryTemplateKey,
-    topic: "A Linh (11 tuổi, Ba Na) cùng bà Đinh Thị Hoa tham quan nhà rông làng. Em học tên các bộ phận của nhà rông, nhạc cụ cồng chiêng và ý nghĩa của ngôi nhà cộng đồng bằng tiếng Anh.",
-    characterNames: ["A Linh", "Bà Đinh Thị Hoa"],
+    level: 3 as const,
+    topic: "Ksor Phuoc (11 years old, Gia Rai) visits a Ba Na village with elder Ong Dinh Hoa. He learns English names for parts of the communal house (rong house, thatched roof, carved pillar), the gong ensemble, and the meaning of the rong house as a community center. Keep cultural terms 'nha rong', 'cong chieng' in Vietnamese. Do not translate proper names.",
+    characterNames: ["Ksor Phước", "Ông Đinh Hòa"],
     backgroundKeys: ["festival_ground", "drum"],
   },
 ];
@@ -75,7 +90,7 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
 
       const [cd, bd] = await Promise.all([
         fetch(`/api/comic/characters?ethnicGroupId=${eg.id}`).then((r) => r.json()).catch(() => ({ characters: [] })),
-        fetch(`/api/comic/backgrounds?ethnicGroupId=${eg.id}`).then((r) => r.json()).catch(() => ({ backgrounds: [] })),
+        fetch('/api/comic/backgrounds').then((r) => r.json()).catch(() => ({ backgrounds: [] })),
       ]);
 
       const chars: ComicCharacterDTO[] = cd.characters ?? [];
@@ -96,6 +111,7 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
       setTitleVi("");
       setSelectedEthnic(eg.id);
       setSelectedTemplate(preset.template);
+      setSelectedLevel(preset.level ?? 2);
       setAllChars(chars);
       setAllBgs(bgs);
       setSelectedCharIds(charIds);
@@ -110,10 +126,10 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
 
   useEffect(() => {
     if (step !== "characters" && step !== "backgrounds") return;
-    const q = selectedEthnic ? `?ethnicGroupId=${selectedEthnic}` : "";
+    const charQ = selectedEthnic ? `?ethnicGroupId=${selectedEthnic}` : "";
     Promise.all([
-      fetch(`/api/comic/characters${q}`).then((r) => r.json()).catch(() => ({ characters: [] })),
-      fetch(`/api/comic/backgrounds${q}`).then((r) => r.json()).catch(() => ({ backgrounds: [] })),
+      fetch(`/api/comic/characters${charQ}`).then((r) => r.json()).catch(() => ({ characters: [] })),
+      fetch(`/api/comic/backgrounds`).then((r) => r.json()).catch(() => ({ backgrounds: [] })),
     ]).then(([cd, bd]) => {
       setAllChars(cd.characters ?? []);
       setAllBgs(bd.backgrounds ?? []);
@@ -228,6 +244,9 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
                 <div style={{ fontSize: "1.3rem", marginBottom: 3 }}>{preset.emoji}</div>
                 <div style={{ fontWeight: 700, fontSize: "0.82rem", color: "var(--text)" }}>{preset.label}</div>
                 <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 2 }}>
+                  Level: {preset.level === 1 ? "Starter" : preset.level === 2 ? "Basic" : "Intermediate"}
+                </div>
+                <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 2 }}>
                   {preset.characterNames.join(" & ")} · {TEMPLATES.find(t => t.key === preset.template)?.panelCount} panel
                 </div>
               </button>
@@ -249,7 +268,7 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
             </label>
             <textarea value={topic} onChange={(e) => setTopic(e.target.value)}
               style={{ ...inp, minHeight: 110, resize: "vertical" }}
-              placeholder={"Ví dụ:\nYa Đin (10 tuổi, K'Ho) theo bà ngoại học dệt thổ cẩm tại nhà sàn. Em học tên các hoa văn truyền thống (hoa văn hươu nai, chim chóc), màu sắc từ cây rừng và ý nghĩa từng hoa văn bằng tiếng Anh. Có cảnh bà giải thích tại sao hoa văn quan trọng với người K'Ho.\n\nMô tả càng chi tiết → AI tạo kịch bản càng hay!"} />
+              placeholder={"Ví dụ:\nYa Đin (10 tuổi, K'Ho) theo bà ngoại học dệt thổ cẩm tại nhà sàn. Em học tên các hoa văn truyền thống (hoa văn động vật, chim chóc), màu sắc từ cây rừng và ý nghĩa từng hoa văn bằng tiếng Anh. Có cảnh bà giải thích tại sao hoa văn quan trọng với người K'Ho.\n\nMô tả càng chi tiết → AI tạo kịch bản càng hay!"} />
           </div>
 
           <div>
@@ -284,7 +303,7 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
                       color: selectedLevel === lv ? "#fff" : "var(--text)",
                       fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "0.82rem", textAlign: "center",
                     }}>
-                    {lv === 1 ? "🌱 Starter" : lv === 2 ? "🌿 Basic" : "🌳 Trung cấp"}
+                    {lv === 1 ? "🌱 Starter" : lv === 2 ? "🌿 Basic" : "🌳 Intermediate"}
                   </button>
                 ))}
               </div>

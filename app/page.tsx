@@ -213,7 +213,15 @@ export default function HomePage() {
         <div onClick={() => setSelectedFeature(null)}
           style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 16px" }}>
           <div onClick={(e) => e.stopPropagation()}
-            style={{ background: "var(--bg-card)", borderRadius: 20, maxWidth: 500, width: "100%", padding: 32, boxShadow: "0 24px 80px rgba(0,0,0,0.35)", position: "relative" }}>
+            style={{
+              background: "var(--bg-card)", borderRadius: 20, maxWidth: 680, width: "100%", padding: 32, overflow: "hidden",
+              boxShadow: "0 24px 80px rgba(0,0,0,.35)",
+              maxHeight: "90vh",
+              transformStyle: "preserve-3d",
+              backfaceVisibility: "hidden",
+              transformOrigin: "center center",
+              position: "relative"
+            }}>
             <button onClick={() => setSelectedFeature(null)}
               style={{ position: "absolute", top: 16, right: 16, width: 32, height: 32, borderRadius: "50%", border: "1.5px solid var(--border)", background: "var(--bg-card)", cursor: "pointer", fontSize: "1rem" }}>
               ✕

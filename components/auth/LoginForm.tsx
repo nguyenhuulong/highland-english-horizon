@@ -15,7 +15,7 @@ const DEMO_ACCOUNTS = [
   { label: "🧒 Học sinh", email: "student@highlandenglish.vn" },
   { label: "🧑‍🏫 Giáo viên", email: "teacher@highlandenglish.vn" },
   { label: "🛡️ Quản trị viên", email: "admin@highlandenglish.vn" },
-  { label: "🛡️ Ban tổ chức", email: "superadmin@highlandenglish.vn" },
+  // { label: "🛡️ Ban tổ chức", email: "superadmin@highlandenglish.vn" },
 ];
 
 export default function LoginForm() {

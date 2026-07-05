@@ -7,10 +7,8 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const category = searchParams.get("category");
-    const ethnicGroupId = searchParams.get("ethnicGroupId");
     const where: Record<string, unknown> = { isActive: true };
     if (category) where.category = category;
-    if (ethnicGroupId) where.ethnicGroupId = ethnicGroupId;
     const backgrounds = await prisma.comicBackground.findMany({
       where,
       orderBy: { createdAt: "asc" },
@@ -33,7 +31,6 @@ export async function POST(req: NextRequest) {
       nameVi,
       nameEn,
       category,
-      ethnicGroupId,
       prompt,
       thumbnailEmoji,
       referenceImageUrl,

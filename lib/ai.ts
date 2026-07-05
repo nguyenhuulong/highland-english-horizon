@@ -1,16 +1,12 @@
 import { getCulturalGroup } from "@/data/culture";
 import type { AILessonInput, LessonDTO } from "@/types";
 
-// Bất kỳ provider tương thích OpenAI Chat Completions API đều dùng được:
-// - Groq (free, rất nhanh):       AI_BASE_URL=https://api.groq.com/openai/v1   AI_MODEL=llama-3.3-70b-versatile
-// - Google Gemini (free tier):    AI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai  AI_MODEL=gemini-2.0-flash
-// - OpenRouter (nhiều model free): AI_BASE_URL=https://openrouter.ai/api/v1   AI_MODEL=meta-llama/llama-3.3-70b-instruct:free
-// - Ollama (chạy local, free):    AI_BASE_URL=http://localhost:11434/v1       AI_MODEL=llama3.1 (không cần AI_API_KEY)
-// - OpenAI:                       AI_BASE_URL=https://api.openai.com/v1       AI_MODEL=gpt-4o-mini
 const AI_BASE_URL = (
-  process.env.AI_BASE_URL || "https://api.groq.com/openai/v1"
+  process.env.AI_BASE_URL || "https://api.together.xyz/v1"
 ).replace(/\/+$/, "");
-const AI_MODEL = process.env.AI_MODEL || "llama-3.3-70b-versatile";
+const AI_MODEL =
+  process.env.AI_MODEL ||
+  "meta-llama/Llama-3.3-70B-Instruct-Turbo";
 const AI_API_KEY = process.env.AI_API_KEY || "";
 
 const SYSTEM_PROMPT = `Bạn là trợ lý AI của nền tảng Highland English Horizon, hỗ trợ giáo viên vùng Tây Nguyên tạo bài học tiếng Anh dạng truyện tranh song ngữ cho học sinh dân tộc thiểu số.

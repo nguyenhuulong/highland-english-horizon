@@ -23,6 +23,7 @@ interface CulturalGroup {
 interface Props {
   group: CulturalGroup;
   onClose: () => void;
+  onClosed?: () => void;
 }
 
 // ─── Từ điển EN chung cho toàn bộ các từ khoá trong culture.ts ────────────────
@@ -218,22 +219,54 @@ const SECTIONS: { key: keyof CulturalGroup; label: string; labelEn: string; icon
 ];
 
 // ─── Modal chính ───────────────────────────────────────────────────────────────
-export default function EthnicModal({ group, onClose }: Props) {
+export default function EthnicModal({ group, onClose, onClosed }: Props) {
+  const [closing, setClosing] = useState(false);
+  
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    console.log(handler)
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [onClose]);
+  }, [closing]);
+
+  const close = () => {
+    if (closing) return;
+
+    setClosing(true);
+
+    setTimeout(() => {
+      onClose();
+      onClosed?.();
+    }, 350);
+  };
 
   return (
-    <div onClick={onClose}
-      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: "20px 16px" }}>
-      <div onClick={(e) => e.stopPropagation()}
-        style={{ background: "var(--bg-card)", borderRadius: 20, maxWidth: 680, width: "100%", overflow: "hidden", boxShadow: "0 24px 80px rgba(0,0,0,0.35)", position: "relative", maxHeight: "90vh" }}>
+    <div onClick={close}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", perspective: "1400px", padding: "20px 16px" }}>
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "var(--bg-card)",
+          maxWidth: 680,
+          width: "100%",
+          overflow: "auto",
+          boxShadow: "0 24px 80px rgba(0,0,0,0.35)",
+          position: "relative",
+          maxHeight: "90vh",
+          transformStyle: "preserve-3d",
+          backfaceVisibility: "hidden",
+          transformOrigin: "center center",
+          animation: closing
+            ? "flipOut .35s ease forwards"
+            : "flipIn .35s ease forwards",
+        }}
+      >
 
         {/* Header */}
         <div style={{ padding: "24px 24px 16px", background: "linear-gradient(135deg, var(--surface), #fff8f0)", borderRadius: "20px 20px 0 0" }}>
-          <button onClick={onClose}
+          <button onClick={close}
             style={{ position: "absolute", top: 16, right: 16, width: 32, height: 32, borderRadius: "50%", border: "1.5px solid var(--border)", background: "var(--bg-card)", cursor: "pointer", fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
             ✕
           </button>
@@ -311,11 +344,11 @@ export default function EthnicModal({ group, onClose }: Props) {
 
           {/* CTA */}
           <div style={{ display: "flex", gap: 10 }}>
-            <Link href={`/library`} onClick={onClose}
+            <Link href={`/library`} onClick={close}
               style={{ flex: 1, padding: "12px 0", borderRadius: 10, background: "var(--primary)", color: "#fff", fontWeight: 700, textAlign: "center", textDecoration: "none", fontSize: "0.9rem" }}>
               📚 Xem bài học về dân tộc {group.nameVi}
             </Link>
-            <button onClick={onClose}
+            <button onClick={close}
               style={{ padding: "12px 20px", borderRadius: 10, border: "1.5px solid var(--border)", background: "var(--bg-card)", cursor: "pointer", fontWeight: 600, fontFamily: "var(--font-body)" }}>
               Đóng
             </button>

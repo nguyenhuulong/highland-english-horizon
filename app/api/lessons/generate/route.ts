@@ -3,40 +3,62 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateComicPanel } from "@/lib/imageGen";
 import { uploadFromUrl, makeFileName } from "@/lib/storage";
-import type { ComicCharacterDTO, ComicBackgroundDTO, CulturalMission } from "@/types";
+import type {
+  ComicCharacterDTO,
+  ComicBackgroundDTO,
+  CulturalMission,
+} from "@/types";
 
-const AI_BASE_URL = (process.env.AI_BASE_URL || "https://api.groq.com/openai/v1").replace(/\/+$/, "");
-const AI_MODEL    = process.env.AI_MODEL    || "llama-3.3-70b-versatile";
-const AI_API_KEY  = process.env.AI_API_KEY  || "";
+const AI_BASE_URL = (
+  process.env.AI_BASE_URL || "https://api.together.xyz/v1"
+).replace(/\/+$/, "");
+const AI_MODEL =
+  process.env.AI_MODEL || "meta-llama/Llama-3.3-70B-Instruct-Turbo";
+const AI_API_KEY = process.env.AI_API_KEY || "";
 
-// ─── Cấp độ ───────────────────────────────────────────────────────────────────
-const LEVEL_SPEC: Record<number, {
-  label: string; dialogueWords: string; vocabCount: string;
-  sentenceType: string; example: string; forbidden: string;
-}> = {
+// ─── Cap do ───────────────────────────────────────────────────────────────────
+const LEVEL_SPEC: Record<
+  number,
+  {
+    label: string;
+    dialogueWords: string;
+    vocabCount: string;
+    sentenceType: string;
+    example: string;
+    forbidden: string;
+  }
+> = {
   1: {
-    label: "Starter — Tiểu học (lớp 3–5, 8–10 tuổi)",
-    dialogueWords: "4–8 từ/câu",
-    vocabCount: "6–8 từ đơn giản: danh từ, động từ cơ bản, màu sắc, số đếm",
-    sentenceType: "Simple Present, câu khẳng định/phủ định, câu hỏi Yes/No đơn giản",
+    label: "Starter — Tieu hoc (lop 3-5, 8-10 tuoi)",
+    dialogueWords: "4-8 tu/cau",
+    vocabCount: "6-8 tu don gian: danh tu, dong tu co ban, mau sac, so dem",
+    sentenceType:
+      "Simple Present, cau khang dinh/phu dinh, cau hoi Yes/No don gian",
     example: "This is a gong. We play it at festivals.",
-    forbidden: "KHÔNG dùng câu phức, mệnh đề quan hệ, thì quá khứ hoàn thành, passive voice, từ vựng học thuật",
+    forbidden:
+      "KHONG dung cau phuc, menh de quan he, thi qua khu hoan thanh, passive voice, tu vung hoc thuat. Moi cau PHAI co duoi 9 tu.",
   },
   2: {
-    label: "Basic — THCS (lớp 6–7, 11–13 tuổi)",
-    dialogueWords: "8–14 từ/câu",
-    vocabCount: "8–10 từ: danh từ, động từ, tính từ, cụm từ văn hóa cơ bản",
-    sentenceType: "Present/Past Simple, câu hỏi Wh-, so sánh hơn/nhất đơn giản",
-    example: "My grandmother weaves brocade cloth every morning at the longhouse.",
-    forbidden: "Tránh mệnh đề quan hệ phức tạp, passive voice nhiều lớp, conditional type 2/3",
+    label: "Basic — THCS (lop 6-7, 11-13 tuoi)",
+    dialogueWords: "8-14 tu/cau",
+    vocabCount: "8-10 tu: danh tu, dong tu, tinh tu, cum tu van hoa co ban",
+    sentenceType: "Present/Past Simple, cau hoi Wh-, so sanh hon/nhat don gian",
+    example:
+      "My grandmother weaves brocade cloth every morning at the longhouse.",
+    forbidden:
+      "Tranh menh de quan he phuc tap, passive voice nhieu lop, conditional type 2/3",
   },
   3: {
-    label: "Intermediate — THCS nâng cao (lớp 8+, 13–15 tuổi)",
-    dialogueWords: "12–20 từ/câu",
-    vocabCount: "10–14 từ: cụm từ văn hóa, thành ngữ đơn giản, từ học thuật vừa phải",
-    sentenceType: "Đa dạng thì, mệnh đề trạng ngữ, conditional type 1, so sánh phức tạp",
-    example: "If you visit during the harvest festival, you will see everyone wearing traditional K'Ho brocade costumes.",
-    forbidden: "Không giới hạn cấu trúc nhưng phải tự nhiên, phù hợp văn cảnh câu chuyện",
+    label: "Intermediate — THCS nang cao (lop 8+, 13-15 tuoi)",
+    dialogueWords: "12-20 tu/cau",
+    vocabCount:
+      "10-14 tu: cum tu van hoa, thanh ngu don gian, tu hoc thuat vua phai",
+    sentenceType:
+      "Da dang thi, menh de trang ngu, conditional type 1, so sanh phuc tap",
+    example:
+      "If you visit during the harvest festival, you will see everyone wearing traditional K'Ho brocade costumes.",
+    forbidden:
+      "Khong gioi han cau truc nhung phai tu nhien, phu hop van canh cau chuyen",
   },
 };
 
@@ -44,39 +66,39 @@ const LEVEL_SPEC: Record<number, {
 const TEMPLATES: Record<string, { panelCount: number; guide: string }> = {
   INTRO_4: {
     panelCount: 4,
-    guide: `Panel 1: Mở đầu — nhân vật đang làm gì cụ thể, bối cảnh rõ ràng, giới thiệu chủ đề.
-Panel 2: Điều thú vị xảy ra — câu hỏi thật sự hoặc sự vật liên quan đến văn hóa.
-Panel 3: Khám phá, học hỏi — nhân vật giải thích cụ thể, dùng đúng tên văn hóa từ dữ liệu.
-Panel 4: Kết thúc — nhân vật áp dụng điều học được, cảm xúc tích cực.`,
+    guide: `Panel 1: Mo dau — nhan vat dang lam gi cu the, boi canh ro rang, gioi thieu chu de.
+Panel 2: Dieu thu vi xay ra — cau hoi that su hoac su vat lien quan den van hoa.
+Panel 3: Kham pha, hoc hoi — nhan vat giai thich cu the, dung dung ten van hoa tu du lieu.
+Panel 4: Ket thuc — nhan vat ap dung dieu hoc duoc, cam xuc tich cuc.`,
   },
   DIALOGUE_6: {
     panelCount: 6,
-    guide: `Panel 1: Hai nhân vật gặp nhau trong tình huống thực tế của đời sống buôn làng.
-Panel 2: Hỏi thăm cụ thể — không chỉ chào hỏi xã giao.
-Panel 3: Cùng làm một việc thực tế (dệt vải, nấu ăn, làm nương...).
-Panel 4: Một nhân vật giải thích điều đặc biệt của văn hóa mình (dùng đúng tên lễ hội/nhạc cụ/món ăn từ dữ liệu).
-Panel 5: Tình huống vui hoặc thử thách nhỏ liên quan đến ngôn ngữ/văn hóa.
-Panel 6: Kết bạn, lời hẹn có ý nghĩa.`,
+    guide: `Panel 1: Hai nhan vat gap nhau trong tinh huong thuc te cua doi song buon lang.
+Panel 2: Hoi tham cu the — khong chi chao hoi xa giao.
+Panel 3: Cung lam mot viec thuc te (det vai, nau an, lam nuong...).
+Panel 4: Mot nhan vat giai thich dieu dac biet cua van hoa minh (dung dung ten le hoi/nhac cu/mon an tu du lieu).
+Panel 5: Tinh huong vui hoac thu thach nho lien quan den ngon ngu/van hoa.
+Panel 6: Ket ban, loi hen co y nghia.`,
   },
   ADVENTURE_6: {
     panelCount: 6,
-    guide: `Panel 1: Nhân vật lên đường với mục đích cụ thể, mô tả đồ vật mang theo.
-Panel 2: Khám phá địa điểm mới — mô tả chi tiết cảnh vật, cây cối, âm thanh.
-Panel 3: Gặp người địa phương, học được điều thực tế về cuộc sống nơi đây.
-Panel 4: Khó khăn hoặc điều bất ngờ — liên quan đến ngôn ngữ hoặc phong tục.
-Panel 5: Cùng nhau giải quyết bằng kiến thức văn hóa.
-Panel 6: Bài học ý nghĩa, ký ức đẹp mang về.`,
+    guide: `Panel 1: Nhan vat len duong voi muc dich cu the, mo ta do vat mang theo.
+Panel 2: Kham pha dia diem moi — mo ta chi tiet canh vat, cay coi, am thanh.
+Panel 3: Gap nguoi dia phuong, hoc duoc dieu thuc te ve cuoc song noi day.
+Panel 4: Kho khan hoac dieu bat ngo — lien quan den ngon ngu hoac phong tuc.
+Panel 5: Cung nhau giai quyet bang kien thuc van hoa.
+Panel 6: Bai hoc y nghia, ky uc dep mang ve.`,
   },
   FESTIVAL_8: {
     panelCount: 8,
-    guide: `Panel 1: Không khí chuẩn bị lễ hội — công việc cụ thể, đồ vật truyền thống.
-Panel 2: Mặc trang phục — giải thích ý nghĩa từng chi tiết trang phục.
-Panel 3: Đến nơi lễ hội, gặp gỡ mọi người, mô tả không khí.
-Panel 4: Âm nhạc — tên nhạc cụ cụ thể, cách chơi, ý nghĩa.
-Panel 5: Ẩm thực — tên món cụ thể, cách làm, ý nghĩa trong lễ hội.
-Panel 6: Trò chơi dân gian — mô tả luật chơi, cách tham gia.
-Panel 7: Kết bạn với người từ nơi khác, chia sẻ văn hóa bằng tiếng Anh.
-Panel 8: Chia sẻ điều đẹp nhất, ý nghĩa lễ hội với cuộc sống hiện tại.`,
+    guide: `Panel 1: Khong khi chuan bi le hoi — cong viec cu the, do vat truyen thong.
+Panel 2: Mac trang phuc — giai thich y nghia tung chi tiet trang phuc.
+Panel 3: Den noi le hoi, gap go moi nguoi, mo ta khong khi.
+Panel 4: Am nhac — ten nhac cu cu the, cach choi, y nghia.
+Panel 5: Am thuc — ten mon cu the, cach lam, y nghia trong le hoi.
+Panel 6: Tro choi dan gian — mo ta luat choi, cach tham gia.
+Panel 7: Ket ban voi nguoi tu noi khac, chia se van hoa bang tieng Anh.
+Panel 8: Chia se dieu dep nhat, y nghia le hoi voi cuoc song hien tai.`,
   },
 };
 
@@ -89,34 +111,56 @@ async function callLLM(system: string, user: string): Promise<string> {
       ...(AI_API_KEY ? { Authorization: `Bearer ${AI_API_KEY}` } : {}),
     },
     body: JSON.stringify({
-      model: AI_MODEL, temperature: 0.72, max_tokens: 9000,
-      messages: [{ role: "system", content: system }, { role: "user", content: user }],
+      model: AI_MODEL,
+      temperature: 0.72,
+      max_tokens: 9000,
+      messages: [
+        { role: "system", content: system },
+        { role: "user", content: user },
+      ],
     }),
   });
-  if (!res.ok) throw new Error(`AI ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  if (!res.ok)
+    throw new Error(`AI ${res.status}: ${(await res.text()).slice(0, 200)}`);
   const data = await res.json();
   const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error("AI không trả về nội dung");
+  if (!content) throw new Error("AI khong tra ve noi dung");
   return content;
 }
 
 function parseJson(raw: string): unknown {
-  let s = raw.trim().replace(/^```(?:json)?\s*/m, "").replace(/\s*```$/m, "").trim();
-  const a = s.indexOf("{"), b = s.lastIndexOf("}");
+  let s = raw
+    .trim()
+    .replace(/^```(?:json)?\s*/m, "")
+    .replace(/\s*```$/m, "")
+    .trim();
+  const a = s.indexOf("{"),
+    b = s.lastIndexOf("}");
   if (a !== -1 && b !== -1) s = s.slice(a, b + 1);
   return JSON.parse(s);
 }
 
 interface ScriptData {
-  titleVi: string; titleEn: string; descriptionVi: string;
+  titleVi: string;
+  titleEn: string;
+  descriptionVi: string;
   vocabulary: { en: string; vi: string }[];
   quiz: { question_en: string; options: string[]; answer: number }[];
   missions: CulturalMission[];
   panels: {
-    id: number; backgroundIndex: number; characterNames: string[];
+    id: number;
+    backgroundIndex: number;
+    characterNames: string[];
     action: string;
     dialogue: { characterName: string; en: string; vi: string }[];
   }[];
+}
+
+function hashString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++)
+    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
 }
 
 // ─── Main handler ──────────────────────────────────────────────────────────────
@@ -124,18 +168,36 @@ export async function POST(req: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user || session.user.role !== "TEACHER") {
-      return NextResponse.json({ error: "Chỉ giáo viên mới tạo được bài học" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Chi giao vien moi tao duoc bai hoc" },
+        { status: 403 },
+      );
     }
 
     const body = await req.json();
-    const { topic, templateKey, ethnicGroupId, characterIds, backgroundIds, titleVi, level } = body as {
-      topic: string; templateKey: string; ethnicGroupId?: string;
-      characterIds?: string[]; backgroundIds?: string[];
-      titleVi?: string; level?: number;
+    const {
+      topic,
+      templateKey,
+      ethnicGroupId,
+      characterIds,
+      backgroundIds,
+      titleVi,
+      level,
+    } = body as {
+      topic: string;
+      templateKey: string;
+      ethnicGroupId?: string;
+      characterIds?: string[];
+      backgroundIds?: string[];
+      titleVi?: string;
+      level?: number;
     };
 
     if (!topic || !templateKey) {
-      return NextResponse.json({ error: "Thiếu topic hoặc templateKey" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Thieu topic hoac templateKey" },
+        { status: 400 },
+      );
     }
 
     const lessonLevel = Math.min(3, Math.max(1, level ?? 2)) as 1 | 2 | 3;
@@ -144,196 +206,273 @@ export async function POST(req: NextRequest) {
     const charIds = characterIds ?? [];
     const bgIds = backgroundIds ?? [];
 
-    // Đọc dữ liệu từ DB — KHÔNG dùng data/culture.ts ở runtime
     const [dbChars, dbBgs, ethnicGroup] = await Promise.all([
       prisma.comicCharacter.findMany({ where: { id: { in: charIds } } }),
       prisma.comicBackground.findMany({ where: { id: { in: bgIds } } }),
-      ethnicGroupId ? prisma.ethnicGroup.findUnique({ where: { id: ethnicGroupId } }) : null,
+      ethnicGroupId
+        ? prisma.ethnicGroup.findUnique({ where: { id: ethnicGroupId } })
+        : null,
     ]);
 
-    const characters: ComicCharacterDTO[] = dbChars.map((c) => ({
-      id: c.id, name: c.name, nameEn: c.nameEn,
+    const characters: ComicCharacterDTO[] = dbChars.map(c => ({
+      id: c.id,
+      name: c.name,
+      nameEn: c.nameEn,
       role: c.role as "child" | "adult" | "elder",
       gender: c.gender as "male" | "female",
-      ethnicGroupId: c.ethnicGroupId, descriptionVi: c.descriptionVi, descriptionEn: c.descriptionEn,
-      costumePrompt: c.costumePrompt, appearancePrompt: c.appearancePrompt,
-      referenceImageUrl: c.referenceImageUrl, characterImageUrl: c.characterImageUrl,
-      thumbnailEmoji: c.thumbnailEmoji, isActive: c.isActive,
+      ethnicGroupId: c.ethnicGroupId,
+      descriptionVi: c.descriptionVi,
+      descriptionEn: c.descriptionEn,
+      costumePrompt: c.costumePrompt,
+      appearancePrompt: c.appearancePrompt,
+      referenceImageUrl: c.referenceImageUrl,
+      characterImageUrl: c.characterImageUrl,
+      thumbnailEmoji: c.thumbnailEmoji,
+      isActive: c.isActive,
     }));
 
-    const backgrounds: ComicBackgroundDTO[] = dbBgs.map((b) => ({
-      id: b.id, key: b.key, nameVi: b.nameVi, nameEn: b.nameEn,
-      category: b.category as "village" | "forest" | "market" | "festival" | "house" | "school",
+    const backgrounds: ComicBackgroundDTO[] = dbBgs.map(b => ({
+      id: b.id,
+      key: b.key,
+      nameVi: b.nameVi,
+      nameEn: b.nameEn,
+      category: b.category as
+        | "village"
+        | "forest"
+        | "market"
+        | "festival"
+        | "house"
+        | "school",
       prompt: b.prompt,
-      referenceImageUrl: b.referenceImageUrl, imageUrl: b.imageUrl,
-      thumbnailEmoji: b.thumbnailEmoji, isActive: b.isActive,
+      referenceImageUrl: b.referenceImageUrl,
+      imageUrl: b.imageUrl,
+      thumbnailEmoji: b.thumbnailEmoji,
+      isActive: b.isActive,
     }));
 
     const ethnicNameVi = ethnicGroup?.nameVi ?? "K'Ho";
     const ethnicNameEn = ethnicGroup?.nameEn ?? "K'Ho";
-    const ethnicEmoji  = ethnicGroup?.emoji  ?? "🌄";
+    const ethnicEmoji = ethnicGroup?.emoji ?? "🌄";
 
-    // ── Dữ liệu văn hóa đầy đủ từ DB ────────────────────────────────────────
+    // Du lieu van hoa day du tu DB
     const cultureBlock = ethnicGroup
-      ? `DỮ LIỆU VĂN HÓA CHÍNH XÁC — CHỈ ĐƯỢC DÙNG THÔNG TIN NÀY, KHÔNG ĐƯỢC BỊA THÊM:
-Dân tộc: ${ethnicGroup.nameVi} (${ethnicGroup.nameEn})
-Mô tả: ${ethnicGroup.description}
-Lễ hội: ${(ethnicGroup.festivals as string[]).join(" | ")}
-Trang phục: ${(ethnicGroup.costume as string[]).join(" | ")}
-Nhạc cụ: ${(ethnicGroup.instruments as string[]).join(" | ")}
-Nghề thủ công: ${(ethnicGroup.crafts as string[]).join(" | ")}
-Ẩm thực truyền thống: ${(ethnicGroup.cuisine as string[]).join(" | ")}
-Địa danh: ${(ethnicGroup.locations as string[]).join(" | ")}
-Kiến trúc: ${ethnicGroup.architecture}`
-      : `Dân tộc thiểu số vùng Tây Nguyên Việt Nam.`;
+      ? `DU LIEU VAN HOA CHINH XAC — CHI DUOC DUNG THONG TIN NAY, KHONG DUOC BIA THEM:
+Dan toc: ${ethnicGroup.nameVi} (${ethnicGroup.nameEn})
+Mo ta: ${ethnicGroup.description}
+Le hoi: ${(ethnicGroup.festivals as string[]).join(" | ")}
+Trang phuc: ${(ethnicGroup.costume as string[]).join(" | ")}
+Nhac cu: ${(ethnicGroup.instruments as string[]).join(" | ")}
+Nghe thu cong: ${(ethnicGroup.crafts as string[]).join(" | ")}
+Am thuc truyen thong: ${(ethnicGroup.cuisine as string[]).join(" | ")}
+Dia danh: ${(ethnicGroup.locations as string[]).join(" | ")}
+Kien truc: ${ethnicGroup.architecture}`
+      : `Dan toc thieu so vung Tay Nguyen Viet Nam.`;
 
     const charHint = characters.length
-      ? characters.map((c) => `${c.name} (${c.nameEn}): ${c.appearancePrompt}`).join(" | ")
-      : "Tự đặt tên nhân vật phù hợp dân tộc";
+      ? characters
+          .map(c => `${c.name} (${c.nameEn}): ${c.appearancePrompt}`)
+          .join(" | ")
+      : "Tu dat ten nhan vat phu hop dan toc";
+
+    // Danh sach ten nhan vat hop le de LLM khong bia them
+    const charNames = characters.length
+      ? characters.map(c => c.name).join(", ")
+      : "nhan vat tu dat";
 
     const bgHint = backgrounds.length
       ? backgrounds.map((b, i) => `[${i}] ${b.nameVi}`).join(", ")
-      : "Tự mô tả bối cảnh phù hợp";
+      : "Tu mo ta boi canh phu hop";
 
-    // ── System prompt ─────────────────────────────────────────────────────────
-    const systemPrompt = `Bạn là tác giả truyện tranh giáo dục song ngữ Anh-Việt cho học sinh dân tộc thiểu số tại Tây Nguyên Việt Nam, cấp độ ${lessonLevel}: ${levelSpec.label}.
+    // ── System prompt — toan bo ASCII khong dau de tranh encoding loi ─────────
+    const systemPrompt = `Ban la tac gia truyen tranh giao duc song ngu Anh-Viet cho hoc sinh dan toc thieu so tai Tay Nguyen Viet Nam, cap do ${lessonLevel}: ${levelSpec.label}.
 
-NGÔN NGỮ — BẮT BUỘC TUYỆT ĐỐI:
-- Trường "vi": PHẢI là tiếng Việt thuần túy, TUYỆT ĐỐI KHÔNG có ký tự chữ Hán, chữ Trung Quốc, chữ Nhật hoặc bất kỳ ký tự ngoài bảng chữ cái tiếng Việt
-- Trường "en": tiếng Anh đúng ngữ pháp, tự nhiên
+NGON NGU — BAT BUOC TUYET DOI:
+- Truong "vi": PHAI la tieng Viet thuan tuy, TUYET DOI KHONG co ky tu chu Han, chu Trung Quoc, chu Nhat
+- Dich tieng Viet phai tu nhien, dung cach xung ho: con/me, em/ong, em/ba, ban/ban... tuy quan he nhan vat
+- KHONG dich may: "You're welcome" = "Khong co chi" (KHONG PHAI "Khong co van de"), "I'm glad" = "Minh vui" hoac "Bac vui" tuy ngu canh
+- Truong "en": tieng Anh dung ngu phap, tu nhien nhu tre em that su noi
 
-CẤP ĐỘ ${lessonLevel} — QUY TẮC LỜI THOẠI:
-- Độ dài: ${levelSpec.dialogueWords}
-- Từ vựng: ${levelSpec.vocabCount}
-- Cấu trúc câu: ${levelSpec.sentenceType}
-- Ví dụ câu chuẩn: "${levelSpec.example}"
+CAP DO ${lessonLevel} — QUY TAC LOI THOAI (BAT BUOC TUYET DOI):
+- Do dai: ${levelSpec.dialogueWords} — DEM SO TU TUNG CAU, BAN CO VAI LONG KIEM TRA LAI TRUOC KHI VIET
+- Tu vung: ${levelSpec.vocabCount}
+- Cau truc cau: ${levelSpec.sentenceType}
+- Vi du CAU DUNG o cap do nay: "${levelSpec.example}"
 - ${levelSpec.forbidden}
-- Mỗi panel: 2–3 lượt thoại, câu sau phản hồi và mở rộng câu trước
+- Moi panel: 2-3 luot thoai, cau sau phan hoi va mo rong cau truoc
 
-T�NH CHÍNH XÁC VĂN HÓA — BẮT BUỘC:
-- Tên lễ hội, nhạc cụ, trang phục, món ăn PHẢI lấy đúng từ DỮ LIỆU VĂN HÓA bên dưới
-- KHÔNG được bịa: lễ hội không có trong danh sách, hoa văn "on trees/rocks", nhạc cụ không thuộc dân tộc này
-- Dùng tên lễ hội cụ thể (ví dụ: "Lễ mừng lúa mới" / "Rice Harvest Festival"), không gọi chung "gong ceremony"
+NHAN VAT — BAT BUOC:
+- characterNames CHI duoc dung ten tu danh sach sau, KHONG duoc bia them nhan vat moi: ${charNames}
+- Neu nhan vat trong truyen can mot nhan vat phu (vi du: nguoi ban hang), su dung mo ta "nguoi ban" hoac "nguoi lang" thay vi dat ten moi
 
-LỜI THOẠI CẤM DÙNG (bất kể cấp độ):
-✗ "Let's go", "Okay", "Me too", "I see", "Yes/No" độc lập — câu dưới 4 từ không có thông tin
-✗ Câu không có chủ ngữ hoặc động từ chính
-✗ Lời thoại không liên quan đến văn hóa hoặc chủ đề bài học
+VOCABULARY — BAT BUOC:
+- Chi dua vao vocabulary cac tu/cum tu DA XUAT HIEN trong dialogue cua it nhat mot panel
+- KHONG dua ten dan toc (K'Ho, Ba Na, Gia Rai...) vao vocabulary
+- KHONG dua tu hoc thuat khong xuat hien trong truyen vao vocabulary
+- Vi du DUNG: {"en": "loom", "vi": "khung cui"} neu tu "loom" co trong dialogue
+- Vi du SAI: {"en": "matrilineal", "vi": "mau he"} neu tu nay khong co trong bat ky dong thoai nao
 
-Chỉ trả về JSON thuần túy, không markdown, không giải thích.`;
+TINH CHINH XAC VAN HOA — BAT BUOC:
+- Ten le hoi, nhac cu, trang phuc, mon an PHAI lay dung tu DU LIEU VAN HOA ben duoi
+- KHONG duoc bia: le hoi khong co trong danh sach, hoa van "on trees/rocks", nhac cu khong thuoc dan toc nay
+- Dung ten le hoi cu the, khong goi chung "gong ceremony"
+
+LOI THOAI CAM DUNG:
+- "Let's go", "Okay", "Me too", "I see", "Yes/No" doc lap — cau duoi 4 tu khong co thong tin
+- Cau khong co chu ngu hoac dong tu chinh
+- Loi thoai khong lien quan den van hoa hoac chu de bai hoc
+
+Chi tra ve JSON thuan tuy, khong markdown, khong giai thich.`;
 
     // ── User prompt ────────────────────────────────────────────────────────────
-    const userPrompt = `Tạo truyện tranh ${tmpl.panelCount} panel về chủ đề: "${topic}"
+    const userPrompt = `Tao truyen tranh ${tmpl.panelCount} panel ve chu de: "${topic}"
 
 ${cultureBlock}
 
-Nhân vật: ${charHint}
-Bối cảnh có sẵn (chọn theo index): ${bgHint}
+Nhan vat: ${charHint}
+DANH SACH TEN NHAN VAT HOP LE (chi duoc dung cac ten nay, khong them nhan vat khac): ${charNames}
+Boi canh co san (chon theo index): ${bgHint}
 
-Cấu trúc từng panel:
+Cau truc tung panel:
 ${tmpl.guide}
 
-Trả về JSON:
+Tra ve JSON:
 {
-  "titleVi": "Tên truyện tiếng Việt hấp dẫn, cụ thể — phản ánh đúng nội dung",
+  "titleVi": "Ten truyen tieng Viet hap dan, cu the — phan anh dung noi dung",
   "titleEn": "Specific English title",
-  "descriptionVi": "1-2 câu: học sinh sẽ đọc về gì và học được gì",
-  "vocabulary": [{"en": "từ/cụm từ", "vi": "nghĩa tiếng Việt chuẩn, KHÔNG chữ Hán"}],
-  "quiz": [{"question_en": "Câu hỏi kiểm tra hiểu bài cụ thể", "options": ["A","B","C","D"], "answer": 0}],
+  "descriptionVi": "1-2 cau: hoc sinh se doc ve gi va hoc duoc gi",
+  "vocabulary": [
+    {"en": "tu hoac cum tu DA XUAT HIEN trong dialogue", "vi": "nghia tieng Viet tu nhien, KHONG chu Han"}
+  ],
+  "quiz": [{"question_en": "Cau hoi kiem tra hieu bai cu the", "options": ["A","B","C","D"], "answer": 0}],
   "missions": [
     {
       "id": "m1", "type": "select",
-      "title": "Tên nhiệm vụ khám phá văn hóa",
-      "prompt": "Câu hỏi về phong tục/lễ hội/nhạc cụ cụ thể trong truyện",
+      "title": "Ten nhiem vu kham pha van hoa",
+      "prompt": "Cau hoi ve phong tuc/le hoi/nhac cu cu the trong truyen",
       "options": [
-        {"id":"a","label":"Đáp án đúng từ dữ liệu văn hóa","emoji":"🎵","correct":true},
-        {"id":"b","label":"Đáp án sai hợp lý","emoji":"🌿","correct":false},
-        {"id":"c","label":"Đáp án sai hợp lý","emoji":"🏺","correct":false}
+        {"id":"a","label":"Dap an dung tu du lieu van hoa","emoji":"🎵","correct":true},
+        {"id":"b","label":"Dap an sai hop ly","emoji":"🌿","correct":false},
+        {"id":"c","label":"Dap an sai hop ly","emoji":"🏺","correct":false}
       ],
-      "fact": "Thông tin thú vị 2-3 câu giải thích đáp án, lấy từ dữ liệu văn hóa"
+      "fact": "Thong tin thu vi 2-3 cau giai thich dap an, lay tu du lieu van hoa"
     }
   ],
   "panels": [
     {
       "id": 1, "backgroundIndex": 0,
-      "characterNames": ["tên nhân vật xuất hiện"],
-      "action": "Mô tả hành động, vị trí, cảm xúc nhân vật bằng tiếng Anh để gen ảnh AI",
+      "characterNames": ["chi duoc dung ten tu danh sach: ${charNames}"],
+      "action": "Mo ta hanh dong, vi tri, cam xuc nhan vat bang tieng Anh de gen anh AI",
       "dialogue": [
-        {"characterName": "tên", "en": "Câu tiếng Anh đúng cấp độ ${lessonLevel}, có thông tin văn hóa cụ thể", "vi": "Bản dịch tiếng Việt thuần túy, KHÔNG chữ Hán"},
-        {"characterName": "tên", "en": "Câu phản hồi mở rộng chủ đề", "vi": "Bản dịch tiếng Việt thuần túy"}
+        {"characterName": "ten", "en": "Cau tieng Anh dung cap do ${lessonLevel}, co thong tin van hoa cu the", "vi": "Ban dich tieng Viet tu nhien, dung xung ho phu hop, KHONG chu Han"},
+        {"characterName": "ten", "en": "Cau phan hoi mo rong chu de", "vi": "Ban dich tieng Viet tu nhien"}
       ]
     }
   ]
 }
 
-Số lượng: vocabulary ${lessonLevel === 1 ? "6-8" : lessonLevel === 2 ? "8-10" : "10-14"} mục, quiz đúng 4 câu, missions 1-2, panels đúng ${tmpl.panelCount}.`;
+So luong: vocabulary ${lessonLevel === 1 ? "6-8" : lessonLevel === 2 ? "8-10" : "10-14"} muc (chi lay tu dialogue), quiz dung 4 cau, missions 1-2, panels dung ${tmpl.panelCount}.`;
 
     let script: ScriptData;
     try {
       const raw = await callLLM(systemPrompt, userPrompt);
       script = parseJson(raw) as ScriptData;
     } catch (err) {
-      return NextResponse.json({ error: `LLM thất bại: ${err}` }, { status: 500 });
+      return NextResponse.json(
+        { error: `LLM that bai: ${err}` },
+        { status: 500 },
+      );
     }
 
-    // Tạo lesson DRAFT trước để có ID
+    // Tao lesson DRAFT truoc de co ID
     const lesson = await prisma.lesson.create({
       data: {
         titleVi: titleVi || script.titleVi,
-        titleEn: script.titleEn, topic,
+        titleEn: script.titleEn,
+        topic,
         descriptionVi: script.descriptionVi || topic,
-        emoji: ethnicEmoji, level: lessonLevel,
+        emoji: ethnicEmoji,
+        level: lessonLevel,
         vocabulary: JSON.parse(JSON.stringify(script.vocabulary ?? [])),
         panels: [],
         quiz: JSON.parse(JSON.stringify(script.quiz ?? [])),
         missions: JSON.parse(JSON.stringify(script.missions ?? [])),
-        status: "DRAFT", source: "COMIC",
+        status: "DRAFT",
+        source: "COMIC",
         authorId: session.user.id!,
-        characterIds: charIds, backgroundIds: bgIds, templateKey,
+        characterIds: charIds,
+        backgroundIds: bgIds,
+        templateKey,
       },
     });
 
-    // Sinh ảnh từng panel tuần tự
+    // Sinh anh tung panel tuan tu
     const SCENE_MAP: Record<string, string> = {
-      village: "morning_village", forest: "forest_entrance", market: "market_morning",
-      festival: "drum", house: "costume", school: "morning_village",
+      village: "morning_village",
+      forest: "forest_entrance",
+      market: "market_morning",
+      festival: "drum",
+      house: "costume",
+      school: "morning_village",
     };
 
     const panelData: {
-      id: number; bg: string; scene: string; generatedImageUrl?: string;
+      id: number;
+      bg: string;
+      scene: string;
+      generatedImageUrl?: string;
       dialogue: { character: string; vi: string; en: string }[];
-      characterIds: string[]; backgroundId: string; action: string;
+      characterIds: string[];
+      backgroundId: string;
+      action: string;
     }[] = [];
 
     for (let i = 0; i < script.panels.length; i++) {
       const ps = script.panels[i];
       const bg = backgrounds[ps.backgroundIndex] ??
         backgrounds[i % Math.max(backgrounds.length, 1)] ?? {
-          id: "", key: "village", nameVi: "Làng", nameEn: "Village",
-          category: "village" as const, prompt: `${ethnicNameEn} highland village`,
-          thumbnailEmoji: "🌄", isActive: true,
+          id: "",
+          key: "village",
+          nameVi: "Lang",
+          nameEn: "Village",
+          category: "village" as const,
+          prompt: `${ethnicNameEn} highland village`,
+          thumbnailEmoji: "🌄",
+          isActive: true,
         };
 
-      const panelChars = characters.filter((c) =>
-        ps.characterNames?.some((n) => n === c.name || n === c.nameEn)
+      const panelChars = characters.filter(c =>
+        ps.characterNames?.some(n => n === c.name || n === c.nameEn),
       );
-      if (panelChars.length === 0 && characters.length > 0) panelChars.push(characters[0]);
+      if (panelChars.length === 0 && characters.length > 0)
+        panelChars.push(characters[0]);
 
-      const dialogue = (ps.dialogue || []).map((d) => ({
-        character: d.characterName, vi: d.vi, en: d.en,
+      const dialogue = (ps.dialogue || []).map(d => ({
+        character: d.characterName,
+        vi: d.vi,
+        en: d.en,
       }));
 
-      const panelSeed = (parseInt(lesson.id.replace(/[^0-9]/g, "").slice(0, 6) || "100", 10) + i * 17) % 9999;
+      const panelSeed = (hashString(lesson.id) + i * 1337) % 99999;
 
       let generatedImageUrl: string | undefined;
       try {
         const rawUrl = await generateComicPanel({
-          background: bg, characters: panelChars,
-          action: ps.action || `${ethnicNameEn} characters in traditional setting, panel ${i + 1}`,
-          ethnicCulture: ethnicNameEn, panelSeed,
+          background: bg,
+          characters: panelChars,
+          action:
+            ps.action ||
+            `${ethnicNameEn} characters in traditional setting, panel ${i + 1}`,
+          ethnicCulture: ethnicNameEn,
+          panelSeed,
         });
-        const fileName = makeFileName(`lessons/${lesson.id}/panel-${i + 1}`, "jpg");
-        generatedImageUrl = await uploadFromUrl({ sourceUrl: rawUrl, fileName }).catch(() => rawUrl);
+        const fileName = makeFileName(
+          `lessons/${lesson.id}/panel-${i + 1}`,
+          "jpg",
+        );
+        generatedImageUrl = await uploadFromUrl({
+          sourceUrl: rawUrl,
+          fileName,
+        }).catch(() => rawUrl);
       } catch (imgErr) {
         console.error(`[generate] Panel ${i + 1} image failed:`, imgErr);
       }
@@ -342,33 +481,50 @@ Số lượng: vocabulary ${lessonLevel === 1 ? "6-8" : lessonLevel === 2 ? "8-1
       const sceneKey = bg.key || SCENE_MAP[cat] || "morning_village";
 
       panelData.push({
-        id: ps.id || i + 1, bg: "#FFF3E0", scene: sceneKey,
-        generatedImageUrl, dialogue,
-        characterIds: panelChars.map((c) => c.id),
-        backgroundId: bg.id, action: ps.action,
+        id: ps.id || i + 1,
+        bg: "#FFF3E0",
+        scene: sceneKey,
+        generatedImageUrl,
+        dialogue,
+        characterIds: panelChars.map(c => c.id),
+        backgroundId: bg.id,
+        action: ps.action,
       });
     }
 
     const updated = await prisma.lesson.update({
       where: { id: lesson.id },
       data: {
-        titleVi: titleVi || script.titleVi, titleEn: script.titleEn,
+        titleVi: titleVi || script.titleVi,
+        titleEn: script.titleEn,
         panels: JSON.parse(JSON.stringify(panelData)),
         status: "PUBLISHED",
       },
     });
 
-    await prisma.aIGenerationLog.create({
-      data: {
-        userId: session.user.id!, lessonId: lesson.id,
-        input: { topic, templateKey, level: lessonLevel, characterIds: charIds, backgroundIds: bgIds },
-        status: "success",
-      },
-    }).catch(() => {});
+    await prisma.aIGenerationLog
+      .create({
+        data: {
+          userId: session.user.id!,
+          lessonId: lesson.id,
+          input: {
+            topic,
+            templateKey,
+            level: lessonLevel,
+            characterIds: charIds,
+            backgroundIds: bgIds,
+          },
+          status: "success",
+        },
+      })
+      .catch(() => {});
 
     return NextResponse.json({ lesson: updated });
   } catch (err) {
     console.error("[generate lesson]", err);
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Lỗi server" }, { status: 500 });
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Loi server" },
+      { status: 500 },
+    );
   }
 }

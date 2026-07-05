@@ -184,13 +184,12 @@ export default function CharacterManager({ initialCharacters, ethnicGroups }: Pr
             overflow: "hidden", boxShadow: "var(--shadow)",
             display: "flex", flexDirection: "column",
           }}>
-            {/* Ảnh full width, tỉ lệ 4:3 cố định */}
             <div
               style={{ background: "var(--surface)" }}
               onMouseEnter={() => setHoveredId(c.id)}
               onMouseLeave={() => setHoveredId(null)}
             >
-              {c.characterImageUrl ? (
+              {c.characterImageUrl && (
                 <img src={c.characterImageUrl} alt={c.name}
                   style={{
                     width: "100%", height: "auto", display: "block",
@@ -198,20 +197,6 @@ export default function CharacterManager({ initialCharacters, ethnicGroups }: Pr
                     cursor: hoveredId === c.id ? "pointer" : "default",
                     transition: "opacity 0.2s ease",
                   }} />
-              ) : c.referenceImageUrl ? (
-                <>
-                  <img src={c.referenceImageUrl} alt="reference"
-                    style={{ width: "100%", height: "auto", display: "block" }} />
-                  <div style={{
-                    height: 160, display: "flex", alignItems: "center",
-                    justifyContent: "center", fontSize: "4rem"
-                  }}>{c.thumbnailEmoji}</div>
-                </>
-              ) : (
-                <div style={{
-                  position: "absolute", inset: 0, display: "flex", alignItems: "center",
-                  justifyContent: "center", fontSize: "4rem"
-                }}>{c.thumbnailEmoji}</div>
               )}
               <div style={{ background: "var(--surface)", position: "relative" }}>
                 {generatingId === c.id && (

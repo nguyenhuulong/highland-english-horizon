@@ -29,7 +29,7 @@ async function togetherGenerate(
     negative_prompt: params.negativePrompt,
     width: params.width ?? 768,
     height: params.height ?? 512,
-    steps: useImageToImage ? 28 : 4,
+    steps: useImageToImage ? 40 : 4,
     n: 1,
     disable_safety_checker: false,
   };
@@ -94,54 +94,12 @@ export async function generateCharacterSheet(opts: {
     gender === "female" ? "female character" : "male character";
 
   const prompt = referenceImageUrl
-    ? [
-        // ===== Identity =====
-        "Create a new original 2D children's book character.",
-        "Do NOT recreate the person in the reference image.",
-        appearancePrompt,
-        roleLabel,
-        genderLabel,
-
-        // ===== Costume =====
-        "Use the reference image ONLY to extract the traditional costume.",
-        costumePrompt,
-        `${ethnicCulture} ethnic minority traditional costume.`,
-        "Preserve only the clothing style, embroidery, weaving patterns, colors, accessories and ornaments.",
-        "Do not copy the human model or pose.",
-
-        // ===== Ignore reference =====
-        "Ignore face, hairstyle, body shape, skin tone, age, pose, lighting, camera angle, background, watermark, logo, text, price tags, shop elements and all unrelated objects from the reference image.",
-
-        // ===== Style =====
-        "Front view.",
-        "Standing naturally.",
-        "Full body.",
-        "Centered composition.",
-        "White background.",
-        "anime style 2D illustration, Studio Ghibli inspired, flat cartoon, cel shading, NOT photorealistic",
-        "Clean vector-like outlines.",
-        "Bright harmonious colors.",
-        "Friendly facial expression.",
-        "Consistent character sheet.",
-        "High quality.",
-      ].join(", ")
-    : [
-        "Create a 2D cartoon children's book character.",
-        appearancePrompt,
-        costumePrompt,
-        `${ethnicCulture} ethnic minority traditional costume`,
-        roleLabel,
-        genderLabel,
-        "standing naturally",
-        "front view",
-        "full body",
-        "centered",
-        "white background",
-        "anime style 2D illustration, Studio Ghibli inspired, flat cartoon, cel shading, NOT photorealistic",
-        "clean outline",
-        "bright colors",
-        "high quality character sheet",
-      ].join(", ");
+    ? `
+Create a new original children's book character in a 2D anime style. Use the uploaded image only as a costume reference. The traditional clothing should closely match the reference image, preserving the garment structure, fabric layers, embroidery patterns, woven motifs, colors, accessories, jewelry, belts, scarves, headwear and every decorative detail visible in the costume. Keep the costume as faithful to the reference image as possible, and do not redesign, simplify, modernize or invent any new clothing elements. Generate a completely different person from the reference image. Do not copy the face, hairstyle, body shape, skin tone, age or pose. The character should be ${appearancePrompt}, a ${roleLabel}, and a ${genderLabel}. The costume should faithfully reproduce the traditional clothing shown in the reference image, representing the authentic cultural style of the ${ethnicCulture} people. Show the character standing naturally in a front view, full body, centered on a plain white background. Render the illustration as a high-quality children's book character sheet in a Japanese anime style inspired by Studio Ghibli, using clean vector-like outlines, flat cel shading, bright harmonious colors and a friendly facial expression.
+`.trim()
+    : `
+Create a new original children's book character in a 2D anime style. The character should be ${appearancePrompt}, a ${roleLabel}, and a ${genderLabel}. Dress the character in authentic ${ethnicCulture} traditional clothing described as ${costumePrompt}. Show the character standing naturally in a front view, full body, centered on a plain white background. Render the illustration as a high-quality children's book character sheet in a Japanese anime style inspired by Studio Ghibli, using clean vector-like outlines, flat cel shading, bright harmonious colors and a friendly facial expression.
+`.trim();
 
   const seed = hashSeed(opts.name);
 
@@ -175,9 +133,6 @@ export async function generateCharacterSheet(opts: {
     "DSLR photo",
     "skin pores",
     "real person",
-    "human model",
-    "fashion model",
-    "mannequin",
 
     // background
     "background scenery",

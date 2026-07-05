@@ -10,7 +10,7 @@ const ROLE_HOME: Record<string, string> = {
 
 const ROLE_ALLOWED: Record<string, string[]> = {
   STUDENT: ["/dashboard/student"],
-  TEACHER: ["/dashboard/teacher", "/creator"],
+  TEACHER: ["/dashboard/teacher", "/creator", "/dashboard/admin/students"],
   ADMIN: ["/dashboard/admin"],
 };
 
