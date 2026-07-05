@@ -227,7 +227,6 @@ export async function generateCharacterSheet(opts: {
 export async function generateBackgroundImage(opts: {
   prompt: string;
   nameEn: string;
-  ethnicCulture?: string;
   referenceImageUrl?: string | null;
 }): Promise<string> {
   const fullPrompt = opts.referenceImageUrl
@@ -237,9 +236,6 @@ export async function generateBackgroundImage(opts: {
         "Preserve the architecture, terrain, vegetation and atmosphere.",
         "Ignore all people, vehicles, animals, text, watermark, logos, advertisements, signs and temporary objects.",
         opts.prompt,
-        opts.ethnicCulture
-          ? `${opts.ethnicCulture} ethnic minority Tay Nguyen Highlands`
-          : "",
         "flat illustration",
         "warm colors",
         "wide landscape",
@@ -251,9 +247,6 @@ export async function generateBackgroundImage(opts: {
         .join(", ")
     : [
         opts.prompt,
-        opts.ethnicCulture
-          ? `${opts.ethnicCulture} ethnic minority Tay Nguyen highlands`
-          : "",
         "children book illustration style, flat design, vibrant warm colors",
         "wide landscape, no people, no characters",
         "no text, no watermark, high quality background",

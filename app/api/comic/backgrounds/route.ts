@@ -50,7 +50,6 @@ export async function POST(req: NextRequest) {
         nameVi,
         nameEn: nameEn || nameVi,
         category: category ?? "village",
-        ethnicGroupId: ethnicGroupId || null,
         prompt,
         thumbnailEmoji: thumbnailEmoji ?? "🌄",
         referenceImageUrl: referenceImageUrl || null,

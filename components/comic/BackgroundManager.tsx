@@ -6,7 +6,6 @@ import type { ComicBackgroundDTO, BackgroundCategory } from "@/types";
 
 interface Props {
   initialBackgrounds: ComicBackgroundDTO[];
-  ethnicGroups: { id: string; slug: string; nameVi: string }[];
 }
 
 const CATEGORIES: { value: BackgroundCategory; label: string; emoji: string }[] = [
@@ -20,10 +19,10 @@ const CATEGORIES: { value: BackgroundCategory; label: string; emoji: string }[] 
 
 const emptyForm = {
   key: "", nameVi: "", nameEn: "", category: "village" as BackgroundCategory,
-  ethnicGroupId: "", prompt: "", thumbnailEmoji: "🌄",
+  prompt: "", thumbnailEmoji: "🌄",
 };
 
-export default function BackgroundManager({ initialBackgrounds, ethnicGroups }: Props) {
+export default function BackgroundManager({ initialBackgrounds }: Props) {
   const [bgs, setBgs] = useState<ComicBackgroundDTO[]>(initialBackgrounds);
   const [form, setForm] = useState({ ...emptyForm });
   const [editId, setEditId] = useState<string | null>(null);
@@ -47,7 +46,7 @@ export default function BackgroundManager({ initialBackgrounds, ethnicGroups }: 
   function openEdit(b: ComicBackgroundDTO) {
     setForm({
       key: b.key, nameVi: b.nameVi, nameEn: b.nameEn, category: b.category,
-      ethnicGroupId: b.ethnicGroupId ?? "", prompt: b.prompt, thumbnailEmoji: b.thumbnailEmoji,
+      prompt: b.prompt, thumbnailEmoji: b.thumbnailEmoji,
     });
     setPendingRefUrl(b.referenceImageUrl ?? null);
     setEditId(b.id);
@@ -85,7 +84,6 @@ export default function BackgroundManager({ initialBackgrounds, ethnicGroups }: 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...form,
-          ethnicGroupId: form.ethnicGroupId || null,
           referenceImageUrl: pendingRefUrl || null,
         }),
       });
@@ -282,13 +280,6 @@ export default function BackgroundManager({ initialBackgrounds, ethnicGroups }: 
                 <label style={lbl}>Danh mục</label>
                 <select value={form.category} onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as BackgroundCategory }))} style={inp}>
                   {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.emoji} {c.label}</option>)}
-                </select>
-              </div>
-              <div>
-                <label style={lbl}>Dân tộc</label>
-                <select value={form.ethnicGroupId} onChange={(e) => setForm((f) => ({ ...f, ethnicGroupId: e.target.value }))} style={inp}>
-                  <option value="">-- Không chọn --</option>
-                  {ethnicGroups.map((g) => <option key={g.id} value={g.id}>{g.nameVi}</option>)}
                 </select>
               </div>
 

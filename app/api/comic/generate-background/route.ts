@@ -32,19 +32,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Không có quyền" }, { status: 403 });
     }
 
-    let ethnicCulture: string | undefined;
-    if (bg.ethnicGroupId) {
-      const eg = await prisma.ethnicGroup.findUnique({
-        where: { id: bg.ethnicGroupId },
-        select: { nameEn: true },
-      });
-      ethnicCulture = eg?.nameEn;
-    }
-
     const rawUrl = await generateBackgroundImage({
       prompt: bg.prompt,
       nameEn: bg.nameEn,
-      ethnicCulture,
       referenceImageUrl: bg.referenceImageUrl,
     });
 

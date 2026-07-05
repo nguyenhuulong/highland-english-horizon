@@ -72,7 +72,6 @@ export async function POST(req: NextRequest) {
             | "festival"
             | "house"
             | "school",
-          ethnicGroupId: dbBg.ethnicGroupId,
           prompt: dbBg.prompt,
           referenceImageUrl: dbBg.referenceImageUrl,
           imageUrl: dbBg.imageUrl,

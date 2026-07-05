@@ -20,12 +20,9 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith("/dashboard") || pathname.startsWith("/creator");
   if (!isProtected) return NextResponse.next();
 
-  // Dùng getToken thay vì import auth() để tránh kéo Prisma vào edge bundle
-  // AUTH_SECRET phải khớp chính xác với giá trị trong Vercel env vars
   const token = await getToken({
     req,
     secret: process.env.AUTH_SECRET,
-    // NextAuth v5 dùng cookie name khác với v4
     cookieName:
       process.env.NODE_ENV === "production"
         ? "__Secure-authjs.session-token"

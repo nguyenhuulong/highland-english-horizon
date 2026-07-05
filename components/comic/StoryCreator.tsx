@@ -30,10 +30,10 @@ const DEMO_PRESETS = [
     backgroundKeys: ["costume", "morning_village"],
   },
   {
-    label: "Sùng Mỷ đi chợ phiên H'Mông", emoji: "🛒",
-    ethnicSlug: "hmong", template: "INTRO_4" as StoryTemplateKey,
-    topic: "Sùng Mỷ (9 tuổi, H'Mông) cùng A Chư đi chợ phiên vùng cao buổi sáng. Em học từ vựng về mua bán, mặc cả, tên các mặt hàng thổ cẩm và rau củ núi rừng bằng tiếng Anh.",
-    characterNames: ["Sùng Mỷ", "A Chư"],
+    label: "H'Linh học dệt thổ cẩm Ê Đê", emoji: "🧵",
+    ethnicSlug: "ede", template: "DIALOGUE_6" as StoryTemplateKey,
+    topic: "H'Linh (9 tuổi, Ê Đê) theo bà học dệt thổ cẩm trong nhà dài. Em học tên các hoa văn truyền thống, màu chỉ và ý nghĩa của từng họa tiết bằng tiếng Anh.",
+    characterNames: ["H'Linh", "Y Blô"],
     backgroundKeys: ["market_morning", "cloth_stall"],
   },
   {
@@ -44,10 +44,10 @@ const DEMO_PRESETS = [
     backgroundKeys: ["forest_entrance", "big_tree"],
   },
   {
-    label: "Lâm Bảo dự lễ hội Tày", emoji: "🎉",
-    ethnicSlug: "tay", template: "FESTIVAL_8" as StoryTemplateKey,
-    topic: "Lâm Bảo (11 tuổi, Tày) tham dự lễ hội Lồng Tồng cùng thầy Nông Văn Hiếu. Em học tên các hoạt động lễ hội, nhạc cụ Then Tày, món ăn truyền thống và trang phục chàm đặc trưng bằng tiếng Anh.",
-    characterNames: ["Lâm Bảo", "Nông Văn Hiếu"],
+    label: "A Linh khám phá nhà rông Ba Na", emoji: "🪵",
+    ethnicSlug: "bana", template: "ADVENTURE_6" as StoryTemplateKey,
+    topic: "A Linh (11 tuổi, Ba Na) cùng bà Đinh Thị Hoa tham quan nhà rông làng. Em học tên các bộ phận của nhà rông, nhạc cụ cồng chiêng và ý nghĩa của ngôi nhà cộng đồng bằng tiếng Anh.",
+    characterNames: ["A Linh", "Bà Đinh Thị Hoa"],
     backgroundKeys: ["festival_ground", "drum"],
   },
 ];
@@ -58,6 +58,7 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
   const [titleVi, setTitleVi] = useState("");
   const [selectedEthnic, setSelectedEthnic] = useState("");
   const [selectedTemplate, setSelectedTemplate] = useState<StoryTemplateKey>("DIALOGUE_6");
+  const [selectedLevel, setSelectedLevel] = useState<1 | 2 | 3>(2);
   const [allChars, setAllChars] = useState<ComicCharacterDTO[]>([]);
   const [allBgs, setAllBgs] = useState<ComicBackgroundDTO[]>([]);
   const [selectedCharIds, setSelectedCharIds] = useState<string[]>([]);
@@ -146,6 +147,7 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
           topic,
           titleVi: titleVi || undefined,
           templateKey: selectedTemplate,
+          level: selectedLevel,
           ethnicGroupId: selectedEthnic || null,
           characterIds: selectedCharIds,
           backgroundIds: selectedBgIds,
@@ -267,6 +269,28 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
                 <option value="">-- Chọn dân tộc --</option>
                 {ethnicGroups.map((g) => <option key={g.id} value={g.id}>{g.emoji} {g.nameVi}</option>)}
               </select>
+            </div>
+            <div>
+              <label style={{ fontSize: "0.85rem", fontWeight: 700, color: "var(--text-muted)", display: "block", marginBottom: 6 }}>
+                Cấp độ học sinh *
+              </label>
+              <div style={{ display: "flex", gap: 8 }}>
+                {([1, 2, 3] as const).map((lv) => (
+                  <button key={lv} onClick={() => setSelectedLevel(lv)}
+                    style={{
+                      flex: 1, padding: "9px 4px", borderRadius: 10, cursor: "pointer",
+                      border: `2px solid ${selectedLevel === lv ? "var(--primary)" : "var(--border)"}`,
+                      background: selectedLevel === lv ? "var(--primary)" : "var(--surface)",
+                      color: selectedLevel === lv ? "#fff" : "var(--text)",
+                      fontFamily: "var(--font-body)", fontWeight: 700, fontSize: "0.82rem", textAlign: "center",
+                    }}>
+                    {lv === 1 ? "🌱 Starter" : lv === 2 ? "🌿 Basic" : "🌳 Trung cấp"}
+                  </button>
+                ))}
+              </div>
+              <div style={{ fontSize: "0.72rem", color: "var(--text-muted)", marginTop: 4 }}>
+                {selectedLevel === 1 ? "Tiểu học, 8–10 tuổi, câu 4–8 từ" : selectedLevel === 2 ? "THCS, 11–13 tuổi, câu 8–14 từ" : "THCS nâng cao, 13–15 tuổi, câu 12–20 từ"}
+              </div>
             </div>
           </div>
 

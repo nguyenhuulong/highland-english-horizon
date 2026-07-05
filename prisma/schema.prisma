@@ -49,6 +49,7 @@ model User {
   badges           UserBadge[]
   comicCharacters  ComicCharacter[]       @relation("CharacterCreator")
   comicBackgrounds ComicBackground[]      @relation("BackgroundCreator")
+  bannerImageUrl   String?                @db.Text
 }
 
 model EthnicGroup {
@@ -65,14 +66,11 @@ model EthnicGroup {
   cuisine          Json
   locations        Json
   architecture     String            @db.Text
-  lessons          Lesson[]
-  comicBackgrounds ComicBackground[]
   comicCharacters  ComicCharacter[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 }
 
-// Lesson là entity DUY NHẤT — tích hợp cả nội dung học và comic
 model Lesson {
   id            String                 @id @default(cuid())
   titleVi       String
@@ -91,8 +89,6 @@ model Lesson {
   source        LessonSource           @default(MANUAL)
   authorId      String
   author        User                   @relation("LessonAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  ethnicGroupId String?
-  ethnicGroup   EthnicGroup?           @relation(fields: [ethnicGroupId], references: [id])
   // Comic metadata — chỉ có khi source=COMIC
   characterIds  Json                   @default("[]")
   backgroundIds Json                   @default("[]")
@@ -215,8 +211,6 @@ model ComicBackground {
   nameVi            String
   nameEn            String
   category          String       @default("village")
-  ethnicGroupId     String?
-  ethnicGroup       EthnicGroup? @relation(fields: [ethnicGroupId], references: [id])
   prompt            String       @db.Text
   referenceImageUrl String?      @db.Text
   imageUrl          String?      @db.Text

@@ -35,7 +35,7 @@ export async function GET(req: Request) {
 
   if (!session?.user) {
     const lessons = await prisma.lesson.findMany({
-      where: { status: "PUBLISHED" },
+      where: { status: "PUBLISHED", source: { in: ["SAMPLE", "MANUAL"] } },
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json({ lessons });

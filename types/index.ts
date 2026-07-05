@@ -227,7 +227,6 @@ export interface ComicBackgroundDTO {
   nameVi: string;
   nameEn: string;
   category: BackgroundCategory;
-  ethnicGroupId?: string | null;
   prompt: string;
   referenceImageUrl?: string | null;
   imageUrl?: string | null;

@@ -105,3 +105,7 @@ export async function DELETE(_req: Request, { params }: Params) {
   await prisma.lesson.delete({ where: { id } });
   return NextResponse.json({ ok: true });
 }
+
+export async function PUT(req: Request, ctx: Params) {
+  return PATCH(req, ctx);
+}

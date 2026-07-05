@@ -18,7 +18,7 @@ export default async function BackgroundsPage() {
   const backgrounds: ComicBackgroundDTO[] = dbBgs.map((b) => ({
     id: b.id, key: b.key, nameVi: b.nameVi, nameEn: b.nameEn,
     category: b.category as "village" | "forest" | "market" | "festival" | "house" | "school",
-    ethnicGroupId: b.ethnicGroupId, prompt: b.prompt,
+    prompt: b.prompt,
     referenceImageUrl: (b as { referenceImageUrl?: string }).referenceImageUrl || null,
     imageUrl: b.imageUrl,
     thumbnailEmoji: b.thumbnailEmoji, isActive: b.isActive,
@@ -34,7 +34,7 @@ export default async function BackgroundsPage() {
           Upload ảnh tham chiếu hoặc nhập mô tả → AI sinh ảnh background cho các panel truyện.
         </p>
       </div>
-      <BackgroundManager initialBackgrounds={backgrounds} ethnicGroups={ethnicGroups} />
+      <BackgroundManager initialBackgrounds={backgrounds} />
     </div>
   );
 }

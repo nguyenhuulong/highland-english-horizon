@@ -21,6 +21,7 @@ const NAV_BY_ROLE: Record<string, { href: string; label: string; icon: string }[
     { href: "/dashboard/admin/users", label: "Quản lý người dùng", icon: "👥" },
     { href: "/library", label: "Thư viện bài học", icon: "📚" },
     { href: "/dashboard/admin/students", label: "Thành tích học sinh", icon: "📊" },
+    { href: "/dashboard/admin/culture", label: "Dữ liệu văn hóa", icon: "🌿" },
   ],
 };
 
