@@ -9,6 +9,7 @@ import { ROLE_HOME, ROLE_LABELS } from "@/lib/rbac";
 
 const PUBLIC_LINKS = [
   { href: "/library", label: "Thư viện", icon: "📚" },
+  { href: "/village", label: "Làng của tôi", icon: "🗺️" },
   { href: "/games", label: "Trò chơi", icon: "🎮" },
 ];
 const STUDENT_ONLY_LINKS = [

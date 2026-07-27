@@ -6,12 +6,14 @@ const NAV_BY_ROLE: Record<string, { href: string; label: string; icon: string }[
   STUDENT: [
     { href: "/dashboard/student", label: "Tổng quan", icon: "🏠" },
     { href: "/library", label: "Thư viện", icon: "📚" },
+    { href: "/village", label: "Làng của tôi", icon: "🗺️" },
     { href: "/games", label: "Trò chơi", icon: "🎮" },
     { href: "/progress", label: "Tiến độ", icon: "📊" },
   ],
   TEACHER: [
     { href: "/dashboard/teacher", label: "Tổng quan", icon: "🏠" },
     { href: "/dashboard/teacher/stories", label: "Bài học của tôi", icon: "📖" },
+    { href: "/village", label: "Làng của tôi", icon: "🗺️" },
     { href: "/dashboard/teacher/characters", label: "Nhân vật", icon: "🧒" },
     { href: "/dashboard/teacher/backgrounds", label: "Bối cảnh", icon: "🌄" },
     { href: "/dashboard/admin/students", label: "Học sinh", icon: "📊" },
