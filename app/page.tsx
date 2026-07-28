@@ -154,7 +154,7 @@ export default function HomePage() {
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px" }}>
           <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.5rem", fontWeight: 800, marginBottom: 8 }}>🌿 Culture Hub — Kho văn hóa dân tộc</h2>
           <p style={{ color: "var(--text-muted)", marginBottom: 20, fontSize: "0.92rem" }}>
-            6 dân tộc tiêu biểu của Tây Nguyên — K&apos;Ho, Mạ, M&apos;Nông, Ê Đê, Gia Rai, Ba Na — được tích hợp vào học liệu. Nhấn vào để khám phá lễ hội, trang phục, âm nhạc và ẩm thực kèm từ vựng tiếng Anh tương tác.
+            6 dân tộc tiêu biểu tại Đắk Nông, Tây Nguyên — K&apos;Ho, Mạ, M&apos;Nông, H&apos;Mông, Tày, Nùng — được tích hợp vào học liệu. Nhấn vào để khám phá lễ hội, trang phục, âm nhạc và ẩm thực kèm từ vựng tiếng Anh tương tác.
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))", gap: 16 }}>
             {CULTURAL_GROUPS.map((c) => (

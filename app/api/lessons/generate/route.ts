@@ -183,6 +183,7 @@ export async function POST(req: NextRequest) {
       backgroundIds,
       titleVi,
       level,
+      panelBackgroundKeys,
     } = body as {
       topic: string;
       templateKey: string;
@@ -191,6 +192,7 @@ export async function POST(req: NextRequest) {
       backgroundIds?: string[];
       titleVi?: string;
       level?: number;
+      panelBackgroundKeys?: string[]; // mapping key theo index panel [panel0_key, panel1_key, ...]
     };
 
     if (!topic || !templateKey) {
@@ -206,13 +208,30 @@ export async function POST(req: NextRequest) {
     const charIds = characterIds ?? [];
     const bgIds = backgroundIds ?? [];
 
-    const [dbChars, dbBgs, ethnicGroup] = await Promise.all([
+    // Nếu có panelBackgroundKeys, tải thêm backgrounds theo key (cho preset demo)
+    const extraBgKeys = panelBackgroundKeys
+      ? [...new Set(panelBackgroundKeys)].filter(k => !bgIds.includes(k))
+      : [];
+
+    const [dbChars, dbBgs, dbExtraBgs, ethnicGroup] = await Promise.all([
       prisma.comicCharacter.findMany({ where: { id: { in: charIds } } }),
       prisma.comicBackground.findMany({ where: { id: { in: bgIds } } }),
+      extraBgKeys.length > 0
+        ? prisma.comicBackground.findMany({
+            where: { key: { in: extraBgKeys } },
+          })
+        : Promise.resolve([]),
       ethnicGroupId
         ? prisma.ethnicGroup.findUnique({ where: { id: ethnicGroupId } })
         : null,
     ]);
+
+    // Gộp backgrounds: theo ID + theo key (cho panelBackgroundKeys)
+    const allBgsMap = new Map<string, (typeof dbBgs)[0]>();
+    [...dbBgs, ...dbExtraBgs].forEach(b => {
+      allBgsMap.set(b.id, b);
+      allBgsMap.set(b.key, b); // index cả bằng key
+    });
 
     const characters: ComicCharacterDTO[] = dbChars.map(c => ({
       id: c.id,
@@ -306,7 +325,7 @@ NHAN VAT — BAT BUOC:
 
 VOCABULARY — BAT BUOC:
 - Chi dua vao vocabulary cac tu/cum tu DA XUAT HIEN trong dialogue cua it nhat mot panel
-- KHONG dua ten dan toc (K'Ho, Ba Na, Gia Rai...) vao vocabulary
+- KHONG dua ten dan toc (K'Ho, Ma, M'Nong, H'Mong, Tay, Nung...) vao vocabulary
 - KHONG dua tu hoc thuat khong xuat hien trong truyen vao vocabulary
 - Vi du DUNG: {"en": "loom", "vi": "khung cui"} neu tu "loom" co trong dialogue
 - Vi du SAI: {"en": "matrilineal", "vi": "mau he"} neu tu nay khong co trong bat ky dong thoai nao
@@ -428,11 +447,48 @@ So luong: vocabulary ${lessonLevel === 1 ? "6-8" : lessonLevel === 2 ? "8-10" : 
 
     for (let i = 0; i < script.panels.length; i++) {
       const ps = script.panels[i];
-      const bg = backgrounds[ps.backgroundIndex] ??
-        backgrounds[i % Math.max(backgrounds.length, 1)] ?? {
+
+      // Chọn background cho panel này:
+      // 1. Nếu có panelBackgroundKeys từ preset → dùng key tương ứng panel index
+      // 2. Nếu LLM trả về backgroundIndex hợp lệ → dùng
+      // 3. Fallback: rotate theo index panel
+      let bg = backgrounds[0]; // fallback default
+      if (panelBackgroundKeys && panelBackgroundKeys[i]) {
+        const keyBg = allBgsMap.get(panelBackgroundKeys[i]);
+        if (keyBg)
+          bg = {
+            id: keyBg.id,
+            key: keyBg.key,
+            nameVi: keyBg.nameVi,
+            nameEn: keyBg.nameEn,
+            category: keyBg.category as
+              | "village"
+              | "forest"
+              | "market"
+              | "festival"
+              | "house"
+              | "school",
+            prompt: keyBg.prompt,
+            referenceImageUrl: keyBg.referenceImageUrl,
+            imageUrl: keyBg.imageUrl,
+            thumbnailEmoji: keyBg.thumbnailEmoji,
+            isActive: keyBg.isActive,
+          };
+      } else if (
+        ps.backgroundIndex !== undefined &&
+        backgrounds[ps.backgroundIndex]
+      ) {
+        bg = backgrounds[ps.backgroundIndex];
+      } else {
+        bg = backgrounds[i % Math.max(backgrounds.length, 1)] ?? bg;
+      }
+
+      // Nếu không có bg fallback cuối cùng
+      if (!bg)
+        bg = {
           id: "",
           key: "village",
-          nameVi: "Lang",
+          nameVi: "Làng",
           nameEn: "Village",
           category: "village" as const,
           prompt: `${ethnicNameEn} highland village`,

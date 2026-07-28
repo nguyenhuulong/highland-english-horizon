@@ -23,47 +23,73 @@ type Step = "setup" | "characters" | "backgrounds" | "generate";
 // Preset demo — nhân vật cùng dân tộc để đảm bảo tính hợp lý văn hóa
 const DEMO_PRESETS = [
   {
-    // K'Ho: Ya Đin (child, K'Ho female) + H'Brih (adult, K'Ho female) — cùng dân tộc, hợp lý mẹ-con
-    // Background: costume (nhà sàn mặc trang phục) + morning_village (làng buổi sáng)
+    // K'Ho: Ya Đin + H'Brih — mẹ-con cùng K'Ho
+    // Backgrounds: costume (trong nhà dệt) → morning_village (sân làng) — 2 bối cảnh khác nhau
     label: "Ya Đin học dệt K'Ho", emoji: "🧵",
     ethnicSlug: "kho", template: "DIALOGUE_6" as StoryTemplateKey,
     level: 1 as const,
-    topic: "Ya Din (10 years old, K'Ho) sits with her mother H'Brih at the loom inside their stilt house. She learns English words for weaving tools (loom, thread, pattern), colors from forest plants (indigo, red), and the names of traditional brocade patterns. Keep all K'Ho cultural terms in Vietnamese as-is, do not translate proper names.",
+    topic: "Ya Din (10 tuổi, K'Ho) ngồi cùng mẹ H'Brih bên khung cửi trong nhà sàn. Em học các từ tiếng Anh về dụng cụ dệt (loom, thread, pattern), màu sắc từ cây rừng (indigo, red) và tên các hoa văn thổ cẩm truyền thống. Tên 'Ya Đin', 'H'Brih', 'K'Ho' giữ nguyên trong cả tiếng Anh và tiếng Việt, KHÔNG dịch.",
     characterNames: ["Ya Đin", "H'Brih"],
+    // Panel 1-3: trong nhà (costume), Panel 4-6: ra sân làng (morning_village)
     backgroundKeys: ["costume", "morning_village"],
+    panelBackgrounds: ["costume", "costume", "costume", "morning_village", "morning_village", "morning_village"],
   },
   {
-    // Mạ: Pơ Mai (child, Mạ female) + Ama K'Bram (elder, Mạ male) — cùng dân tộc, ông-cháu hợp lý
-    // Background: forest_entrance + big_tree — đúng chủ đề khám phá rừng
+    // Mạ: Pơ Mai + Ama K'Bram — cháu-ông cùng Mạ
+    // Backgrounds: forest_entrance → big_tree → birds — đi sâu vào rừng
     label: "Pơ Mai khám phá rừng Mạ", emoji: "🌲",
     ethnicSlug: "ma", template: "ADVENTURE_6" as StoryTemplateKey,
     level: 2 as const,
-    topic: "Po Mai (9 years old, Ma people) walks into the forest with elder Ama K'Bram to find medicinal plants. She learns English names of trees, birds, and forest sounds. Ama K'Bram explains forest knowledge in simple sentences. Keep names 'Ama K'Bram', 'Po Mai', 'Ma people' unchanged in both English and Vietnamese dialogue.",
+    topic: "Pơ Mai (9 tuổi, Mạ) đi vào rừng cùng già làng Ama K'Bram tìm cây thuốc. Em học tên tiếng Anh của các loài cây, chim và âm thanh rừng. Tên 'Pơ Mai', 'Ama K'Bram', 'Mạ' giữ nguyên trong cả tiếng Anh và tiếng Việt, KHÔNG dịch.",
     characterNames: ["Pơ Mai", "Ama K'Bram"],
-    backgroundKeys: ["forest_entrance", "big_tree"],
+    // Đi sâu vào rừng: cửa rừng → cây to → tiếng chim → quay về
+    backgroundKeys: ["forest_entrance", "big_tree", "birds"],
+    panelBackgrounds: ["forest_entrance", "forest_entrance", "big_tree", "big_tree", "birds", "forest_entrance"],
   },
   {
-    // M'Nông: N'Thao (child, M'Nong male) + Y Điớp (adult, M'Nong female) — cùng dân tộc
-    // Chủ đề: chợ phiên buổi sáng — học mua bán, từ vựng thực tế
-    // Background: market_morning + bargain
+    // M'Nông: N'Thao + Y Điớp — cùng M'Nông
+    // Backgrounds: market_morning → cloth_stall → vegetable_stall → bargain
     label: "N'Thao đi chợ phiên M'Nông", emoji: "🛒",
     ethnicSlug: "mnong", template: "INTRO_4" as StoryTemplateKey,
     level: 2 as const,
-    topic: "N'Thao (10 years old, M'Nong) goes to the highland market with Y Diep in the morning. He learns English words for buying and selling: price, cheap, expensive, bargain, pay. They visit vegetable stalls and a fabric stall. Keep names 'N'Thao', 'Y Diep', 'M'Nong' unchanged in dialogue.",
+    topic: "N'Thao (10 tuổi, M'Nông) đi chợ phiên buổi sáng cùng Y Điớp. Em học các từ tiếng Anh về mua bán: price, cheap, expensive, bargain, pay. Hai người ghé qua gian hàng rau và gian hàng vải. Tên 'N'Thao', 'Y Điớp', 'M'Nông' giữ nguyên trong cả tiếng Anh và tiếng Việt, KHÔNG dịch.",
     characterNames: ["N'Thao", "Y Điớp"],
-    backgroundKeys: ["market_morning", "bargain"],
+    // Xuyên suốt chợ: vào chợ → gian vải → gian rau → mặc cả
+    backgroundKeys: ["market_morning", "cloth_stall", "vegetable_stall", "bargain"],
+    panelBackgrounds: ["market_morning", "cloth_stall", "vegetable_stall", "bargain"],
   },
   {
-    // Ba Na: A Linh → thay bằng Ksor Phước (child Gia Rai male) + Ông Đinh Hòa (elder Ba Na male)
-    // LƯU Ý: không có child Ba Na trong DB, dùng Ksor Phước (Gia Rai) làm khách đến thăm nhà rông
-    // Đây là kịch bản hợp lý: trẻ em dân tộc khác đến thăm làng Ba Na
-    // Background: festival_ground + drum
-    label: "Ksor Phước thăm nhà rông Ba Na", emoji: "🪵",
-    ethnicSlug: "bana", template: "ADVENTURE_6" as StoryTemplateKey,
-    level: 3 as const,
-    topic: "Ksor Phuoc (11 years old, Gia Rai) visits a Ba Na village with elder Ong Dinh Hoa. He learns English names for parts of the communal house (rong house, thatched roof, carved pillar), the gong ensemble, and the meaning of the rong house as a community center. Keep cultural terms 'nha rong', 'cong chieng' in Vietnamese. Do not translate proper names.",
-    characterNames: ["Ksor Phước", "Ông Đinh Hòa"],
-    backgroundKeys: ["festival_ground", "drum"],
+    // H'Mông: H'Linh + Y Blô — cùng H'Mông
+    // Backgrounds: costume (trong nhà thêu) → morning_village (ra sân)
+    label: "H'Linh học thêu thổ cẩm H'Mông", emoji: "🌈",
+    ethnicSlug: "hmong", template: "DIALOGUE_6" as StoryTemplateKey,
+    level: 1 as const,
+    topic: "H'Linh (9 tuổi, H'Mông) học thêu thổ cẩm từ Y Blô trong làng. Em học các từ tiếng Anh về màu sắc, hoa văn, kim chỉ và vải. Tên 'H'Linh', 'Y Blô', 'H'Mông' giữ nguyên trong cả tiếng Anh và tiếng Việt, KHÔNG dịch.",
+    characterNames: ["H'Linh", "Y Blô"],
+    backgroundKeys: ["costume", "morning_village"],
+    panelBackgrounds: ["costume", "costume", "costume", "morning_village", "morning_village", "morning_village"],
+  },
+  {
+    // Tày: Lường Khánh + Kpă Điêu — cùng Tày
+    // Backgrounds: morning_village (ngoài sân) → costume (trong nhà sàn) → harvest (nhìn ra ruộng)
+    label: "Lường Khánh học về nhà sàn Tày", emoji: "🏡",
+    ethnicSlug: "tay", template: "INTRO_4" as StoryTemplateKey,
+    level: 2 as const,
+    topic: "Lường Khánh (10 tuổi, Tày) giúp thầy Kpă Điêu dọn nhà sàn truyền thống. Em học các từ tiếng Anh về các bộ phận của nhà sàn (stilts, wooden floor, stairs, roof), đồ vật trong nhà và cuộc sống hàng ngày. Tên 'Lường Khánh', 'Kpă Điêu', 'Tày' giữ nguyên trong cả tiếng Anh và tiếng Việt, KHÔNG dịch.",
+    characterNames: ["Lường Khánh", "Kpă Điêu"],
+    backgroundKeys: ["morning_village", "costume", "harvest"],
+    panelBackgrounds: ["morning_village", "costume", "costume", "harvest"],
+  },
+  {
+    // Nùng: A Linh + Bà Đinh Thị Hoa — cùng Nùng, bà-cháu
+    // Backgrounds: festival_ground (sân lễ hội) → morning_village (sân nhà)
+    label: "A Linh nghe hát Then Nùng", emoji: "🎵",
+    ethnicSlug: "nung", template: "DIALOGUE_6" as StoryTemplateKey,
+    level: 2 as const,
+    topic: "A Linh (11 tuổi, Nùng) xem bà Đinh Thị Hoa biểu diễn hát Then và đàn tính trong sân làng. Em học các từ tiếng Anh về nhạc cụ (lute, string, sound) và truyền thống văn hóa Nùng. Tên 'A Linh', 'Đinh Thị Hoa', 'Nùng', 'đàn tính', 'hát Then' giữ nguyên trong cả tiếng Anh và tiếng Việt, KHÔNG dịch hay chuyển tự.",
+    characterNames: ["A Linh", "Đinh Thị Hoa"],
+    backgroundKeys: ["festival_ground", "morning_village", "dance"],
+    panelBackgrounds: ["morning_village", "festival_ground", "festival_ground", "dance", "dance", "morning_village"],
   },
 ];
 
@@ -78,6 +104,7 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
   const [allBgs, setAllBgs] = useState<ComicBackgroundDTO[]>([]);
   const [selectedCharIds, setSelectedCharIds] = useState<string[]>([]);
   const [selectedBgIds, setSelectedBgIds] = useState<string[]>([]);
+  const [panelBackgroundKeys, setPanelBackgroundKeys] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
   const [genStep, setGenStep] = useState("");
   const [loadingDemo, setLoadingDemo] = useState(false);
@@ -116,7 +143,9 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
       setAllBgs(bgs);
       setSelectedCharIds(charIds);
       setSelectedBgIds(bgIds);
-      setStep("generate"); // Nhảy thẳng đến bước xem lại & tạo
+      // Lưu mapping key→panel để route biết panel nào dùng background nào
+      setPanelBackgroundKeys((preset as typeof preset & { panelBackgrounds?: string[] }).panelBackgrounds ?? []);
+      setStep("generate");
     } finally {
       setLoadingDemo(false);
     }
@@ -167,6 +196,7 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
           ethnicGroupId: selectedEthnic || null,
           characterIds: selectedCharIds,
           backgroundIds: selectedBgIds,
+          panelBackgroundKeys: panelBackgroundKeys.length > 0 ? panelBackgroundKeys : undefined,
         }),
       });
       if (!res.ok) {
@@ -179,7 +209,7 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
       showToast("Bài học đã được xuất bản vào thư viện! 🎉", "success");
       onStoryReady?.(lesson.id);
       setStep("setup");
-      setTopic(""); setTitleVi(""); setSelectedCharIds([]); setSelectedBgIds([]);
+      setTopic(""); setTitleVi(""); setSelectedCharIds([]); setSelectedBgIds([]); setPanelBackgroundKeys([]);
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Lỗi tạo bài học", "error");
     } finally {

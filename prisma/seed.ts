@@ -160,8 +160,8 @@ async function main() {
   const khoGroup = await prisma.ethnicGroup.findUnique({
     where: { slug: "kho" },
   });
-  const edeGroup = await prisma.ethnicGroup.findUnique({
-    where: { slug: "ede" },
+  const hmongGroup = await prisma.ethnicGroup.findUnique({
+    where: { slug: "hmong" },
   });
   const maGroup = await prisma.ethnicGroup.findUnique({
     where: { slug: "ma" },
@@ -169,11 +169,11 @@ async function main() {
   const mnongGroup = await prisma.ethnicGroup.findUnique({
     where: { slug: "mnong" },
   });
-  const giaraiGroup = await prisma.ethnicGroup.findUnique({
-    where: { slug: "giarai" },
+  const tayGroup = await prisma.ethnicGroup.findUnique({
+    where: { slug: "tay" },
   });
-  const banaGroup = await prisma.ethnicGroup.findUnique({
-    where: { slug: "bana" },
+  const nungGroup = await prisma.ethnicGroup.findUnique({
+    where: { slug: "nung" },
   });
 
   // descriptionVi/En và thumbnailEmoji được tự điền từ appearancePrompt (theo logic đã đơn giản hoá ở CharacterManager)
@@ -184,14 +184,14 @@ async function main() {
       nameEn: "H'Linh",
       role: "child",
       gender: "female",
-      ethnicGroupId: edeGroup?.id ?? null,
+      ethnicGroupId: hmongGroup?.id ?? null,
       appearancePrompt:
-        "9-year-old Ede girl, oval face, warm brown skin, bright dark eyes, straight black hair in a ponytail, cheerful smile",
-      costumePrompt: "Ede traditional costume",
+        "9-year-old H'Mong girl, round face, warm brown skin, bright dark eyes, straight black hair in two braids, cheerful smile",
+      costumePrompt: "H'Mong traditional costume",
       descriptionVi:
-        "Bé gái Ê Đê 9 tuổi, hoạt bát, thích học dệt thổ cẩm cùng bà.",
+        "Bé gái H'Mông 9 tuổi, hoạt bát, thích thêu thổ cẩm và đi chợ phiên.",
       descriptionEn:
-        "9-year-old Ede girl, lively, loves learning brocade weaving with her grandmother.",
+        "9-year-old H'Mong girl, lively, loves embroidery and the highland market.",
       thumbnailEmoji: "🧒",
       createdById: teacher.id,
     },
@@ -244,18 +244,17 @@ async function main() {
       createdById: teacher.id,
     },
     {
-      name: "Ksor Hnul",
-      nameEn: "Ksor Hnul",
+      name: "Lường Khánh",
+      nameEn: "Luong Khanh",
       role: "child",
       gender: "female",
-      ethnicGroupId: banaGroup?.id ?? null,
+      ethnicGroupId: tayGroup?.id ?? null,
       appearancePrompt:
-        "10-year-old Gia Rai girl, oval face, warm brown skin, lively dark eyes, black hair tied back, friendly smile",
-      costumePrompt: "Gia Rai traditional costume",
-      descriptionVi:
-        "Bé gái Gia Rai 10 tuổi, vui vẻ, thích nghe kể chuyện về nhà rông.",
+        "10-year-old Tay girl, oval face, warm light-brown skin, calm dark eyes, straight black hair, gentle smile",
+      costumePrompt: "Tay traditional costume",
+      descriptionVi: "Bé gái Tày 10 tuổi, chăm chỉ, thích dọn nhà sàn cùng bà.",
       descriptionEn:
-        "10-year-old Gia Rai girl, cheerful, loves stories about the communal longhouse.",
+        "10-year-old Tay girl, diligent, enjoys helping grandmother around the stilt house.",
       thumbnailEmoji: "🧒",
       createdById: teacher.id,
     },
@@ -264,14 +263,14 @@ async function main() {
       nameEn: "A Linh",
       role: "child",
       gender: "male",
-      ethnicGroupId: giaraiGroup?.id ?? null,
+      ethnicGroupId: nungGroup?.id ?? null,
       appearancePrompt:
-        "11-year-old Ba Na boy, round face, warm brown skin, bright dark eyes, short black hair, confident smile",
-      costumePrompt: "Ba Na traditional costume",
+        "11-year-old Nung boy, round face, warm light-brown skin, bright dark eyes, short black hair, confident smile",
+      costumePrompt: "Nung traditional costume",
       descriptionVi:
-        "Bé trai Ba Na 11 tuổi, thông minh, thích khắc gỗ và nghe kể sử thi.",
+        "Bé trai Nùng 11 tuổi, thông minh, thích nghe hát Then và học đàn tính.",
       descriptionEn:
-        "11-year-old Ba Na boy, smart, enjoys wood carving and listening to epic stories.",
+        "11-year-old Nung boy, smart, enjoys Then music and wants to learn the tinh lute.",
       thumbnailEmoji: "🧒",
       createdById: teacher.id,
     },
@@ -298,14 +297,14 @@ async function main() {
       nameEn: "Y Blo",
       role: "adult",
       gender: "male",
-      ethnicGroupId: edeGroup?.id ?? null,
+      ethnicGroupId: hmongGroup?.id ?? null,
       appearancePrompt:
-        "31-year-old Ede man, square face, warm brown skin, dark eyes, short black hair, strong build, confident expression",
-      costumePrompt: "Ede traditional costume",
+        "31-year-old H'Mong man, square face, sun-tanned skin, dark eyes, short black hair, lean muscular build, confident expression",
+      costumePrompt: "H'Mong traditional costume",
       descriptionVi:
-        "Người đàn ông Ê Đê 31 tuổi, giỏi chơi đàn goong, gắn bó với văn hóa cồng chiêng.",
+        "Người đàn ông H'Mông 31 tuổi, giỏi chế tác khèn, gắn bó với văn hóa bản làng.",
       descriptionEn:
-        "31-year-old Ede man, skilled goong musician and gong culture keeper.",
+        "31-year-old H'Mong man, skilled khene craftsman and community cultural keeper.",
       thumbnailEmoji: "🧒",
       createdById: teacher.id,
     },
@@ -330,14 +329,14 @@ async function main() {
       nameEn: "Kpa Dieu",
       role: "adult",
       gender: "male",
-      ethnicGroupId: giaraiGroup?.id ?? null,
+      ethnicGroupId: tayGroup?.id ?? null,
       appearancePrompt:
-        "33-year-old Gia Rai man, oval face, warm brown skin, bright dark eyes, short black hair, kind confident smile",
-      costumePrompt: "Gia Rai traditional costume",
+        "33-year-old Tay man, oval face, warm light-brown skin, bright dark eyes, short black hair, confident smile",
+      costumePrompt: "Tay traditional costume",
       descriptionVi:
-        "Giáo viên Gia Rai 33 tuổi, yêu văn hóa dân tộc, giỏi điêu khắc nhà mồ.",
+        "Giáo viên Tày 33 tuổi, yêu văn hóa dân tộc, bảo tồn điệu hát và lễ hội Lồng Tồng.",
       descriptionEn:
-        "33-year-old Gia Rai teacher, passionate about ethnic culture and traditional wood sculpture.",
+        "33-year-old Tay teacher, passionate about ethnic culture and preserving the Lồng Tồng festival.",
       thumbnailEmoji: "🧒",
       createdById: teacher.id,
     },
@@ -360,18 +359,18 @@ async function main() {
       createdById: teacher.id,
     },
     {
-      name: "Bà Đinh Thị Hoa",
+      name: "Đinh Thị Hoa",
       nameEn: "Dinh Thi Hoa",
       role: "elder",
       gender: "female",
-      ethnicGroupId: banaGroup?.id ?? null,
+      ethnicGroupId: nungGroup?.id ?? null,
       appearancePrompt:
-        "65-year-old Ba Na elder woman, gentle oval face with wrinkles, warm brown skin, kind dark eyes, gray-black hair in a bun, upright posture",
-      costumePrompt: "Ba Na traditional costume",
+        "65-year-old Nung elder woman, gentle oval face with wrinkles, warm skin, kind dark eyes, gray-black hair in a bun, upright posture",
+      costumePrompt: "Nung traditional costume",
       descriptionVi:
-        "Bà già làng Ba Na 65 tuổi, am hiểu sử thi, được cả làng kính trọng.",
+        "Nghệ nhân hát Then Nùng 65 tuổi, nắm giữ nhiều bài Then cổ, được cả làng kính trọng.",
       descriptionEn:
-        "65-year-old Ba Na village elder, storyteller of ancient epics, respected by the whole community.",
+        "65-year-old Nung Then singer, keeper of ancient Then songs, respected by the whole community.",
       thumbnailEmoji: "🧒",
       createdById: teacher.id,
     },

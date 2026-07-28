@@ -1,0 +1,1 @@
+DELETE FROM "ComicCharacter" WHERE name = 'A Linh';
