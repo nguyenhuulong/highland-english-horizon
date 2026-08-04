@@ -393,12 +393,14 @@ So luong: vocabulary ${lessonLevel === 1 ? "6-8" : lessonLevel === 2 ? "8-10" : 
 
     let script: ScriptData;
     try {
-      console.log("[AI KEY prefix]", process.env.AI_API_KEY?.slice(0, 8));
+      const keyPrefix = process.env.AI_API_KEY?.slice(0, 8) ?? "EMPTY";
       const raw = await callLLM(systemPrompt, userPrompt);
       script = parseJson(raw) as ScriptData;
     } catch (err) {
       return NextResponse.json(
-        { error: `LLM that bai: ${err}` },
+        {
+          error: `LLM that bai: ${err} | KEY: ${process.env.AI_API_KEY?.slice(0, 8) ?? "EMPTY"}`,
+        },
         { status: 500 },
       );
     }
