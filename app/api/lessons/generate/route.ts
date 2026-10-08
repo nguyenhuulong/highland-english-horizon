@@ -163,6 +163,13 @@ export async function POST(req: NextRequest) {
     }));
     const backgrounds = dbBgs.map(toBgDTO);
 
+    if (characters.length < 2) {
+      return NextResponse.json(
+        { error: "Vui lòng chọn ít nhất 2 nhân vật để truyện có hội thoại (không dùng nhân vật ngoài danh sách)." },
+        { status: 400 },
+      );
+    }
+
     const ethnicNameEn = ethnicGroup?.nameEn ?? "K'Ho";
     const ethnicEmoji = ethnicGroup?.emoji ?? "🌄";
 

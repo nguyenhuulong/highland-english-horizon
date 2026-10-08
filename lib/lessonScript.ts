@@ -6,6 +6,7 @@
 
 import { z } from "zod";
 import { chat, extractJson } from "@/lib/aiConfig";
+import { LEXICON_KEYS } from "@/data/cultureLexicon";
 import type { CulturalMission } from "@/types";
 
 // ─── Cấp độ ───────────────────────────────────────────────────────────────────
@@ -237,6 +238,7 @@ export function validateDialogue(
   level: 1 | 2 | 3,
   validNames: Set<string>,
   roles: Record<string, { role: string; gender: string }> = {},
+  adultNames: string[] = [],
 ): LineIssue[] {
   const spec = LEVEL_SPEC[level];
   const seen = new Set<string>();
@@ -265,6 +267,11 @@ export function validateDialogue(
       if (/welcome/i.test(d.en) && /không có vấn đề|khong co van de/i.test(d.vi))
         reasons.push('dich "You are welcome" la "Khong co chi" hoac "Khong sao dau", KHONG phai "Khong co van de"');
       const who = roles[d.characterName];
+      if (who?.role === "child") {
+        const hit = adultNames.find(n => (d.en + " " + d.vi).toLowerCase().includes(n.toLowerCase()));
+        if (hit)
+          reasons.push(`tre em khong goi nguoi lon bang ten day du "${hit}" - dung xung ho theo quan he (me/ba/ong/co/chu/thay; EN Mom/Grandma/Grandpa/Auntie/Uncle/teacher)`);
+      }
       if (who?.role === "child" && /(^|[\s,.!?])tôi(?=[\s,.!?]|$)/i.test(d.vi))
         reasons.push('tre em xung "em"/"con"/"minh", KHONG xung "toi"');
       if (who?.role === "elder" && /^\s*dạ(?=[\s,.!?]|$)/i.test(d.vi))
@@ -303,6 +310,44 @@ const ETHNIC_NAME_RE = /^(k'?ho|ma'?|mnong|m'nong|h'?mong|tay|nung)$/i;
 
 function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// ─── Đặt từ tiếng Việt trong câu tiếng Anh vào dấu ngoặc kép ──────────────────
+const VN_DIACRITIC = "àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ";
+const PROPER_NOUNS = ["Việt Nam", "Tây Nguyên", "Đắk Nông", "Đắk Lắk", "Lâm Đồng", "Mạ", "Tày", "Nùng", "H'Mông", "M'Nông", "K'Ho"];
+
+/** Bọc từ/cụm tiếng Việt (từ điển văn hóa + từ có dấu) trong "..." trừ tên riêng/nhân vật. */
+export function quoteVietnameseTerms(text: string, protectedNames: string[], lexiconKeys: string[]): string {
+  const holders: string[] = [];
+  const hold = (m: string) => `\u0001${holders.push(m) - 1}\u0002`;
+  let out = text;
+  // 1) giữ nguyên đoạn đã có ngoặc kép và tên riêng
+  out = out.replace(/"[^"]*"|“[^”]*”/g, hold);
+  for (const n of [...protectedNames, ...PROPER_NOUNS].sort((a, b) => b.length - a.length)) {
+    if (!n) continue;
+    out = out.replace(new RegExp(`(?<![\\p{L}])${escapeRe(n)}(?![\\p{L}])`, "giu"), hold);
+  }
+  // 2) cụm trong từ điển (dài trước)
+  for (const k of lexiconKeys) {
+    out = out.replace(new RegExp(`(?<![\\p{L}\\u0001])${escapeRe(k)}(?![\\p{L}])`, "giu"), m => hold(`"${m}"`));
+  }
+  // 3) các từ còn lại có dấu tiếng Việt (liên tiếp → một cụm)
+  const tok = `[\\p{L}']*[${VN_DIACRITIC}][\\p{L}']*`;
+  out = out.replace(new RegExp(`(?<![\\p{L}\\u0001])${tok}(?:\\s+${tok})*(?![\\p{L}])`, "giu"), m => hold(`"${m}"`));
+  // 4) trả lại các đoạn đã giữ (lặp để mở lồng nhau)
+  for (let i = 0; i < 3; i++) out = out.replace(/\u0001(\d+)\u0002/g, (_, n) => holders[Number(n)]);
+  return out;
+}
+
+/** Rút gọn mô tả: tối đa 2 câu, ≤ 200 ký tự. */
+export function trimDescription(s: string, max = 200): string {
+  const sentences = s.trim().match(/[^.!?…]+[.!?…]*/g) ?? [s];
+  let out = "";
+  for (const sen of sentences.slice(0, 2)) {
+    if ((out + sen).length > max && out) break;
+    out += sen;
+  }
+  return (out.length > max ? out.slice(0, max - 1).trimEnd() + "…" : out).trim();
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -392,11 +437,88 @@ function levelRules(level: 1 | 2 | 3): string {
 - Vi du cau dung: "${s.example}"`;
 }
 
+export function makeBaseRules(level: 1 | 2 | 3, nameList: string): string {
+  return `Ban la tac gia truyen tranh giao duc song ngu Anh-Viet cho hoc sinh dan toc thieu so Tay Nguyen (Dak Nong), Viet Nam.
+
+${levelRules(level)}
+
+NGON NGU:
+- Truong "vi": tieng Viet thuan tuy, TUYET DOI KHONG co chu Han/Trung/Nhat/Han. Dich tu nhien, dung xung ho theo quan he (me-con, ong-chau, ba-chau, co-tro).
+- Ten rieng nhan vat (co dau, vi du "Ya Đin") giu nguyen trong ca "en" va "vi", KHONG dich, KHONG bo dau.
+- Truong "en": tieng Anh tu nhien nhu tre em that su noi.
+- Tre em KHONG goi nguoi lon / nguoi cao tuoi bang ten day du. Dung xung ho theo quan he trong chu de: me, ba, ong, co, chu, thay/co giao (EN: Mom, Grandma, Grandpa, Auntie, Uncle, teacher). Nguoi lon goi tre bang ten thi duoc.
+- Tu tieng Viet xen trong cau tieng Anh (vd "cong chieng", "dan tinh", "hat Then", ten mon an, ten le hoi) PHAI dat trong dau ngoac kep "...".
+
+NHAN VAT:
+- Chi duoc dung dung cac ten nay lam nguoi noi: ${nameList}. KHONG tao nhan vat moi (khong "Ba lang", "Nguoi dan"). Neu can nhac den nguoi khac, de nhan vat chinh nhac toi trong loi thoai.
+
+VAN HOA:
+- Chi dung thong tin trong DU LIEU VAN HOA ben duoi. KHONG bia le hoi, nhac cu, luat choi, hoa van. Neu du lieu khong noi, hay noi chung chung, an toan, ton trong.
+- Khong rap khuon, khong mo ta ngoai hinh theo dan toc.`;
+}
+
 function pronounHint(c: ScriptCharacter): string {
   const male = c.gender === "male";
   if (c.role === "elder") return male ? "ong (goi tre la 'chau')" : "ba (goi tre la 'chau')";
   if (c.role === "adult") return male ? "chu/bac hoac bo (goi tre la 'con'/'em')" : "co/me (goi tre la 'con'/'em')";
   return "em/con/chau (goi nguoi lon theo vai: ong, ba, co, chu, me)";
+}
+
+async function runRepairRounds(
+  panels: ScriptPanel[],
+  level: 1 | 2 | 3,
+  validNames: Set<string>,
+  roleMap: Record<string, { role: string; gender: string }>,
+  adultNames: string[],
+  baseRules: string,
+  nameList: string,
+  report: ScriptReport,
+): Promise<void> {
+  for (let round = 0; round < 2; round++) {
+    const issues = validateDialogue(panels, level, validNames, roleMap, adultNames);
+    if (issues.length === 0) break;
+    report.repairRounds++;
+    const failing = issues
+      .map(
+        is =>
+          `Panel ${is.panel + 1}, luot ${is.line + 1}: EN="${panels[is.panel].dialogue[is.line].en}" | VI="${panels[is.panel].dialogue[is.line].vi}" | LOI: ${is.reasons.join("; ")}`,
+      )
+      .join("\n");
+    const context = [...new Set(issues.map(i => i.panel))]
+      .map(
+        pi =>
+          `Panel ${pi + 1} (action: ${panels[pi].action}):\n` +
+          panels[pi].dialogue
+            .map((d, li) => `  ${li + 1}. ${d.characterName}: ${d.en} / ${d.vi}`)
+            .join("\n"),
+      )
+      .join("\n");
+    const fixUser = `Mot so luot thoai vi pham quy tac. Viet lai CHI cac luot loi, giu nguyen y nghia va mach truyen, khop voi cac luot xung quanh.
+
+Nguoi noi hop le: ${nameList}
+${levelRules(level)}
+
+CAC LUOT LOI:
+${failing}
+
+NGU CANH:
+${context}
+
+Tra ve JSON: {"fixes":[{"panel":1,"line":2,"en":"...","vi":"..."}]} (panel/line danh so tu 1). Neu loi la nguoi noi, van viet lai en/vi cho khop nguoi noi hop le. Chi tra JSON.`;
+    try {
+      const fx = await llmJson(fixesSchema, baseRules, fixUser, 0.4, report, 3000);
+      for (const f of fx.fixes) {
+        const d = panels[f.panel - 1]?.dialogue[f.line - 1];
+        if (d) {
+          d.en = f.en;
+          d.vi = f.vi;
+        }
+      }
+    } catch (e) {
+      report.warnings.push(`Vong sua ${round + 1} that bai: ${e instanceof Error ? e.message : e}`);
+      break;
+    }
+  }
 }
 
 // ─── Hàm chính ────────────────────────────────────────────────────────────────
@@ -415,6 +537,10 @@ export async function generateLessonScript(input: ScriptInput): Promise<{
   };
 
   const validNames = new Set(characters.flatMap(c => [c.name, c.nameEn]));
+  const adultNames = characters
+    .filter(c => c.role !== "child")
+    .flatMap(c => [c.name, c.nameEn])
+    .filter(n => n && !/^ama\s/i.test(n));
   const roleMap: Record<string, { role: string; gender: string }> = {};
   for (const c of characters) roleMap[c.name] = roleMap[c.nameEn] = { role: c.role, gender: c.gender };
   const nameList = characters.map(c => c.name).join(", ") || "(tu dat 2 nhan vat)";
@@ -430,21 +556,7 @@ export async function generateLessonScript(input: ScriptInput): Promise<{
     ? input.backgroundNames.map((b, i) => `[${i}] ${b}`).join(", ")
     : "tu mo ta";
 
-  const baseRules = `Ban la tac gia truyen tranh giao duc song ngu Anh-Viet cho hoc sinh dan toc thieu so Tay Nguyen (Dak Nong), Viet Nam.
-
-${levelRules(level)}
-
-NGON NGU:
-- Truong "vi": tieng Viet thuan tuy, TUYET DOI KHONG co chu Han/Trung/Nhat/Han. Dich tu nhien, dung xung ho theo quan he (me-con, ong-chau, ba-chau, co-tro).
-- Ten rieng nhan vat (co dau, vi du "Ya Đin") giu nguyen trong ca "en" va "vi", KHONG dich, KHONG bo dau.
-- Truong "en": tieng Anh tu nhien nhu tre em that su noi.
-
-NHAN VAT:
-- Chi duoc dung dung cac ten nay lam nguoi noi: ${nameList}. KHONG tao nhan vat moi (khong "Ba lang", "Nguoi dan"). Neu can nhac den nguoi khac, de nhan vat chinh nhac toi trong loi thoai.
-
-VAN HOA:
-- Chi dung thong tin trong DU LIEU VAN HOA ben duoi. KHONG bia le hoi, nhac cu, luat choi, hoa van. Neu du lieu khong noi, hay noi chung chung, an toan, ton trong.
-- Khong rap khuon, khong mo ta ngoai hinh theo dan toc.`;
+  const baseRules = makeBaseRules(level, nameList);
 
   // ── Bước 1: lời thoại ──────────────────────────────────────────────────────
   const dialogueUser = `Viet truyen tranh ${tmpl.panelCount} panel ve chu de: "${input.topic}"
@@ -469,7 +581,7 @@ YEU CAU:
 - Ten nhan vat viet DUNG co dau nhu trong danh sach (vi du "Pơ Mai", khong viet "Po Mai").
 
 Tra ve JSON:
-{"titleVi":"...","titleEn":"...","descriptionVi":"1-2 cau","panels":[{"id":1,"backgroundIndex":0,"characterNames":["..."],"action":"...","dialogue":[{"characterName":"...","en":"...","vi":"..."}]}]}
+{"titleVi":"...","titleEn":"...","descriptionVi":"1-2 cau NGAN (toi da 180 ky tu): hoc sinh se doc ve gi","panels":[{"id":1,"backgroundIndex":0,"characterNames":["..."],"action":"...","dialogue":[{"characterName":"...","en":"...","vi":"..."}]}]}
 Dung ${tmpl.panelCount} panel. Chi tra JSON.`;
 
   const draft = await llmJson(dialogueSchema, baseRules, dialogueUser, 0.7, report, 7000);
@@ -574,51 +686,7 @@ Tra ve JSON: {"panels":[{"id":1,"dialogue":[{"characterName":"","en":"","vi":""}
     }
   }
 
-  for (let round = 0; round < 2; round++) {
-    const issues = validateDialogue(panels, level, validNames, roleMap);
-    if (issues.length === 0) break;
-    report.repairRounds++;
-    const failing = issues
-      .map(
-        is =>
-          `Panel ${is.panel + 1}, luot ${is.line + 1}: EN="${panels[is.panel].dialogue[is.line].en}" | VI="${panels[is.panel].dialogue[is.line].vi}" | LOI: ${is.reasons.join("; ")}`,
-      )
-      .join("\n");
-    const context = [...new Set(issues.map(i => i.panel))]
-      .map(
-        pi =>
-          `Panel ${pi + 1} (action: ${panels[pi].action}):\n` +
-          panels[pi].dialogue
-            .map((d, li) => `  ${li + 1}. ${d.characterName}: ${d.en} / ${d.vi}`)
-            .join("\n"),
-      )
-      .join("\n");
-    const fixUser = `Mot so luot thoai vi pham quy tac. Viet lai CHI cac luot loi, giu nguyen y nghia va mach truyen, khop voi cac luot xung quanh.
-
-Nguoi noi hop le: ${nameList}
-${levelRules(level)}
-
-CAC LUOT LOI:
-${failing}
-
-NGU CANH:
-${context}
-
-Tra ve JSON: {"fixes":[{"panel":1,"line":2,"en":"...","vi":"..."}]} (panel/line danh so tu 1). Neu loi la nguoi noi, van viet lai en/vi cho khop nguoi noi hop le. Chi tra JSON.`;
-    try {
-      const fx = await llmJson(fixesSchema, baseRules, fixUser, 0.4, report, 3000);
-      for (const f of fx.fixes) {
-        const d = panels[f.panel - 1]?.dialogue[f.line - 1];
-        if (d) {
-          d.en = f.en;
-          d.vi = f.vi;
-        }
-      }
-    } catch (e) {
-      report.warnings.push(`Vong sua ${round + 1} that bai: ${e instanceof Error ? e.message : e}`);
-      break;
-    }
-  }
+  await runRepairRounds(panels, level, validNames, roleMap, adultNames, baseRules, nameList, report);
 
   // "action" dùng để sinh ảnh nên PHẢI là tiếng Anh; LLM hay viết tiếng Việt
   const VI_CHARS = /[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/i;
@@ -647,6 +715,7 @@ Tra ve JSON: {"fixes":[{"panel":1,"line":2,"en":"...","vi":"..."}]} (panel/line 
       re: new RegExp(`\\b${escapeRe(c.nameEn)}\\b`, "g"),
       to: c.name,
     }));
+  const namesToProtect = characters.flatMap(c => [c.name, c.nameEn]);
   const fixNames = (t: string) => nameFix.reduce((acc, f) => acc.replace(f.re, f.to), t);
   for (const p of panels)
     for (const d of p.dialogue) {
@@ -654,6 +723,7 @@ Tra ve JSON: {"fixes":[{"panel":1,"line":2,"en":"...","vi":"..."}]} (panel/line 
         const full = characters.find(c => c.nameEn === d.characterName);
         if (full) d.characterName = full.name;
       }
+      d.en = quoteVietnameseTerms(d.en, namesToProtect, LEXICON_KEYS);
       // câu kết thúc thiếu dấu câu → thêm
       if (!/[.!?…"'”)]$/.test(d.en.trim())) d.en = d.en.trim() + ".";
       if (!/[.!?…"'”)]$/.test(d.vi.trim())) d.vi = d.vi.trim() + ".";
@@ -746,7 +816,7 @@ Chi tra JSON.`;
     report.warnings.push(`Chi co ${vocab.length} tu vung hop le (can ${spec.vocab[0]}+)`);
 
   const quiz = extras.quiz
-    .map(normalizeQuiz)
+    .map(q => normalizeQuiz({ ...q, question_en: quoteVietnameseTerms(q.question_en, namesToProtect, LEXICON_KEYS), options: q.options.map(o => quoteVietnameseTerms(o, namesToProtect, LEXICON_KEYS)) }))
     .filter((q): q is NonNullable<typeof q> => q !== null)
     .slice(0, 4);
   if (quiz.length < 4) report.warnings.push(`Chi co ${quiz.length}/4 cau quiz hop le`);
@@ -774,7 +844,7 @@ Chi tra JSON.`;
     script: {
       titleVi: draft.titleVi,
       titleEn: fixNames(draft.titleEn),
-      descriptionVi: fixNames(draft.descriptionVi),
+      descriptionVi: trimDescription(fixNames(draft.descriptionVi)),
       vocabulary: vocab,
       quiz,
       missions,
@@ -815,4 +885,30 @@ Dia danh: ${j(g.locations)}
 Kien truc: ${g.architecture}${extra ? `
 
 ${extra}` : ""}`;
+}
+
+/** Sửa lời thoại của bài đã lưu (dùng cho script bảo trì): validator + vòng sửa bằng LLM. Trả về cảnh báo còn lại. */
+export async function repairStoredDialogue(
+  panels: ScriptPanel[],
+  level: 1 | 2 | 3,
+  characters: ScriptCharacter[],
+): Promise<{ warnings: string[]; llmCalls: number }> {
+  const report: ScriptReport = {
+    llmCalls: 0,
+    repairRounds: 0,
+    warnings: [],
+    metrics: { sentences: 0, inLimitPct: 0, vocabCount: 0, vocabInDialoguePct: 0, quizCount: 0 },
+  };
+  const validNames = new Set(characters.flatMap(c => [c.name, c.nameEn]));
+  const roleMap: Record<string, { role: string; gender: string }> = {};
+  for (const c of characters) roleMap[c.name] = roleMap[c.nameEn] = { role: c.role, gender: c.gender };
+  const adultNames = characters
+    .filter(c => c.role !== "child")
+    .flatMap(c => [c.name, c.nameEn])
+    .filter(n => n && !/^ama\s/i.test(n));
+  const nameList = characters.map(c => c.name).join(", ");
+  await runRepairRounds(panels, level, validNames, roleMap, adultNames, makeBaseRules(level, nameList), nameList, report);
+  const left = validateDialogue(panels, level, validNames, roleMap, adultNames);
+  if (left.length) report.warnings.push(`Con ${left.length} luot thoai chua dat sau khi sua`);
+  return { warnings: report.warnings, llmCalls: report.llmCalls };
 }

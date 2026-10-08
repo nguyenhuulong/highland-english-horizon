@@ -179,7 +179,7 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
 
   async function handleGenerate() {
     if (!topic.trim()) { showToast("Nhập mô tả nội dung câu chuyện", "error"); return; }
-    if (selectedCharIds.length === 0) { showToast("Chọn ít nhất 1 nhân vật", "error"); return; }
+    if (selectedCharIds.length < 2) { showToast("Chọn ít nhất 2 nhân vật để truyện có hội thoại", "error"); return; }
 
     setGenerating(true);
     setGenStep("AI đang viết, kiểm tra và vẽ truyện (khoảng 1–2 phút)...");
@@ -422,7 +422,7 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
 
           <div style={{ display: "flex", gap: 10 }}>
             <button onClick={() => setStep("setup")} style={{ flex: 1, padding: "12px 0", borderRadius: 10, border: "1.5px solid var(--border)", background: "var(--surface)", cursor: "pointer", fontWeight: 700, fontFamily: "var(--font-body)" }}>← Quay lại</button>
-            <button onClick={() => { if (selectedCharIds.length === 0) { showToast("Chọn ít nhất 1 nhân vật", "error"); return; } setStep("backgrounds"); }}
+            <button onClick={() => { if (selectedCharIds.length < 2) { showToast("Chọn ít nhất 2 nhân vật để truyện có hội thoại", "error"); return; } setStep("backgrounds"); }}
               style={{ flex: 2, padding: "12px 0", borderRadius: 10, background: "var(--primary)", color: "#fff", border: "none", cursor: "pointer", fontWeight: 800, fontFamily: "var(--font-body)" }}>
               Tiếp theo → Chọn bối cảnh
             </button>

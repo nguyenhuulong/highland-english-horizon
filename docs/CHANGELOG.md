@@ -31,3 +31,10 @@
 - Bộ truyện mẫu `source=SAMPLE`: 5/6 bài PUBLISHED (K'Ho, Mạ, M'Nông, H'Mông, Nùng) với 100% panel do Kontext vẽ và nhân vật nhận diện được; bài Tày còn DRAFT (1 panel dùng ảnh ghép).
 - Công cụ: `scripts/build-sample-stories.ts`, `rerender-drafts.ts`, `edit-character.ts`, `apply-assets.ts`, `lesson-sheet.ts`.
 - Còn lại: nền `costume` vẫn có tranh chữ treo tường (cần vẽ lại, hết số dư Together lúc đó — 402); thi thoảng Kontext thêm một nhân vật thừa (đã thấy 1 lần ở bài H'Mông panel 3).
+
+## 2026-10 — Sửa lỗi phản hồi từ đọc thử
+- Trẻ em không còn gọi người lớn/người cao tuổi bằng tên đầy đủ (validator + quy tắc xưng hô trong prompt); 6 bài mẫu đã được sửa lại bằng `scripts/fix-sample-dialogue.ts`.
+- Từ/cụm tiếng Việt xen trong câu tiếng Anh (đàn tính, gùi, hát Then…) được tự đặt trong dấu ngoặc kép (`quoteVietnameseTerms`), áp dụng cả quiz.
+- Thẻ thư viện: nhãn dân tộc không còn hiện cả đoạn `topic` dài; mô tả giới hạn 3 dòng; mô tả bài mới tối đa 2 câu/200 ký tự.
+- Tạo bài cần ≥ 2 nhân vật (API + form), tránh LLM tự bịa "người dân địa phương".
+- Ẩn (chuyển DRAFT) 3 bài thử cũ dùng người nói ngoài danh sách: "K'Thao and the Forest", "K'Thao's Forest Adventure", "N'Thao's Adventure". Muốn hiện lại: đổi status về PUBLISHED.

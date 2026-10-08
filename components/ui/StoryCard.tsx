@@ -76,7 +76,7 @@ export default function StoryCard({ story, progress }: Props) {
         <div style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: 8, fontStyle: "italic" }}>
           {story.title.en}
         </div>
-        <div style={{ fontSize: "0.85rem", color: "var(--text-light)", lineHeight: 1.5 }}>
+        <div style={{ fontSize: "0.85rem", color: "var(--text-light)", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
           {story.description_vi}
         </div>
       </div>
