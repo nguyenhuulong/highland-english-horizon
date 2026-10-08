@@ -5,7 +5,7 @@ const LIM: Record<number, [number, number]> = { 1: [4, 8], 2: [8, 14], 3: [12, 2
 const wc = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
 const CJK = /[぀-ヿ㐀-鿿가-힯]/;
 async function main() {
-  const lessons = await p.lesson.findMany({ where: { source: "COMIC" }, orderBy: { createdAt: "asc" } });
+  const lessons = await p.lesson.findMany({ where: process.env.MEASURE_NEW ? { source: "SAMPLE", templateKey: { not: null } } : { source: "COMIC" }, orderBy: { createdAt: "asc" } });
   const chars = await p.comicCharacter.findMany({ select: { id: true, name: true, nameEn: true } });
   const valid = new Set(chars.flatMap(c => [c.name, c.nameEn]));
   const T = { sent: 0, over: 0, under: 0, vocab: 0, vocabMiss: 0, dlg: 0, badName: 0, cjk: 0, panels: 0, noImg: 0, dupSent: 0, ans0: 0, quiz: 0, short4: 0 };

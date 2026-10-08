@@ -111,3 +111,18 @@ Hạn chế: chưa chạy bài mới. Đo lại sau sửa sẽ chạy LLM-only (
 
 - Đã tạo: `docs/AUDIT.md`, `scripts/audit-db.ts`, `scripts/measure-lessons.ts` (đều chỉ đọc). **Không sửa code ứng dụng, không ghi DB, không gọi API tính phí, không commit.**
 - Cần người dùng: xác nhận dev/prod chung DB; xoay key; duyệt kế hoạch Phase 3.
+
+## 5. Đo lại sau cải tiến (Phase 5) — 6 bài mẫu mới (L1×2, L2×4; 123 câu thoại, 52 vocab, 24 quiz)
+
+| Chỉ số | Trước (11 bài cũ) | Sau (6 bài mẫu) |
+|---|---|---|
+| Câu vượt giới hạn từ theo cấp | 8,6% | 0% |
+| Câu dưới mức tối thiểu | 49% | 0% |
+| Vocab không nằm trong thoại | 52,9% | 0% |
+| Dòng thoại có nhân vật lạ | 7% | 0% |
+| Câu chứa chữ CJK | 3 | 0 |
+| Quiz có đáp án ở vị trí 0 | 52% | 25% (ngẫu nhiên, kỳ vọng 25%) |
+| Lượt thoại/panel | 2 | 3–4 |
+| Panel không dùng nhân vật (text→image) | không đo được | 0/32 (31 panel Kontext, 1 panel ảnh ghép có cờ degraded) |
+| Thời gian sinh kịch bản 1 bài | — | 40–110 s (3–5 lần gọi LLM) |
+Đánh giá bằng mắt 6/6 bài: nhân vật nhận diện được, trang phục nhất quán, ≥2 bối cảnh/bài. Tồn đọng: Kontext thi thoảng thêm người thừa (đã thấy 1 lần); một số nền vẫn nhỏ lỗi (đèn lồng, tranh treo).

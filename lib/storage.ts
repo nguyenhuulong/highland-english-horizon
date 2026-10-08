@@ -27,15 +27,26 @@ export async function uploadToSupabase(opts: {
 
   const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${opts.fileName}`;
 
-  const res = await fetch(uploadUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
-      "Content-Type": opts.contentType,
-      "x-upsert": "true", // overwrite nếu file đã tồn tại
-    },
-    body: buf as unknown as BodyInit,
-  });
+  // Mạng yếu/ECONNRESET: thử lại tối đa 3 lần
+  let res: Response | undefined;
+  let lastErr: unknown;
+  for (let attempt = 0; attempt < 3 && !res; attempt++) {
+    try {
+      res = await fetch(uploadUrl, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`,
+          "Content-Type": opts.contentType,
+          "x-upsert": "true", // overwrite nếu file đã tồn tại
+        },
+        body: buf as unknown as BodyInit,
+      });
+    } catch (e) {
+      lastErr = e;
+      await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+    }
+  }
+  if (!res) throw lastErr instanceof Error ? lastErr : new Error("Upload thất bại");
 
   if (!res.ok) {
     const err = await res.text();
