@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateComicPanel } from "@/lib/imageGen";
-import { uploadFromUrl, makeFileName } from "@/lib/storage";
+import { makeFileName } from "@/lib/storage";
 import type { ComicCharacterDTO, ComicBackgroundDTO } from "@/types";
 
 export async function POST(req: NextRequest) {
@@ -35,8 +35,17 @@ export async function POST(req: NextRequest) {
     };
 
     const dbChars = await prisma.comicCharacter.findMany({
-      where: { name: { in: characterNames }, isActive: true },
+      where: {
+        OR: [
+          { name: { in: characterNames ?? [] } },
+          { id: { in: characterNames ?? [] } }, // trang sửa bài gửi id
+        ],
+        isActive: true,
+      },
+      include: { ethnicGroup: { select: { nameEn: true } } },
     });
+
+    const ethnicName = dbChars.find(c => c.ethnicGroup)?.ethnicGroup?.nameEn ?? ethnicCulture ?? "K'Ho";
 
     const characters: ComicCharacterDTO[] = dbChars.map(c => ({
       id: c.id,
@@ -96,21 +105,19 @@ export async function POST(req: NextRequest) {
         ) % 10000
       : 42 + panelId;
 
-    const rawUrl = await generateComicPanel({
+    const result = await generateComicPanel({
       background,
       characters,
       action,
-      ethnicCulture,
+      ethnicCulture: ethnicName,
       panelSeed: seed,
+      panelIndex: Math.max(0, panelId - 1) + (Date.now() % 3), // đổi góc máy khi vẽ lại
+      fileName: makeFileName(
+        `panels/${lessonId || "preview"}/panel-${panelId}`,
+        "jpg",
+      ),
     });
-
-    const fileName = makeFileName(
-      `panels/${lessonId || "preview"}/panel-${panelId}`,
-      "jpg",
-    );
-    const imageUrl = await uploadFromUrl({ sourceUrl: rawUrl, fileName }).catch(
-      () => rawUrl,
-    );
+    const imageUrl = result.url;
 
     if (saveToPanel && lessonId) {
       const lesson = await prisma.lesson.findUnique({
@@ -119,7 +126,13 @@ export async function POST(req: NextRequest) {
       if (lesson) {
         const panels = lesson.panels as Record<string, unknown>[];
         const updated = panels.map(p =>
-          Number(p.id) === panelId ? { ...p, generatedImageUrl: imageUrl } : p,
+          Number(p.id) === panelId ? {
+                ...p,
+                generatedImageUrl: imageUrl,
+                imageMode: result.mode,
+                degraded: result.degraded,
+                imageNote: result.note ?? null,
+              } : p,
         );
         await prisma.lesson.update({
           where: { id: lessonId },
@@ -145,7 +158,12 @@ export async function POST(req: NextRequest) {
       })
       .catch(() => {});
 
-    return NextResponse.json({ imageUrl, cached: false });
+    return NextResponse.json({
+      imageUrl,
+      cached: false,
+      degraded: result.degraded,
+      note: result.note ?? null,
+    });
   } catch (err) {
     console.error("[generate-image]", err);
     return NextResponse.json(

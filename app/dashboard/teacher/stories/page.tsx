@@ -11,7 +11,7 @@ interface EthnicGroup { id: string; slug: string; nameVi: string; nameEn: string
 type ViewMode = "list" | "create" | "edit";
 
 interface EditingPanel {
-  id: number; bg: string; scene: string; generatedImageUrl?: string;
+  id: number; bg: string; scene: string; generatedImageUrl?: string; degraded?: boolean; imageNote?: string | null;
   action: string; backgroundId: string; characterIds: string[];
   dialogue: { character: string; vi: string; en: string }[];
 }
@@ -94,12 +94,12 @@ export default function TeacherStoriesPage() {
         }),
       });
       if (!res.ok) throw new Error();
-      const { imageUrl } = await res.json();
+      const { imageUrl, degraded, note } = await res.json();
       setEditPanels((prev) =>
-        prev.map((p) => (p.id === panel.id ? { ...p, generatedImageUrl: imageUrl } : p))
+        prev.map((p) => (p.id === panel.id ? { ...p, generatedImageUrl: imageUrl, degraded: !!degraded, imageNote: note } : p))
       );
       setRegenExtra((prev) => ({ ...prev, [panel.id]: "" }));
-      showToast("Đã sinh lại ảnh panel!", "success");
+      showToast(degraded ? "Đã vẽ lại, nhưng ảnh chưa hoàn hảo — bạn có thể nhấn vẽ lại" : "Đã sinh lại ảnh panel!", degraded ? "error" : "success");
       spawnConfetti();
     } catch {
       showToast("Lỗi sinh ảnh", "error");
@@ -188,6 +188,11 @@ export default function TeacherStoriesPage() {
                   ? <img src={panel.generatedImageUrl} alt={`Panel ${panel.id}`} style={{ width: "100%", height: "100%", objectFit: "cover", minHeight: 130 }} />
                   : <div style={{ width: "100%", minHeight: 130, background: "var(--surface)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem" }}>🖼️</div>
                 }
+                {panel.degraded && (
+                  <div title={panel.imageNote ?? ""} style={{ position: "absolute", left: 6, bottom: 6, right: 6, background: "rgba(255,243,205,0.95)", color: "#7a5b00", borderRadius: 8, padding: "4px 8px", fontSize: "0.72rem", fontWeight: 700 }}>
+                    ⚠️ {panel.imageNote || "Ảnh chưa dùng đúng nhân vật — nhấn Vẽ lại"}
+                  </div>
+                )}
                 {regenPanel === panel.id && (
                   <div style={{ position: "absolute", inset: 0, background: "rgba(255,255,255,0.85)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <div style={{ width: 32, height: 32, border: "3px solid var(--border)", borderTopColor: "var(--primary)", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />

@@ -1,13 +1,8 @@
 import { getCulturalGroup } from "@/data/culture";
+import { getAIConfig } from "@/lib/aiConfig";
 import type { AILessonInput, LessonDTO } from "@/types";
 
-const AI_BASE_URL = (
-  process.env.AI_BASE_URL || "https://api.together.xyz/v1"
-).replace(/\/+$/, "");
-const AI_MODEL =
-  process.env.AI_MODEL ||
-  "meta-llama/Llama-3.3-70B-Instruct-Turbo";
-const AI_API_KEY = process.env.AI_API_KEY || "";
+const { baseUrl: AI_BASE_URL, model: AI_MODEL, apiKey: AI_API_KEY } = getAIConfig();
 
 const SYSTEM_PROMPT = `Bạn là trợ lý AI của nền tảng Highland English Horizon, hỗ trợ giáo viên vùng Tây Nguyên tạo bài học tiếng Anh dạng truyện tranh song ngữ cho học sinh dân tộc thiểu số.
 

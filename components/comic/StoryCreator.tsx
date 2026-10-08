@@ -182,7 +182,7 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
     if (selectedCharIds.length === 0) { showToast("Chọn ít nhất 1 nhân vật", "error"); return; }
 
     setGenerating(true);
-    setGenStep("AI đang viết kịch bản truyện tranh...");
+    setGenStep("AI đang viết, kiểm tra và vẽ truyện (khoảng 1–2 phút)...");
 
     try {
       const res = await fetch("/api/lessons/generate", {
@@ -203,10 +203,11 @@ export default function StoryCreator({ ethnicGroups, onStoryReady }: Props) {
         const err = await res.json();
         throw new Error(err.error || "Lỗi sinh bài học");
       }
-      const { lesson } = await res.json();
+      const { lesson, degradedPanels, quality } = await res.json();
 
       setGenStep("Hoàn thành!");
-      showToast("Bài học đã được xuất bản vào thư viện! 🎉", "success");
+      showToast(degradedPanels ? `Bài học đã xuất bản. ${degradedPanels} ảnh chưa hoàn hảo — mở bài để vẽ lại nhé.` : "Bài học đã được xuất bản vào thư viện! 🎉", degradedPanels ? "error" : "success");
+      if (quality?.warnings?.length) console.info("[quality]", quality.warnings);
       onStoryReady?.(lesson.id);
       setStep("setup");
       setTopic(""); setTitleVi(""); setSelectedCharIds([]); setSelectedBgIds([]); setPanelBackgroundKeys([]);
