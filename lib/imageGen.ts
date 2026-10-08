@@ -58,6 +58,10 @@ async function togetherGenerate(
 
   if (!res.ok) {
     const err = await res.text();
+    if (err.includes("third_party_data_sharing_blocked") && attempt < 2) {
+      await new Promise(r => setTimeout(r, 4000));
+      return togetherGenerate(params, attempt + 1);
+    }
     if (err.includes("third_party_data_sharing_blocked"))
       throw new Error(
         "TOGETHER_BLOCKED: Together.ai chưa bật 'third-party data sharing' cho tài khoản nên không dùng được model FLUX. Vào Together > Settings > Privacy để bật.",
