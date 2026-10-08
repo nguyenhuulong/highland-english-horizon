@@ -317,6 +317,11 @@ export async function buildComposite(
     (0.299 * stats.channels[0].mean + 0.587 * stats.channels[1].mean + 0.114 * stats.channels[2].mean) / 255;
   const brightness = Math.min(1.04, Math.max(0.9, 0.86 + bgLum * 0.22));
 
+  const bgTint = {
+    r: Math.round(stats.channels[0].mean),
+    g: Math.round(stats.channels[1].mean),
+    b: Math.round(stats.channels[2].mean),
+  };
   const centers = n === 1 ? [0.32] : n === 2 ? [0.3, 0.68] : [0.2, 0.5, 0.8];
   const comps: OverlayOptions[] = [];
   const shadows: OverlayOptions[] = [];
@@ -327,9 +332,26 @@ export async function buildComposite(
     let h = Math.round(PANEL_H * (ROLE_HEIGHT[role] ?? 0.62) * shot.charScale);
     h = Math.min(h, Math.round(PANEL_H * 0.92));
     const w = Math.round(h * (cutout.w / cutout.h));
-    const piece = await sharpLib(cutout.buf)
+    const resized = await sharpLib(cutout.buf)
       .resize(w, h, { fit: "fill" })
       .modulate({ brightness, saturation: 0.97 })
+      .ensureAlpha()
+      .png()
+      .toBuffer();
+    // phủ nhẹ (~14%) màu môi trường của nền lên nhân vật (chỉ trong vùng nhân vật) cho đỡ "dán"
+    const rawPiece = await sharpLib(resized).ensureAlpha().raw().toBuffer();
+    const tintRaw = Buffer.alloc(w * h * 4);
+    for (let q = 0; q < w * h; q++) {
+      tintRaw[q * 4] = bgTint.r;
+      tintRaw[q * 4 + 1] = bgTint.g;
+      tintRaw[q * 4 + 2] = bgTint.b;
+      tintRaw[q * 4 + 3] = Math.round(rawPiece[q * 4 + 3] * 0.14);
+    }
+    const tintLayer = await sharpLib(tintRaw, { raw: { width: w, height: h, channels: 4 } })
+      .png()
+      .toBuffer();
+    const piece = await sharpLib(resized)
+      .composite([{ input: tintLayer, blend: "over" }])
       .png()
       .toBuffer();
     const left = Math.max(0, Math.min(PANEL_W - w, Math.round(PANEL_W * centers[i] - w / 2)));
