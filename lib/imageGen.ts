@@ -516,6 +516,41 @@ export async function generateBackgroundImage(opts: {
   }
 }
 
+/** Độ lệch CẤU TRÚC (đã chuẩn hóa độ sáng/tương phản từng vùng) — không bị ảnh hưởng khi Kontext chỉ đổi màu/ánh sáng chung. */
+export async function regionStructureDifference(a: Buffer, b: Buffer, boxes: Placed[]): Promise<number> {
+  const SW = 224,
+    SH = 128;
+  const toGray = (x: Buffer) => sharpLib(x).resize(SW, SH, { fit: "fill" }).greyscale().raw().toBuffer();
+  const [ga, gb] = await Promise.all([toGray(a), toGray(b)]);
+  const fx = SW / PANEL_W,
+    fy = SH / PANEL_H;
+  let worst = 0;
+  for (const bx of boxes) {
+    const x0 = Math.max(0, Math.floor(bx.x * fx)),
+      x1 = Math.min(SW, Math.ceil((bx.x + bx.w) * fx));
+    const y0 = Math.max(0, Math.floor(bx.y * fy)),
+      y1 = Math.min(SH, Math.ceil((bx.y + bx.h) * fy));
+    const va: number[] = [],
+      vb: number[] = [];
+    for (let y = y0; y < y1; y++)
+      for (let x = x0; x < x1; x++) {
+        va.push(ga[y * SW + x]);
+        vb.push(gb[y * SW + x]);
+      }
+    if (va.length < 10) continue;
+    const norm = (v: number[]) => {
+      const m = v.reduce((s, q) => s + q, 0) / v.length;
+      const sd = Math.sqrt(v.reduce((s, q) => s + (q - m) ** 2, 0) / v.length) || 1;
+      return v.map(q => (q - m) / sd);
+    };
+    const na = norm(va),
+      nb = norm(vb);
+    const d = na.reduce((s, q, i) => s + Math.abs(q - nb[i]), 0) / na.length; // 0 = giống hệt
+    worst = Math.max(worst, d);
+  }
+  return worst;
+}
+
 // ─── generateComicPanel ───────────────────────────────────────────────────────
 // Pipeline:
 //   1. Tải nền + ảnh nhân vật, tách nền nhân vật (flood-fill), ghép composite đúng tỉ lệ + bóng
@@ -533,7 +568,7 @@ export interface PanelResult {
 }
 
 // Ngưỡng độ lệch vùng nhân vật (0-255). Hiệu chỉnh bằng thí nghiệm (scripts/test-panel.ts).
-export const CHARACTER_DIFF_THRESHOLD = 34;
+export const CHARACTER_DIFF_THRESHOLD = 45;
 
 async function storeJpeg(buf: Buffer, fileName: string): Promise<string> {
   const jpg = await sharpLib(buf).jpeg({ quality: 88 }).toBuffer();
@@ -650,6 +685,13 @@ export async function generateComicPanel(opts: {
         if (!out) continue;
         const diff = await regionDifference(composite, out, boxes);
         lastDiff = diff;
+        if (process.env.PANEL_DEBUG_DIR) {
+          const sd = await regionStructureDifference(composite, out, boxes);
+          const tag = `${process.env.PANEL_DEBUG_DIR}/${fileName.split("/").pop()}-a${a}`;
+          await sharpLib(out).jpeg().toFile(`${tag}-out.jpg`);
+          await sharpLib(composite).jpeg().toFile(`${tag}-comp.jpg`);
+          console.log(`[debug] ${tag} colorDiff=${diff.toFixed(1)} structDiff=${sd.toFixed(3)}`);
+        }
         if (diff <= CHARACTER_DIFF_THRESHOLD) {
           const url = await storeJpeg(out, fileName);
           return { url, mode: "kontext", degraded: !!missNote, note: missNote, attempts, diff };

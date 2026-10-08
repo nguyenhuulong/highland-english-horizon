@@ -22,3 +22,12 @@
 ### Village Map
 - Mỗi điểm 3 câu quiz, đáp án luôn được xáo; fun fact hiện sau câu cuối; XP lấy từ server; ghi tiến độ không còn bắt buộc có bài SAMPLE; báo lỗi đúng khi lưu thất bại; `GET` trả XP thật.
 - Lỗi lint (`village/page.tsx`, `EthnicModal.tsx`) đã sửa; thư mục `scripts/` bỏ khỏi lint.
+
+## 2026-10 — Vẽ ảnh thật & bộ truyện mẫu (Phase 5)
+- Together đã bật passthrough; FLUX hoạt động (hiệu lực sau vài phút, code tự thử lại).
+- Vẽ lại 8 nền (festival_ground, drum, costume, dance, birds, butterfly, bargain, cloth_stall): hết chùa/đèn lồng Trung Hoa, hết người trong nền. Đã áp dụng vào DB (URL cũ lưu ở `scripts/out/`, thư mục không commit).
+- Nhân vật: Ama K'Bram đổi thành nam (Kontext chỉnh từ ảnh cũ); Ya Đin, Y Điớp, A Linh, Kpă Điêu gỡ watermark bằng Kontext (giữ nguyên trang phục). Vẽ lại bằng text thuần cho kết quả sai văn hóa (hanfu/chibi) nên KHÔNG dùng.
+- Ngưỡng kiểm tra nhân vật `CHARACTER_DIFF_THRESHOLD` nâng 34 → 45 sau khi xem ảnh: các panel có độ lệch 35–41 vẫn giữ đúng nhân vật; chỉ các ca >45 mới thực sự bị vẽ lại.
+- Bộ truyện mẫu `source=SAMPLE`: 5/6 bài PUBLISHED (K'Ho, Mạ, M'Nông, H'Mông, Nùng) với 100% panel do Kontext vẽ và nhân vật nhận diện được; bài Tày còn DRAFT (1 panel dùng ảnh ghép).
+- Công cụ: `scripts/build-sample-stories.ts`, `rerender-drafts.ts`, `edit-character.ts`, `apply-assets.ts`, `lesson-sheet.ts`.
+- Còn lại: nền `costume` vẫn có tranh chữ treo tường (cần vẽ lại, hết số dư Together lúc đó — 402); thi thoảng Kontext thêm một nhân vật thừa (đã thấy 1 lần ở bài H'Mông panel 3).
