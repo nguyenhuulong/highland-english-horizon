@@ -14,7 +14,7 @@ const ROLE_ALLOWED: Record<string, string[]> = {
   ADMIN: ["/dashboard/admin"],
 };
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isProtected =
     pathname.startsWith("/dashboard") || pathname.startsWith("/creator");
