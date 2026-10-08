@@ -265,6 +265,8 @@ export function validateDialogue(
       if (/welcome/i.test(d.en) && /không có vấn đề|khong co van de/i.test(d.vi))
         reasons.push('dich "You are welcome" la "Khong co chi" hoac "Khong sao dau", KHONG phai "Khong co van de"');
       const who = roles[d.characterName];
+      if (who?.role === "child" && /(^|[\s,.!?])tôi(?=[\s,.!?]|$)/i.test(d.vi))
+        reasons.push('tre em xung "em"/"con"/"minh", KHONG xung "toi"');
       if (who?.role === "elder" && /^\s*dạ(?=[\s,.!?]|$)/i.test(d.vi))
         reasons.push('nguoi cao tuoi noi voi tre em khong dung "Da" - dung "U", "Ua", "Dung roi"');
       if (who && who.gender === "male" && who.role !== "child" && /(^|\s)bà(?=[\s,.!?]|$)/i.test(d.vi))
@@ -652,6 +654,9 @@ Tra ve JSON: {"fixes":[{"panel":1,"line":2,"en":"...","vi":"..."}]} (panel/line 
         const full = characters.find(c => c.nameEn === d.characterName);
         if (full) d.characterName = full.name;
       }
+      // câu kết thúc thiếu dấu câu → thêm
+      if (!/[.!?…"'”)]$/.test(d.en.trim())) d.en = d.en.trim() + ".";
+      if (!/[.!?…"'”)]$/.test(d.vi.trim())) d.vi = d.vi.trim() + ".";
       for (const f of nameFix) {
         d.en = d.en.replace(f.re, f.to);
         d.vi = d.vi.replace(f.re, f.to);
