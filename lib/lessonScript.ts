@@ -528,6 +528,50 @@ Tra ve JSON: {"panels":[{"id":${from},"backgroundIndex":0,"characterNames":["...
     report.warnings.push(`AI chi viet ${panels.length}/${tmpl.panelCount} panel`);
 
   // ── Bước 2: validator + vòng sửa ───────────────────────────────────────────
+  // Panel quá ngắn (ít lượt thoại hơn quy định) → xin viết thêm
+  for (let t = 0; t < 2; t++) {
+    const shortIdx = panels.map((p, i) => (p.dialogue.length < spec.lines[0] ? i : -1)).filter(i => i >= 0);
+    if (shortIdx.length === 0) break;
+    try {
+      const ex = await llmJson(
+        z.object({
+          panels: z.array(
+            z.object({
+              id: z.coerce.number(),
+              dialogue: z.array(z.object({ characterName: str, en: str, vi: str })),
+            }),
+          ),
+        }),
+        baseRules,
+        `Cac panel sau co qua it luot thoai (can ${spec.lines[0]}-${spec.lines[1]} luot). Viet lai TOAN BO thoai cua tung panel (giu y cu, them luot thoai moi co thong tin), dung cap do.
+` +
+          shortIdx
+            .map(
+              i =>
+                `Panel ${panels[i].id} (action: ${panels[i].action}):
+` +
+                panels[i].dialogue.map(d => `  ${d.characterName}: ${d.en} / ${d.vi}`).join("\n"),
+            )
+            .join("\n") +
+          `
+Nguoi noi hop le: ${nameList}
+${levelRules(level)}
+Tra ve JSON: {"panels":[{"id":1,"dialogue":[{"characterName":"","en":"","vi":""}]}]}`,
+        0.5,
+        report,
+        3000,
+      );
+      for (const e of ex.panels) {
+        const target = panels.find(p => p.id === e.id);
+        if (target && e.dialogue.length >= target.dialogue.length)
+          target.dialogue = e.dialogue.slice(0, spec.lines[1]);
+      }
+    } catch (e) {
+      report.warnings.push(`Mo rong panel ngan that bai: ${e instanceof Error ? e.message : e}`);
+      break;
+    }
+  }
+
   for (let round = 0; round < 2; round++) {
     const issues = validateDialogue(panels, level, validNames, roleMap);
     if (issues.length === 0) break;
@@ -601,6 +645,7 @@ Tra ve JSON: {"fixes":[{"panel":1,"line":2,"en":"...","vi":"..."}]} (panel/line 
       re: new RegExp(`\\b${escapeRe(c.nameEn)}\\b`, "g"),
       to: c.name,
     }));
+  const fixNames = (t: string) => nameFix.reduce((acc, f) => acc.replace(f.re, f.to), t);
   for (const p of panels)
     for (const d of p.dialogue) {
       if (validNames.has(d.characterName)) {
@@ -653,7 +698,7 @@ ${input.cultureBlock}
 Tao:
 1. "vocabulary": ${spec.vocab[0]}-${spec.vocab[1]} muc. MOI muc "en" PHAI la tu/cum tu XUAT HIEN NGUYEN VAN trong loi thoai o tren (khong chia dong tu, khong them tu moi). Chon tu huu ich cho hoc sinh cap ${level}; KHONG chon ten dan toc, ten nhan vat, tu qua de (a, the, is). "vi": nghia tieng Viet ngan, tu nhien, khong chu Han.
 2. "quiz": dung 4 cau, moi cau tra loi duoc CHI dua tren loi thoai. 4 lua chon khac nhau, "answer" la chi so 0-3 cua dap an dung. Da dang: 1 cau ve tu vung, 1-2 cau hieu noi dung, 1 cau ve chi tiet van hoa. Cau hoi viet o cap ${level}.
-3. "missions": 1 nhiem vu kham pha van hoa (type "select") voi 3 lua chon, dung 1 dap an dung LAY TU DU LIEU VAN HOA, 2 dap an sai hop ly. "fact": 2 cau tieng Viet, chi dung du lieu van hoa.
+3. "missions": 1 nhiem vu kham pha van hoa (type "select") voi 3 lua chon, dung 1 dap an dung LAY TU DU LIEU VAN HOA, 2 dap an SAI ro rang (KHONG duoc lay tu cac danh sach le hoi/nhac cu/mon an cua chinh dan toc nay trong du lieu; phai la thu khong thuoc dan toc nay hoac khong co that, de hoc sinh khong bi nham). "fact": 2 cau tieng Viet, chi dung du lieu van hoa.
 
 Tra ve JSON: {"vocabulary":[{"en":"","vi":""}],"quiz":[{"question_en":"","options":["","","",""],"answer":0}],"missions":[{"id":"m1","type":"select","title":"","prompt":"","options":[{"id":"a","label":"","emoji":"","correct":true},{"id":"b","label":"","emoji":"","correct":false},{"id":"c","label":"","emoji":"","correct":false}],"fact":""}]}
 Chi tra JSON.`;
@@ -723,8 +768,8 @@ Chi tra JSON.`;
   return {
     script: {
       titleVi: draft.titleVi,
-      titleEn: draft.titleEn,
-      descriptionVi: draft.descriptionVi,
+      titleEn: fixNames(draft.titleEn),
+      descriptionVi: fixNames(draft.descriptionVi),
       vocabulary: vocab,
       quiz,
       missions,

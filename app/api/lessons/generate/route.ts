@@ -103,7 +103,9 @@ export async function POST(req: NextRequest) {
       titleVi,
       level,
       panelBackgroundKeys,
+      dryRun,
     } = body as {
+      dryRun?: boolean; // chỉ sinh kịch bản để xem thử: không ghi DB, không vẽ ảnh
       topic: string;
       templateKey: string;
       ethnicGroupId?: string;
@@ -192,6 +194,14 @@ export async function POST(req: NextRequest) {
       );
     }
     const { script, report } = result;
+
+    if (dryRun) {
+      return NextResponse.json({
+        dryRun: true,
+        script,
+        quality: { ...report.metrics, warnings: report.warnings },
+      });
+    }
 
     // ── Tạo bài DRAFT để có ID ──────────────────────────────────────────────
     const lesson = await prisma.lesson.create({
