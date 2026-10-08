@@ -228,14 +228,20 @@ export interface LineIssue {
   reasons: string[];
 }
 
+// Kiểu thoại "dạy từ vựng" nhàm chán: "What is the English word for X?" — cho phép tối đa 2 câu/bài
+const META_RE = /(english word|in english|how do you say|what('s| is) the word|is called .* in english)/i;
+const META_ALLOWED = 2;
+
 export function validateDialogue(
   panels: ScriptPanel[],
   level: 1 | 2 | 3,
   validNames: Set<string>,
+  roles: Record<string, { role: string; gender: string }> = {},
 ): LineIssue[] {
   const spec = LEVEL_SPEC[level];
   const seen = new Set<string>();
   const issues: LineIssue[] = [];
+  let metaCount = 0;
   panels.forEach((p, pi) =>
     p.dialogue.forEach((d, li) => {
       const reasons: string[] = [];
@@ -252,6 +258,17 @@ export function validateDialogue(
       if (seen.has(key)) reasons.push("cau trung voi cau truoc");
       seen.add(key);
       if (!d.vi.trim()) reasons.push("thieu ban dich tieng Viet");
+      if (META_RE.test(d.en) && ++metaCount > META_ALLOWED)
+        reasons.push('kieu hoi-dap tu vung ("What is the English word for...") - viet lai thanh loi thoai cua truyen that, co thong tin van hoa/hanh dong');
+      if (/(the|and|with|you|spent|are|was|this|that|have|for)/i.test(d.vi.replace(/'[^']*'/g, "")))
+        reasons.push("ban dich tieng Viet con lan tu tieng Anh");
+      if (/welcome/i.test(d.en) && /không có vấn đề|khong co van de/i.test(d.vi))
+        reasons.push('dich "You are welcome" la "Khong co chi" hoac "Khong sao dau", KHONG phai "Khong co van de"');
+      const who = roles[d.characterName];
+      if (who?.role === "elder" && /^\s*dạ(?=[\s,.!?]|$)/i.test(d.vi))
+        reasons.push('nguoi cao tuoi noi voi tre em khong dung "Da" - dung "U", "Ua", "Dung roi"');
+      if (who && who.gender === "male" && who.role !== "child" && /(^|\s)bà(?=[\s,.!?]|$)/i.test(d.vi))
+        reasons.push("sai gioi tinh xung ho: nhan vat nam");
       if (reasons.length) issues.push({ panel: pi, line: li, reasons });
     }),
   );
@@ -281,6 +298,10 @@ export function termInDialogue(term: string, dialogueEn: string): boolean {
 }
 
 const ETHNIC_NAME_RE = /^(k'?ho|ma'?|mnong|m'nong|h'?mong|tay|nung)$/i;
+
+function escapeRe(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -369,6 +390,13 @@ function levelRules(level: 1 | 2 | 3): string {
 - Vi du cau dung: "${s.example}"`;
 }
 
+function pronounHint(c: ScriptCharacter): string {
+  const male = c.gender === "male";
+  if (c.role === "elder") return male ? "ong (goi tre la 'chau')" : "ba (goi tre la 'chau')";
+  if (c.role === "adult") return male ? "chu/bac hoac bo (goi tre la 'con'/'em')" : "co/me (goi tre la 'con'/'em')";
+  return "em/con/chau (goi nguoi lon theo vai: ong, ba, co, chu, me)";
+}
+
 // ─── Hàm chính ────────────────────────────────────────────────────────────────
 export async function generateLessonScript(input: ScriptInput): Promise<{
   script: LessonScript;
@@ -385,12 +413,14 @@ export async function generateLessonScript(input: ScriptInput): Promise<{
   };
 
   const validNames = new Set(characters.flatMap(c => [c.name, c.nameEn]));
+  const roleMap: Record<string, { role: string; gender: string }> = {};
+  for (const c of characters) roleMap[c.name] = roleMap[c.nameEn] = { role: c.role, gender: c.gender };
   const nameList = characters.map(c => c.name).join(", ") || "(tu dat 2 nhan vat)";
   const charHint = characters.length
     ? characters
         .map(
           c =>
-            `- ${c.name} (EN: ${c.nameEn}; vai: ${c.role}; gioi tinh: ${c.gender})${c.descriptionVi ? ": " + c.descriptionVi : ""}`,
+            `- ${c.name} (EN: ${c.nameEn}; vai: ${c.role}; gioi tinh: ${c.gender}; tu xung trong tieng Viet: ${pronounHint(c)})${c.descriptionVi ? ": " + c.descriptionVi : ""}`,
         )
         .join("\n")
     : "Tu dat ten nhan vat phu hop dan toc";
@@ -428,10 +458,13 @@ Cau truc tung panel:
 ${tmpl.guide}
 
 YEU CAU:
-- Moi panel co tu ${spec.lines[0]} den ${spec.lines[1]} luot thoai, luot sau phan hoi/mo rong luot truoc, co thong tin cu the (khong chao hoi suong, khong "Okay"/"I see").
+- Moi panel co DUNG ${spec.lines[0]} den ${spec.lines[1]} luot thoai (KHONG nhieu hon), luot sau phan hoi/mo rong luot truoc, co thong tin cu the (khong chao hoi suong, khong "Okay"/"I see").
 - "action": BANG TIENG ANH (khong tieng Viet), 1 cau mo ta canh NHIN THAY DUOC: ai dang lam gi, vat dung chinh trong canh (vi du loom, gong, basket), goc nhin. Khong mo ta ngoai hinh nhan vat.
 - "characterNames": nhung nhan vat co mat trong panel (tu danh sach).
 - Khong lap lai y giua cac panel; moi panel dua them 1 thong tin moi.
+- KHONG viet kieu day tu vung ("X is called X in English", "What is this in English?"). Viet nhu mot cau chuyen that: nhan vat co mot muc tieu nho, co hanh dong, cam xuc, mot kho khan nho duoc giai quyet; tieng Anh la ngon ngu cua loi thoai.
+- Cu moi 2 panel phai dung it nhat 1 thong tin van hoa CU THE lay tu DU LIEU VAN HOA hoac KIEN THUC BO SUNG (ten vat dung, nghe, nhac cu, mon an), noi bang cau don gian dung cap do.
+- Ten nhan vat viet DUNG co dau nhu trong danh sach (vi du "Pơ Mai", khong viet "Po Mai").
 
 Tra ve JSON:
 {"titleVi":"...","titleEn":"...","descriptionVi":"1-2 cau","panels":[{"id":1,"backgroundIndex":0,"characterNames":["..."],"action":"...","dialogue":[{"characterName":"...","en":"...","vi":"..."}]}]}
@@ -444,14 +477,59 @@ Dung ${tmpl.panelCount} panel. Chi tra JSON.`;
     backgroundIndex: p.backgroundIndex ?? 0,
     characterNames: p.characterNames,
     action: p.action,
-    dialogue: p.dialogue,
+    dialogue: p.dialogue.slice(0, spec.lines[1]),
   }));
+  // LLM đôi khi chỉ trả vài panel → xin viết tiếp phần còn thiếu (tối đa 3 lần)
+  const panelsOnly = z.object({ panels: dialogueSchema.shape.panels });
+  for (let t = 0; t < 3 && panels.length < tmpl.panelCount; t++) {
+    const from = panels.length + 1;
+    const written = panels
+      .map(p => `Panel ${p.id}: ` + p.dialogue.map(d => `${d.characterName}: ${d.en}`).join(" | "))
+      .join("\n");
+    try {
+      const more = await llmJson(
+        panelsOnly,
+        baseRules,
+        `Truyen "${draft.titleEn}" ve chu de "${input.topic}". Da viet ${panels.length} panel dau:
+${written}
+
+${input.cultureBlock}
+
+Nhan vat:
+${charHint}
+Boi canh (backgroundIndex): ${bgHint}
+
+Cau truc ${tmpl.panelCount} panel:
+${tmpl.guide}
+
+Hay viet TIEP panel ${from} den panel ${tmpl.panelCount}, noi tiep mach truyen, khong lap y. Moi panel ${spec.lines[0]}-${spec.lines[1]} luot thoai, "action" bang tieng Anh.
+Tra ve JSON: {"panels":[{"id":${from},"backgroundIndex":0,"characterNames":["..."],"action":"...","dialogue":[{"characterName":"...","en":"...","vi":"..."}]}]}`,
+        0.7,
+        report,
+        6000,
+      );
+      for (const p of more.panels) {
+        if (panels.length >= tmpl.panelCount) break;
+        panels.push({
+          id: panels.length + 1,
+          backgroundIndex: p.backgroundIndex ?? 0,
+          characterNames: p.characterNames,
+          action: p.action,
+          dialogue: p.dialogue.slice(0, spec.lines[1]),
+        });
+      }
+    } catch (e) {
+      report.warnings.push(`Viet tiep panel that bai: ${e instanceof Error ? e.message : e}`);
+      break;
+    }
+  }
+  panels.forEach((p, i) => (p.id = i + 1));
   if (panels.length < tmpl.panelCount)
     report.warnings.push(`AI chi viet ${panels.length}/${tmpl.panelCount} panel`);
 
   // ── Bước 2: validator + vòng sửa ───────────────────────────────────────────
   for (let round = 0; round < 2; round++) {
-    const issues = validateDialogue(panels, level, validNames);
+    const issues = validateDialogue(panels, level, validNames, roleMap);
     if (issues.length === 0) break;
     report.repairRounds++;
     const failing = issues
@@ -516,6 +594,25 @@ Tra ve JSON: {"fixes":[{"panel":1,"line":2,"en":"...","vi":"..."}]} (panel/line 
     }
   }
 
+  // Chuẩn hóa tên riêng: nameEn (không dấu) → name (đúng dấu) trong thoại
+  const nameFix = characters
+    .filter(c => c.nameEn && c.nameEn !== c.name)
+    .map(c => ({
+      re: new RegExp(`\\b${escapeRe(c.nameEn)}\\b`, "g"),
+      to: c.name,
+    }));
+  for (const p of panels)
+    for (const d of p.dialogue) {
+      if (validNames.has(d.characterName)) {
+        const full = characters.find(c => c.nameEn === d.characterName);
+        if (full) d.characterName = full.name;
+      }
+      for (const f of nameFix) {
+        d.en = d.en.replace(f.re, f.to);
+        d.vi = d.vi.replace(f.re, f.to);
+      }
+    }
+
   // Dọn lỗi còn lại bằng code
   const fallbackSpeaker = characters[0]?.name ?? "";
   for (const p of panels) {
@@ -538,7 +635,7 @@ Tra ve JSON: {"fixes":[{"panel":1,"line":2,"en":"...","vi":"..."}]} (panel/line 
       ];
   }
 
-  const remaining = validateDialogue(panels, level, validNames);
+  const remaining = validateDialogue(panels, level, validNames, roleMap);
   if (remaining.length)
     report.warnings.push(`Con ${remaining.length} luot thoai chua dat quy tac cap do sau khi sua`);
 
@@ -640,6 +737,7 @@ Chi tra JSON.`;
 // ─── Khối dữ liệu văn hóa từ DB (nguồn sự thật cho LLM) ───────────────────────
 export function buildCultureBlock(
   g: {
+    slug?: string;
     nameVi: string;
     nameEn: string;
     description: string;
@@ -651,6 +749,7 @@ export function buildCultureBlock(
     locations: unknown;
     architecture: string;
   } | null,
+  extra = "",
 ): string {
   if (!g) return "Dan toc thieu so vung Tay Nguyen Viet Nam. Khong co du lieu cu the: giu boi canh chung chung, an toan.";
   const j = (v: unknown) => (Array.isArray(v) ? (v as string[]).join(" | ") : "");
@@ -663,5 +762,7 @@ Nhac cu: ${j(g.instruments)}
 Nghe thu cong: ${j(g.crafts)}
 Am thuc truyen thong: ${j(g.cuisine)}
 Dia danh: ${j(g.locations)}
-Kien truc: ${g.architecture}`;
+Kien truc: ${g.architecture}${extra ? `
+
+${extra}` : ""}`;
 }

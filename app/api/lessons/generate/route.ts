@@ -10,6 +10,7 @@ import {
   TEMPLATES,
   type ScriptCharacter,
 } from "@/lib/lessonScript";
+import { cultureFactsBlock } from "@/data/cultureFacts";
 import type { ComicCharacterDTO, ComicBackgroundDTO } from "@/types";
 
 // Sinh bài (LLM nhiều bước + vài ảnh) có thể mất vài chục giây đến vài phút
@@ -179,7 +180,7 @@ export async function POST(req: NextRequest) {
         topic,
         templateKey,
         level: lessonLevel,
-        cultureBlock: buildCultureBlock(ethnicGroup),
+        cultureBlock: buildCultureBlock(ethnicGroup, cultureFactsBlock(ethnicGroup?.slug)),
         characters: scriptChars,
         backgroundNames: backgrounds.map(b => b.nameVi),
       });
