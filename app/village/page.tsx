@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { VILLAGE_MAP_POINTS, type VillageMapPoint, type MapStoryPanel } from "@/data/villageMap";
+import { getShuffledQuizzes } from "@/data/villageQuiz";
 import { showToast, spawnConfetti } from "@/components/ui/Feedback";
 import { useSettings, useTTS } from "@/lib/hooks";
 
@@ -23,8 +24,13 @@ function VillagePointModal({
   const { speak } = useTTS(settings.ttsEnabled);
   const [phase, setPhase] = useState<"story" | "vocab" | "quiz">("story");
   const [panelIdx, setPanelIdx] = useState(0);
+  const quizzes = useMemo(() => getShuffledQuizzes(point), [point]);
+  const [qIdx, setQIdx] = useState(0);
+  const [score, setScore] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
+  const quiz = quizzes[qIdx];
+  const isLastQuestion = qIdx === quizzes.length - 1;
   const [completing, setCompleting] = useState(false);
 
   const panel: MapStoryPanel = point.story[panelIdx];
@@ -34,11 +40,16 @@ function VillagePointModal({
     if (isCompleted || completing) return;
     setCompleting(true);
     try {
-      await fetch("/api/village/progress", {
+      const res = await fetch("/api/village/progress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pointId: point.id, xpReward: point.xpReward }),
+        body: JSON.stringify({ pointId: point.id }),
       });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Không lưu được tiến độ", "error");
+        return;
+      }
       spawnConfetti();
       onComplete(point.id, point.xpReward);
       showToast(`+${point.xpReward} XP — Khám phá xong "${point.titleVi}"! 🎉`, "success");
@@ -187,19 +198,23 @@ function VillagePointModal({
           {/* ── Quiz phase ──────────────────────────────────────────── */}
           {phase === "quiz" && (
             <div>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: 700, marginBottom: 8 }}>
+                <span>Câu {qIdx + 1} / {quizzes.length}</span>
+                <span>⭐ {score} đúng</span>
+              </div>
               <p style={{ fontSize: "1rem", fontWeight: 700, marginBottom: 16, lineHeight: 1.55 }}>
-                {point.quiz.question_en}
+                {quiz.question_en}
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-                {point.quiz.options.map((opt, i) => {
-                  const isCorrect = i === point.quiz.answer;
+                {quiz.options.map((opt, i) => {
+                  const isCorrect = i === quiz.answer;
                   const isSelected = selectedAnswer === i;
                   let bg = "var(--surface)", border = "1.5px solid var(--border)", color = "var(--text)";
                   if (answered && isSelected && isCorrect) { bg = "#D1FAE5"; border = "2px solid #10B981"; color = "#065F46"; }
                   else if (answered && isSelected && !isCorrect) { bg = "#FEE2E2"; border = "2px solid #EF4444"; color = "#991B1B"; }
                   else if (answered && isCorrect) { bg = "#D1FAE5"; border = "2px solid #10B981"; color = "#065F46"; }
                   return (
-                    <button key={i} onClick={() => { if (!answered) { setSelectedAnswer(i); setAnswered(true); } }}
+                    <button key={i} onClick={() => { if (!answered) { setSelectedAnswer(i); setAnswered(true); if (i === quiz.answer) setScore(sc => sc + 1); } }}
                       disabled={answered}
                       style={{ padding: "12px 16px", borderRadius: 10, border, background: bg, cursor: answered ? "default" : "pointer", textAlign: "left", fontFamily: "var(--font-body)", fontSize: "0.9rem", fontWeight: isSelected ? 700 : 500, color, transition: "all 0.15s" }}>
                       {opt}
@@ -208,21 +223,31 @@ function VillagePointModal({
                 })}
               </div>
 
-              {/* Fun fact after answer */}
               {answered && (
-                <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 12, background: selectedAnswer === point.quiz.answer ? "#ECFDF5" : "#FFFBEB", border: `1.5px solid ${selectedAnswer === point.quiz.answer ? "#10B981" : "#F59E0B"}` }}>
-                  <div style={{ fontWeight: 700, fontSize: "0.88rem", marginBottom: 6 }}>
-                    {selectedAnswer === point.quiz.answer ? "✅ Đúng rồi!" : `💡 Đáp án đúng: ${point.quiz.options[point.quiz.answer]}`}
-                  </div>
+                <div style={{ marginBottom: 16, padding: "10px 14px", borderRadius: 12, background: selectedAnswer === quiz.answer ? "#ECFDF5" : "#FFFBEB", border: `1.5px solid ${selectedAnswer === quiz.answer ? "#10B981" : "#F59E0B"}`, fontWeight: 700, fontSize: "0.88rem" }}>
+                  {selectedAnswer === quiz.answer ? "✅ Đúng rồi!" : `💡 Đáp án đúng: ${quiz.options[quiz.answer]}`}
+                </div>
+              )}
+
+              {answered && isLastQuestion && (
+                <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 12, background: "var(--surface)", border: "1.5px solid var(--border)" }}>
+                  <div style={{ fontWeight: 800, fontSize: "0.85rem", marginBottom: 6 }}>🌟 Bạn có biết?</div>
                   <div style={{ fontSize: "0.85rem", color: "var(--text)", lineHeight: 1.55, marginBottom: 6 }}>{point.funFact.vi}</div>
                   <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", lineHeight: 1.5, fontStyle: "italic" }}>{point.funFact.en}</div>
                 </div>
               )}
 
-              {answered && (
+              {answered && !isLastQuestion && (
+                <button onClick={() => { setQIdx(q => q + 1); setSelectedAnswer(null); setAnswered(false); }}
+                  style={{ width: "100%", padding: "13px 0", borderRadius: 10, border: "none", background: "var(--primary)", color: "#fff", cursor: "pointer", fontWeight: 800, fontFamily: "var(--font-body)", fontSize: "0.95rem" }}>
+                  Câu tiếp theo →
+                </button>
+              )}
+
+              {answered && isLastQuestion && (
                 <button onClick={isCompleted ? onClose : handleFinish} disabled={completing}
                   style={{ width: "100%", padding: "13px 0", borderRadius: 10, border: "none", background: isCompleted ? "var(--surface)" : "linear-gradient(135deg, var(--primary), var(--accent))", color: isCompleted ? "var(--text)" : "#fff", cursor: completing ? "not-allowed" : "pointer", fontWeight: 800, fontFamily: "var(--font-body)", fontSize: "0.95rem" }}>
-                  {completing ? "Đang lưu..." : isCompleted ? "Đóng" : `🎉 Hoàn thành — Nhận ${point.xpReward} XP`}
+                  {completing ? "Đang lưu..." : isCompleted ? "Đóng" : `🎉 Hoàn thành (${score}/${quizzes.length}) — Nhận ${point.xpReward} XP`}
                 </button>
               )}
             </div>
@@ -238,18 +263,21 @@ export default function VillagePage() {
   const { data: session, status } = useSession();
   const [selectedPoint, setSelectedPoint] = useState<VillageMapPoint | null>(null);
   const [completed, setCompleted] = useState<CompletedPoints>({});
-  const [loading, setLoading] = useState(true);
+  const [progressLoaded, setProgressLoaded] = useState(false);
 
   const isStudent = session?.user?.role === "STUDENT";
+  const loading = status === "loading" || (isStudent && !progressLoaded);
 
   useEffect(() => {
-    if (status === "loading") return;
-    if (!isStudent) { setLoading(false); return; }
+    if (!isStudent) return;
+    let cancelled = false;
     fetch("/api/village/progress")
       .then(r => r.json())
-      .then(d => { setCompleted(d.completed ?? {}); setLoading(false); })
-      .catch(() => setLoading(false));
-  }, [status, isStudent]);
+      .then(d => { if (!cancelled) setCompleted(d.completed ?? {}); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setProgressLoaded(true); });
+    return () => { cancelled = true; };
+  }, [isStudent]);
 
   function handleComplete(pointId: string, xp: number) {
     setCompleted(prev => ({ ...prev, [pointId]: { completedAt: Date.now(), xpEarned: xp } }));

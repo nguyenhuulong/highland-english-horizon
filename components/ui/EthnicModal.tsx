@@ -222,15 +222,6 @@ const SECTIONS: { key: keyof CulturalGroup; label: string; labelEn: string; icon
 export default function EthnicModal({ group, onClose, onClosed }: Props) {
   const [closing, setClosing] = useState(false);
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") close();
-    };
-    console.log(handler)
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
-  }, [closing]);
-
   const close = () => {
     if (closing) return;
 
@@ -241,6 +232,19 @@ export default function EthnicModal({ group, onClose, onClosed }: Props) {
       onClosed?.();
     }, 350);
   };
+
+  const closeRef = useRef(close);
+  useEffect(() => {
+    closeRef.current = close;
+  });
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeRef.current();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, []);
 
   return (
     <div onClick={close}

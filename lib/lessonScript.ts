@@ -472,7 +472,7 @@ Dung ${tmpl.panelCount} panel. Chi tra JSON.`;
 
   const draft = await llmJson(dialogueSchema, baseRules, dialogueUser, 0.7, report, 7000);
 
-  let panels: ScriptPanel[] = draft.panels.slice(0, tmpl.panelCount).map((p, i) => ({
+  const panels: ScriptPanel[] = draft.panels.slice(0, tmpl.panelCount).map((p, i) => ({
     id: p.id ?? i + 1,
     backgroundIndex: p.backgroundIndex ?? 0,
     characterNames: p.characterNames,
